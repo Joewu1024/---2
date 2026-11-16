@@ -1,4 +1,4 @@
-
+[Uploading index.html…]()
 
 <!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>寻品工作看板</title><script>(()=>{const p=new URLSearchParams(location.search);if(!p.has("v"))return;const u=new URL("share.html",location.href);u.search=location.search;u.hash="";location.replace(u.href)})();</script></head>
 <style>
