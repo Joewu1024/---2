@@ -1,7 +1,7 @@
 {
   "testedAt": "2026-11-17T03:57:21.615Z",
   "synthetic": true,
-  "automatedTestsPassed": 192,
+  "automatedTestsPassed": 193,
   "inlineScriptBlocksParsed": 10,
   "scope": "Local Windows in-app browser; no user business CSV was uploaded during these tests",
   "onlineGoogleProbe": {

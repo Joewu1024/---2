@@ -2248,7 +2248,7 @@ function updateTranslationStatus(){
   if(review)el.textContent+=' · 原文需核对 '+review.toLocaleString()+' 款';
   const pause=$('pauseTranslation');if(pause)pause.textContent=translationUserPaused?'继续翻译':'暂停翻译';
 }
-let chromeTranslationMode=false;let chromeTranslationLanguages=new Set(),chromeTranslationBridges=new Set();
+let chromeTranslationMode=false;let chromeTranslationLanguages=new Set(),chromeTranslationBridges=new Set(),chromeTranslationPending=new Set();
 const chromeTranslationProvider=typeof BuyerChromeTranslation!=='undefined'?BuyerChromeTranslation.create():null;
 const translationSourceProviders=new Map();
 const googleTranslationProvider=BuyerGoogleTranslation.create({fetchImpl:fetch,validate:BuyerTranslation.usable});
@@ -2363,7 +2363,7 @@ async function retranslateAutomaticChinese(){
 }
 async function enableChromeTranslation(){
   const button=$('enableChromeTranslation'),status=$('chromeTranslationState');if($('import').disabled){status.textContent='请等待本机数据恢复完成';return}
-  if(chromeTranslationMode){chromeTranslationMode=false;button.textContent='启用 Chrome 本地翻译';status.textContent='使用 Google 在线整句翻译';translationBackgroundDataset=null;retryVisibleTranslation();return}
+  if(chromeTranslationMode&&!chromeTranslationPending.size){chromeTranslationMode=false;button.textContent='启用 Chrome 本地翻译';status.textContent='使用 Google 在线整句翻译';translationBackgroundDataset=null;retryVisibleTranslation();return}
   if(!chromeTranslationProvider||typeof globalThis.Translator==='undefined'){status.textContent='当前浏览器不支持本地模型；可用支持 Translator API 的桌面 Chrome';return}
   const languages=new Set();for(const r of rows)for(const index of [9,11]){const source=translationSource(r,index);if(source&&!BuyerTranslation.passthrough(source))languages.add(translationLanguage(source,translationRegionHint(r)))}
   if(!languages.size)languages.add('en');button.disabled=true;
@@ -2380,7 +2380,7 @@ async function enableChromeTranslation(){
     if(english.some(r=>r.status==='available'))for(const r of pivots)if(r.status==='available'&&!ready.includes(r.sourceLanguage)){ready.push(r.sourceLanguage);bridges.push(r.sourceLanguage)}
     const failed=requested.filter(lang=>!ready.includes(lang));
     if(!ready.length)throw new Error('当前设备未能准备这些语言的本地模型');
-    chromeTranslationLanguages=new Set(ready);chromeTranslationBridges=new Set(bridges);chromeTranslationMode=true;button.textContent='切回 Google 在线';status.textContent='本地就绪：'+ready.join('、')+(bridges.length?'；'+bridges.join('、')+'经英语转换':'')+(failed.length?'；不支持：'+failed.join('、'):'')+'（与Google网页结果可能不同）';
+    chromeTranslationLanguages=new Set(ready);chromeTranslationBridges=new Set(bridges);chromeTranslationPending=new Set(failed);chromeTranslationMode=true;button.textContent=failed.length?'补齐本地模型（'+failed.length+'）':'切回 Google 在线';status.textContent='本地就绪：'+ready.join('、')+(bridges.length?'；'+bridges.join('、')+'经英语转换':'')+(failed.length?'；未准备：'+failed.join('、')+'，可再次点击补齐；也可使用Google官方整表翻译':'')+'（与Google网页结果可能不同）';status.title=[...results,...pivots,...english].filter(r=>r.status!=='available').map(r=>r.sourceLanguage+'→'+r.targetLanguage+': '+(r.error?.message||r.status)).join('；');
     translationBackgroundDataset=null;retryVisibleTranslation();
   }catch(error){status.textContent=error.message||'本地模型准备失败'}finally{button.disabled=false}
 }

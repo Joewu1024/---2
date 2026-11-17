@@ -161,6 +161,8 @@ function harness(options = {}) {
       ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,
       retranslateAutomaticChinese, enableChromeTranslation,
       get chromeMode(){return chromeTranslationMode},
+      get chromeLanguages(){return Array.from(chromeTranslationLanguages)},
+      get chromePending(){return Array.from(chromeTranslationPending)},
       get readyCount(){return translationReadyCount}, get rows(){return rows},
       get dirty(){return dirtyRows},
       setRows(next,{history=false,sync=true,visible=next}={}){
@@ -740,4 +742,21 @@ test('Chrome bridges complete Vietnamese and Portuguese sentences through prepar
   assert.equal(vn.raw[h.api.H[10]],chinese.get(pivot.get(vietnamese)));assert.equal(pt.raw[h.api.H[10]],chinese.get(pivot.get(portuguese)));
   assert.equal(vn.translationItemProvider,'chrome-local-via-en');assert.equal(pt.translationItemProvider,'chrome-local-via-en');assert.equal(chrome.translate.mock.callCount(),4);assert.equal(fetch.mock.callCount(),0);
   assert.match(h.document.getElementById('chromeTranslationState').textContent,/经英语转换/);
+});
+
+test('partial Chrome preparation retries pending languages before a later click switches back online',async()=>{
+  let activation=0;
+  const chrome={prepareLanguages:mock.fn(async(languages,settings={})=>{
+    if(settings.targetLanguage!=='en'&&languages.includes('vi'))activation++;
+    return Array.from(languages,sourceLanguage=>{const available=sourceLanguage==='en'||activation>=2;return {sourceLanguage,targetLanguage:settings.targetLanguage||'zh',status:available?'available':'unavailable',...(available?{}:{error:new Error('FICT_ACTIVATION_REQUIRED')})}});
+  }),translate:mock.fn(async()=>{assert.fail('buyer-confirmed fields do not need translation')}),destroy(){}};
+  const fetch=mock.fn(async()=>{assert.fail('model preparation must not overwrite buyer-confirmed fields')});
+  const h=harness({actualTransport:true,fetch,chromeProvider:chrome}),en=record(h,'prepare-en','Wireless speaker FICT1750','人工确认音箱'),vi=record(h,'prepare-vi','Tai nghe không dây FICT1751','人工确认耳机');
+  for(const r of [en,vi])r.userEditedFields=[h.api.H[10]];h.api.setRows([en,vi],{visible:[]});
+  const button=h.document.getElementById('enableChromeTranslation'),status=h.document.getElementById('chromeTranslationState');
+  await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,true);assert.deepEqual(new Set(h.api.chromeLanguages),new Set(['en']));assert.deepEqual(Array.from(h.api.chromePending),['vi']);
+  assert.equal(button.textContent,'补齐本地模型（1）');assert.match(status.textContent,/未准备：vi/);assert.match(status.title,/FICT_ACTIVATION_REQUIRED/);
+  await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,true);assert.deepEqual(new Set(h.api.chromeLanguages),new Set(['en','vi']));assert.equal(h.api.chromePending.length,0);assert.equal(button.textContent,'切回 Google 在线');
+  const prepared=chrome.prepareLanguages.mock.callCount();await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,false);assert.equal(button.textContent,'启用 Chrome 本地翻译');assert.equal(chrome.prepareLanguages.mock.callCount(),prepared);
+  assert.equal(chrome.translate.mock.callCount(),0);assert.equal(fetch.mock.callCount(),0);
 });
