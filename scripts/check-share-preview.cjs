@@ -33,6 +33,17 @@ class Element {
     this.id = ''; this.hidden = false; this.disabled = false; this.value = ''; this._text = '';
   }
   append(child) { child.parent = this; this.children.push(child); }
+  setAttribute(name, value) { this.attributes[name] = String(value); }
+  getAttribute(name) { return Object.hasOwn(this.attributes, name) ? this.attributes[name] : null; }
+  removeAttribute(name) { delete this.attributes[name]; }
+  set href(value) { this.setAttribute('href', value); }
+  get href() { return this.getAttribute('href') || ''; }
+  set target(value) { this.setAttribute('target', value); }
+  get target() { return this.getAttribute('target') || ''; }
+  set rel(value) { this.setAttribute('rel', value); }
+  get rel() { return this.getAttribute('rel') || ''; }
+  set tabIndex(value) { this.setAttribute('tabindex', value); }
+  get tabIndex() { return this.getAttribute('tabindex') == null ? this.tagName === 'A' && this.href ? 0 : -1 : Number(this.getAttribute('tabindex')); }
   remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); this.parent = null; }
   contains(child) { return this === child || this.children.some(node => node.contains(child)); }
   querySelectorAll(selector) { return this.children.flatMap(child => [...(matches(child, selector) ? [child] : []), ...child.querySelectorAll(selector)]); }
@@ -67,7 +78,7 @@ const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve();
 function harness(overrides = {}) {
   const H = Array.from({ length: 26 }, (_, index) => 'field-' + index);
   const record = { uid: 'fake-row-1', raw: { [H[9]]: 'Wireless speaker', [H[11]]: 'Black' }, userEditedFields: [] };
-  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], timers: new Map(), nextTimer: 1, ...overrides };
+  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], timers: new Map(), nextTimer: 1, generatedUrls: [], copiedUrls: [], ...overrides };
   const body = new Element('body'), overlay = new Element(); overlay.id = 'overlay'; body.append(overlay);
   const anchor = new Element('button'); anchor.attributes['data-share'] = record.uid; anchor.dataset.share = record.uid; body.append(anchor);
   const document = { body, getElementById: id => body.querySelector('#' + id), createElement: tag => new Element(tag), querySelectorAll: selector => body.querySelectorAll(selector) };
@@ -90,8 +101,13 @@ function harness(overrides = {}) {
     render() { controls.renders++; context.closeProductCard(); }, toast: text => { controls.toast = text; },
     async ensureProductTranslations(records) { controls.ensureCalls++; return controls.ensure?.(records); },
     async ensureCategoryTranslations(records) { controls.categoryCalls++; return controls.ensureCategory?.(records); },
-    async buildOnlineShareLink() { if (controls.generateError) throw controls.generateError; return 'https://example.test/share.html#d=fake'; },
-    copyShareText: async () => true,
+    async buildOnlineShareLink(records) {
+      if (controls.generateError) throw controls.generateError;
+      const row = records[0], payload = { id: row.uid, itemChinese: row.raw[H[10]], modelChinese: row.raw[H[12]], category: controls.category };
+      const url = 'https://example.test/share.html#d=j' + Buffer.from(JSON.stringify(payload)).toString('base64url');
+      controls.generatedUrls.push(url); return controls.generate ? controls.generate(records, url) : url;
+    },
+    copyShareText: async url => { controls.copiedUrls.push(url); return true; },
     closeProductCard() { document.getElementById('productCard')?.remove(); context.activeProductCard = ''; },
     $: id => document.getElementById(id),
     setTimeout(callback) { const id = controls.nextTimer++; controls.timers.set(id, callback); return id; }
@@ -201,6 +217,88 @@ test('generation or copy controls remain usable and changed Chinese invalidates 
   assert.equal(card.querySelector('[data-copy-single]').textContent, '已复制');
   h.record.raw[h.H[10]] = '买手核对后的完整中文音箱名称'; card.refreshChinese(h.record);
   assert.equal(card.querySelector('[data-preview-link]').hidden, true);
+});
+
+function assertSingleLinkUnavailable(card) {
+  const result = card.querySelector('[data-preview-link]'), open = card.querySelector('[data-open-single]');
+  assert.ok(open, 'Single preview includes an actual open-link anchor');
+  assert.equal(result.hidden, true, 'No usable result before generation or after invalidation');
+  assert.equal(result.querySelector('input').value, '', 'Previous URL text is cleared');
+  assert.equal(open.getAttribute('href'), null, 'A hidden anchor must not retain a navigable old URL');
+  assert.equal(open.getAttribute('aria-disabled'), 'true');
+  assert.equal(open.tabIndex, -1);
+}
+
+test('single open link is unavailable before generation and points to the exact generated URL afterward', async () => {
+  const h = harness(); h.fill(h.record); const card = h.open(); await flush();
+  assertSingleLinkUnavailable(card);
+  const open = card.querySelector('[data-open-single]');
+  assert.equal(open.tagName, 'A'); assert.ok(open.className.split(/\s+/).includes('btn'));
+  await card.querySelector('[data-generate-single]').onclick();
+  const generatedUrl = h.controls.generatedUrls.at(-1);
+  assert.equal(card.querySelector('[data-preview-link]').hidden, false);
+  assert.equal(open.href, generatedUrl);
+  assert.equal(card.querySelector('[data-preview-link]').querySelector('input').value, generatedUrl);
+  assert.equal(open.target, '_blank');
+  assert.ok(open.rel.split(/\s+/).includes('noopener')); assert.ok(open.rel.split(/\s+/).includes('noreferrer'));
+  assert.notEqual(open.getAttribute('aria-disabled'), 'true'); assert.equal(open.tabIndex, 0);
+  await card.querySelector('[data-copy-single]').onclick({ currentTarget: card.querySelector('[data-copy-single]') });
+  assert.deepEqual(h.controls.copiedUrls, [generatedUrl]);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+});
+
+test('updated title, model or category clears the old open href until a fresh link is generated', async () => {
+  const h = harness(); h.fill(h.record); const card = h.open(); await flush();
+  const changes = [
+    () => { h.record.raw[h.H[10]] = '已更新的虚构中文标题'; card.refreshChinese(h.record); },
+    () => { h.record.raw[h.H[12]] = '已更新的虚构黑色型号'; card.refreshChinese(h.record); },
+    () => { h.controls.category = '影音娱乐 > 无线音箱'; card.refreshCategory(h.record); }
+  ];
+  for (const change of changes) {
+    await card.querySelector('[data-generate-single]').onclick();
+    const oldUrl = card.querySelector('[data-open-single]').href;
+    change(); assertSingleLinkUnavailable(card);
+    await card.querySelector('[data-generate-single]').onclick();
+    const newUrl = card.querySelector('[data-open-single]').href;
+    assert.notEqual(newUrl, oldUrl); assert.equal(newUrl, h.controls.generatedUrls.at(-1));
+  }
+});
+
+test('a pending or failed regeneration never exposes the previous successful open URL', async () => {
+  const h = harness(); h.fill(h.record); const card = h.open(); await flush();
+  await card.querySelector('[data-generate-single]').onclick();
+  assert.ok(card.querySelector('[data-open-single]')?.href);
+  const gate = deferred(); h.controls.generate = () => gate.promise;
+  const generating = card.querySelector('[data-generate-single]').onclick(); await flush();
+  assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  gate.reject(new Error('Fabricated generation failure')); await generating;
+  assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+  assert.match(card.querySelector('[data-preview-status]').textContent, /链接生成失败/);
+});
+
+test('a link completed after Chinese changes is discarded rather than attributed to the new product snapshot', async () => {
+  const h = harness(); h.fill(h.record); const card = h.open(); await flush();
+  const gate = deferred(); h.controls.generate = () => gate.promise;
+  const generating = card.querySelector('[data-generate-single]').onclick(); await flush();
+  const staleUrl = h.controls.generatedUrls.at(-1);
+  h.record.raw[h.H[10]] = '生成期间更新的虚构中文标题'; card.refreshChinese(h.record);
+  gate.resolve(staleUrl); await generating;
+  assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+  h.controls.generate = null; await card.querySelector('[data-generate-single]').onclick();
+  assert.notEqual(card.querySelector('[data-open-single]').href, staleUrl);
+  assert.equal(card.querySelector('[data-open-single]').href, h.controls.generatedUrls.at(-1));
+});
+
+test('generation from a replaced dataset cannot attach an old URL to the new same-UID card', async () => {
+  const h = harness(); h.fill(h.record); const oldCard = h.open(); await flush();
+  const gate = deferred(); h.controls.generate = () => gate.promise;
+  const generating = oldCard.querySelector('[data-generate-single]').onclick(); await flush();
+  const oldUrl = h.controls.generatedUrls.at(-1);
+  h.context.closeProductCard();
+  h.context.rows = [{ ...h.record, raw: { ...h.record.raw, [h.H[10]]: '另一个数据集的虚构中文标题' } }];
+  const newCard = h.open(); await flush();
+  gate.resolve(oldUrl); await generating;
+  assertSingleLinkUnavailable(newCard);
 });
 
 test('legacy share payload gives explicit missing-Chinese text and ignores original fields', () => {
