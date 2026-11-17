@@ -13,7 +13,9 @@ const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const start = html.indexOf('function sharePreviewChineseValue(');
 const end = html.indexOf('async function uploadRowImage(', start);
 assert.ok(start >= 0 && end > start, 'Missing actual preview functions');
-const source = html.slice(start, end);
+const source = process.env.BUYER_SHARE_PREVIEW_SOURCE
+  ? fs.readFileSync(path.resolve(root, process.env.BUYER_SHARE_PREVIEW_SOURCE), 'utf8')
+  : html.slice(start, end);
 const decode = text => text.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 function matches(element, selector) {
@@ -65,7 +67,7 @@ const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve();
 function harness(overrides = {}) {
   const H = Array.from({ length: 26 }, (_, index) => 'field-' + index);
   const record = { uid: 'fake-row-1', raw: { [H[9]]: 'Wireless speaker', [H[11]]: 'Black' }, userEditedFields: [] };
-  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', ...overrides };
+  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], timers: new Map(), nextTimer: 1, ...overrides };
   const body = new Element('body'), overlay = new Element(); overlay.id = 'overlay'; body.append(overlay);
   const anchor = new Element('button'); anchor.attributes['data-share'] = record.uid; anchor.dataset.share = record.uid; body.append(anchor);
   const document = { body, getElementById: id => body.querySelector('#' + id), createElement: tag => new Element(tag), querySelectorAll: selector => body.querySelectorAll(selector) };
@@ -77,6 +79,9 @@ function harness(overrides = {}) {
     translationSource: (row, index) => BuyerTranslation.normalize(row.raw[H[index]]),
     manualChinese: (row, index) => row.userEditedFields.includes(H[index]),
     categoryPath: () => controls.category,
+    categoryValues: () => controls.categoryNames,
+    categoryLabel: () => controls.category,
+    hasChinese: text => /[\u3400-\u9fff]/.test(text),
     productDetail: row => ({ id: row.uid, model: '', itemChinese: row.raw[H[10]], modelChinese: row.raw[H[12]], category: controls.category, target: '2.00', badges: [] }),
     inlineBadgesMarkup: () => '',
     esc: value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
@@ -88,7 +93,8 @@ function harness(overrides = {}) {
     async buildOnlineShareLink() { if (controls.generateError) throw controls.generateError; return 'https://example.test/share.html#d=fake'; },
     copyShareText: async () => true,
     closeProductCard() { document.getElementById('productCard')?.remove(); context.activeProductCard = ''; },
-    $: id => document.getElementById(id)
+    $: id => document.getElementById(id),
+    setTimeout(callback) { const id = controls.nextTimer++; controls.timers.set(id, callback); return id; }
   };
   vm.createContext(context); vm.runInContext(source, context);
   const open = () => { context.toggleProductCard(record.uid, anchor); return document.getElementById('productCard'); };
@@ -96,85 +102,105 @@ function harness(overrides = {}) {
   return { H, record, controls, context, document, open, fill };
 }
 
-test('preview fills both Chinese names after translation without showing original source', async () => {
+test('preview automatically fills Chinese fields without translation controls or pending copy', async () => {
   const gate = deferred(), h = harness({ ensure: () => gate.promise });
   const card = h.open();
-  assert.match(card.querySelector('[data-preview-chinese="10"]').textContent, /正在翻译/);
-  assert.doesNotMatch(card.textContent, /Wireless speaker|Black/);
+  assert.equal(card.querySelector('[data-preview-field="10"]').hidden, true);
+  assert.equal(card.querySelector('[data-preview-status]').hidden, true);
+  assert.equal(card.querySelector('[data-retry-preview]'), null);
+  assert.equal(card.querySelector('[data-edit-preview]'), null);
+  assert.doesNotMatch(card.textContent, /Wireless speaker|Black|翻译中|待翻译|待补全/);
   h.fill(h.record); gate.resolve(); await flush();
   assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
   assert.equal(card.querySelector('[data-preview-chinese="12"]').textContent, '黑色');
-  assert.match(card.querySelector('[data-preview-status]').textContent, /已就绪/);
+  assert.equal(card.querySelector('[data-preview-field="10"]').hidden, false);
+  assert.equal(card.querySelector('[data-preview-status]').hidden, true);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
   assert.equal(h.controls.ensureCalls, 1); assert.equal(h.controls.categoryCalls, 1);
 });
 
-test('network or generation failure retains retry, edit and generate controls', async () => {
-  const h = harness({ ensure: () => { throw new Error('翻译连接超时'); } });
-  const card = h.open(); await flush();
-  assert.match(card.querySelector('[data-preview-status]').textContent, /超时/);
-  assert.equal(card.querySelector('[data-retry-preview]').disabled, false);
-  assert.ok(card.querySelector('[data-edit-preview]'));
-  assert.ok(card.querySelector('[data-generate-single]'));
-  h.controls.ensure = records => h.fill(records[0]);
-  await card.querySelector('[data-retry-preview]').onclick();
-  assert.match(card.querySelector('[data-preview-status]').textContent, /已就绪/);
-  h.controls.generateError = new Error('类目翻译连接失败');
-  await card.querySelector('[data-generate-single]').onclick();
-  assert.match(card.querySelector('[data-preview-status]').textContent, /类目翻译连接失败/);
+test('existing valid Chinese displays immediately and full wording is not shortened', async () => {
+  const gate = deferred(), h = harness({ ensure: () => gate.promise });
+  const title = '支持蓝牙连接的便携式无线音箱，含充电线与完整包装';
+  h.record.raw[h.H[10]] = title; h.record.raw[h.H[12]] = '黑色，双扬声器，标准套装';
+  const card = h.open();
+  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, title);
+  assert.equal(card.querySelector('[data-preview-chinese="12"]').textContent, '黑色，双扬声器，标准套装');
+  assert.equal(card.querySelector('[data-share-category]').textContent, '音响');
   assert.equal(card.querySelector('[data-generate-single]').disabled, false);
-  assert.ok(card.querySelector('[data-retry-preview]'));
-  h.controls.generateError = null;
-  await card.querySelector('[data-generate-single]').onclick();
-  assert.equal(card.querySelector('[data-preview-link]').hidden, false);
+  gate.resolve(); await flush();
 });
 
-test('completion from an old dataset cannot update another card with the same UID', async () => {
+test('network failure gives one concise instruction and never a new empty link', async () => {
+  const h = harness({ ensure: () => { throw new Error('Google 翻译连接超时，敏感内部错误'); } });
+  const card = h.open(); await flush();
+  assert.match(card.querySelector('[data-preview-status]').textContent, /上方“一键翻译”/);
+  assert.doesNotMatch(card.textContent, /敏感内部错误|重试翻译|补全中文/);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  await card.querySelector('[data-generate-single]').onclick();
+  assert.equal(card.querySelector('[data-preview-link]').hidden, true);
+  assert.equal(card.querySelector('[data-retry-preview]'), null);
+});
+
+test('translation-editor and category-cache updates refresh an open card', async () => {
+  const gate = deferred(), h = harness({ category: '', ensure: () => gate.promise, ensureCategory: () => gate.promise });
+  const card = h.open();
+  assert.equal(card.querySelector('[data-preview-field="category"]').hidden, true);
+  h.fill(h.record); card.refreshChinese(h.record);
+  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
+  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  h.controls.category = '影音娱乐 > 家用音响'; card.refreshCategory();
+  assert.equal(card.querySelector('[data-share-category]').textContent, '影音娱乐 > 家用音响');
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+  gate.resolve(); await flush();
+});
+
+test('watcher discovers external cache changes and stops after the card closes', async () => {
+  const h = harness({ category: '' }); const card = h.open(); await flush();
+  h.fill(h.record); h.controls.category = '家用音响';
+  const tick = () => { const [id, callback] = h.controls.timers.entries().next().value; h.controls.timers.delete(id); callback(); };
+  tick();
+  assert.equal(card.querySelector('[data-share-category]').textContent, '家用音响');
+  assert.equal(card.querySelector('[data-preview-status]').hidden, true);
+  h.context.closeProductCard(); tick(); assert.equal(h.controls.timers.size, 0);
+});
+
+test('old async work cannot update another dataset or same-UID replacement card', async () => {
   const oldGate = deferred(), newGate = deferred(); let call = 0;
   const h = harness({ ensure: () => (++call === 1 ? oldGate.promise : newGate.promise) });
-  const oldCard = h.open(); await flush();
-  h.context.closeProductCard();
+  const oldCard = h.open(); await flush(); h.context.closeProductCard();
   const replacement = { ...h.record, raw: { ...h.record.raw } }; h.context.rows = [replacement];
   const newCard = h.open(); await flush();
   h.fill(h.record); oldGate.resolve(); await flush();
-  assert.match(newCard.querySelector('[data-preview-chinese="10"]').textContent, /正在翻译/);
-  assert.doesNotMatch(oldCard.querySelector('[data-preview-status]').textContent, /已就绪/);
+  assert.equal(newCard.querySelector('[data-preview-field="10"]').hidden, true);
+  assert.equal(oldCard.querySelector('[data-preview-chinese="10"]').textContent, '');
   h.fill(replacement); newGate.resolve(); await flush();
   assert.equal(newCard.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
 });
 
-test('empty source and Chinese fields never become a completed preview or visible link', async () => {
-  const h = harness(); h.record.raw = {};
+test('raw source, empty fields and pending categories never count as ready Chinese', async () => {
+  const h = harness({ category: '类目翻译中' });
+  h.record.raw[h.H[10]] = 'Wireless speaker'; h.record.raw[h.H[12]] = 'Black';
   const card = h.open(); await flush();
-  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '中文标题待补全');
-  assert.match(card.querySelector('[data-preview-status]').textContent, /请补全中文/);
+  for (const key of ['10', '12', 'category']) assert.equal(card.querySelector('[data-preview-field="' + key + '"]').hidden, true);
+  assert.doesNotMatch(card.textContent, /Wireless speaker|Black|类目翻译中/);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  h.record.raw = {}; card.refreshChinese(h.record);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+});
+
+test('generation or copy controls remain usable and changed Chinese invalidates old links', async () => {
+  const h = harness(); h.fill(h.record); const card = h.open(); await flush();
+  h.controls.generateError = new Error('translation transport rejected');
   await card.querySelector('[data-generate-single]').onclick();
+  assert.match(card.querySelector('[data-preview-status]').textContent, /链接生成失败/);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+  h.controls.generateError = null; await card.querySelector('[data-generate-single]').onclick();
+  assert.equal(card.querySelector('[data-preview-link]').hidden, false);
+  await card.querySelector('[data-copy-single]').onclick({ currentTarget: card.querySelector('[data-copy-single]') });
+  assert.equal(card.querySelector('[data-copy-single]').textContent, '已复制');
+  h.record.raw[h.H[10]] = '买手核对后的完整中文音箱名称'; card.refreshChinese(h.record);
   assert.equal(card.querySelector('[data-preview-link]').hidden, true);
-  assert.match(card.querySelector('[data-preview-status]').textContent, /请补全中文标题和中文型号/);
-});
-
-test('manual completion validates Chinese and preserves explicit buyer edits', async () => {
-  const h = harness();
-  const card = h.open(); await flush(); card.querySelector('[data-edit-preview]').onclick();
-  h.document.getElementById('shareChineseItem').value = 'Wireless speaker';
-  h.document.getElementById('shareChineseModel').value = 'Black';
-  h.document.getElementById('saveShareChinese').onclick();
-  assert.equal(h.controls.saves, 0); assert.match(h.document.getElementById('shareChineseEditorStatus').textContent, /完整的中文标题/);
-  h.document.getElementById('shareChineseItem').value = '无线音箱';
-  h.document.getElementById('shareChineseModel').value = '黑色';
-  h.document.getElementById('saveShareChinese').onclick(); await flush();
-  assert.equal(h.record.raw[h.H[10]], '无线音箱'); assert.equal(h.record.raw[h.H[12]], '黑色');
-  assert.ok(h.record.userEditedFields.includes(h.H[10])); assert.ok(h.record.userEditedFields.includes(h.H[12]));
-  assert.equal(h.record.autoItemChinese, false); assert.equal(h.record.autoModelChinese, false);
-  assert.equal(h.controls.saves, 1); assert.equal(h.controls.renders, 1); assert.deepEqual(h.controls.dirty, ['fake-row-1']);
-  assert.equal(h.document.getElementById('shareChineseEditor'), null);
-});
-
-test('manual editor cannot save into a different dataset', async () => {
-  const h = harness(); const card = h.open(); await flush(); card.querySelector('[data-edit-preview]').onclick();
-  h.document.getElementById('shareChineseItem').value = '无线音箱'; h.document.getElementById('shareChineseModel').value = '黑色';
-  h.context.rows = [];
-  h.document.getElementById('saveShareChinese').onclick();
-  assert.equal(h.controls.saves, 0); assert.match(h.document.getElementById('shareChineseEditorStatus').textContent, /数据已切换/);
 });
 
 test('legacy share payload gives explicit missing-Chinese text and ignores original fields', () => {

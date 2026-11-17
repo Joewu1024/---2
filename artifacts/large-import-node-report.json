@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T03:09:26.308Z",
+  "generatedAt": "2026-11-17T04:50:07.141Z",
   "runtime": "v24.22.1",
   "platform": "win32/x64",
   "cpu": "Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz",
@@ -12,20 +12,20 @@
       "rows": 10000,
       "bytes": 7864980,
       "megabytes": 7.5,
-      "parseMilliseconds": 175.8,
+      "parseMilliseconds": 269.1,
       "exactFieldComparisons": 140000,
-      "heartbeatTicks": 10,
-      "maxObserved10msTimerGapMilliseconds": 24.4,
-      "progressEvents": 4,
+      "heartbeatTicks": 15,
+      "maxObserved10msTimerGapMilliseconds": 27.3,
+      "progressEvents": 5,
       "cancellation": {
-        "millisecondsUntilRejection": 1.6,
-        "requestToRejectionMilliseconds": 0.1,
+        "millisecondsUntilRejection": 3.5,
+        "requestToRejectionMilliseconds": 0.3,
         "rowsParsedAtAbort": 168,
         "name": "AbortError"
       },
       "workerThread": {
-        "millisecondsIncludingStartupAndFinalClone": 229.1,
-        "progressEvents": 3,
+        "millisecondsIncludingStartupAndFinalClone": 459.3,
+        "progressEvents": 5,
         "correctRows": 10000
       }
     },
@@ -33,20 +33,20 @@
       "rows": 20000,
       "bytes": 15781639,
       "megabytes": 15.05,
-      "parseMilliseconds": 365.3,
+      "parseMilliseconds": 532.6,
       "exactFieldComparisons": 280000,
-      "heartbeatTicks": 20,
-      "maxObserved10msTimerGapMilliseconds": 31.5,
-      "progressEvents": 6,
+      "heartbeatTicks": 29,
+      "maxObserved10msTimerGapMilliseconds": 37.4,
+      "progressEvents": 8,
       "cancellation": {
-        "millisecondsUntilRejection": 1.7,
-        "requestToRejectionMilliseconds": 0.1,
+        "millisecondsUntilRejection": 3.7,
+        "requestToRejectionMilliseconds": 0.3,
         "rowsParsedAtAbort": 168,
         "name": "AbortError"
       },
       "workerThread": {
-        "millisecondsIncludingStartupAndFinalClone": 444.4,
-        "progressEvents": 5,
+        "millisecondsIncludingStartupAndFinalClone": 767.6,
+        "progressEvents": 8,
         "correctRows": 20000
       }
     }

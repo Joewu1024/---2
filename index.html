@@ -77,11 +77,11 @@ body{min-width:0}
 #table th:nth-child(2),#table td:nth-child(2){width:32px!important;left:124px!important}
 #table .thtext{line-height:1.15;overflow-wrap:anywhere}
 #table td .cell{min-width:0!important;width:100%;max-width:100%;padding:3px 4px;font-size:clamp(8px,.52vw,10px)}
-#table td .img{width:100%;max-width:54px;height:50px;object-fit:contain}
+#table td .img{width:100%;max-width:100px;height:88px;object-fit:contain;cursor:zoom-in}
 @media(max-width:900px){.page{padding:8px 6px!important}.top{padding:7px 8px}.gridbox{overflow-x:hidden!important}#table th,#table td{padding:3px 2px;font-size:8px}#table th:first-child,#table td:first-child{width:92px!important}#table th:nth-child(2),#table td:nth-child(2){width:26px!important;left:92px!important}}
-</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(120px,22vh,200px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">Google 整句翻译 · 保留已有译文 · 参数差异提示核对</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
+</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(120px,22vh,200px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">导入后自动生成中文</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
 <main class="page"><section class="title"><div><span class="muted">源表字段结构 · 买手筛选与核价</span><h1>寻品工作看板</h1><p>严格按源表标题、顺序和第二行字段说明展示；无筛选时显示全部导入记录。</p></div><span class="tag" id="state">等待导入商品数据</span></section>
-<div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="translateAll" title="补齐全部商品中文，重复标题仅翻译一次">补齐全部中文</button><button class="btn" id="googleDocumentTools">Google 官方整表翻译</button><input type="file" id="googleDocumentFile" hidden accept=".xlsx,.xlsm,.xls,.csv"><button class="btn" id="retranslateAutomatic">重译全部自动中文</button><button class="btn" id="enableChromeTranslation" disabled>启用 Chrome 本地翻译</button><span id="chromeTranslationState" class="muted"></span><button class="btn" id="pauseTranslation">暂停翻译</button><button class="btn" id="importTranslations">导入中文翻译</button><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
+<div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn primary" id="translateAll">一键翻译</button><button class="btn" id="importTranslations">导入翻译</button><div id="advancedTranslationControls" hidden style="display:none!important"><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="googleDocumentTools">Google 官方整表翻译</button><input type="file" id="googleDocumentFile" hidden accept=".xlsx,.xlsm,.xls,.csv"><button class="btn" id="retranslateAutomatic">重译全部自动中文</button><button class="btn" id="enableChromeTranslation" disabled>启用 Chrome 本地翻译</button><span id="chromeTranslationState" class="muted"></span><button class="btn" id="pauseTranslation">暂停翻译</button></div><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="renameVersion">改名</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
 <div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并选中组</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <button class="btn" id="unselect">清除勾选</button></div>
 <div class="gridbox"><table id="table"></table></div><div id="pager" class="pager"></div><div class="stats"><div class="stat"><span>筛选后商品组</span><b id="groupsN">0</b></div><div class="stat"><span>筛选后 Model ID</span><b id="modelsN">0</b></div><div class="stat"><span>待买手判断</span><b id="pendingN">0</b></div><div class="stat"><span>无 1688 前置核价</span><b id="priceN">0</b></div></div><p id="workspaceInfo" class="help"></p><p class="help">每页默认显示 50 个商品组；筛选和导出仍按全部数据计算。买手编辑会自动保存到本机数据库；请使用同一浏览器和本站网址继续工作。</p></main><div id="closeDialog" class="close-dialog" hidden><section class="close-dialog-card"><h3>关闭工作台前保存</h3><p>工作台会自动保存到本机。确认保存后，可关闭当前浏览器标签页；下次使用同一浏览器和本地启动器会恢复数据。</p><div><button class="btn" id="cancelClose">继续工作</button><button class="btn primary" id="confirmSaveClose">确认保存</button></div></section></div><div id="overlay"></div><div id="versionManager"></div><div id="shareLinkDialog" class="modalbg" hidden></div><div id="toast"></div>
 <script data-buyer-translation-engine="v3">
@@ -1665,6 +1665,933 @@ body{min-width:0}
 });
 
 </script>
+<script data-buyer-reference-translation="v1">
+(function (root) {
+  'use strict';
+
+  const endpoint = 'https://transmart.qq.com/api/imt';
+  const marker = /ZXQ\s*\d+\s*QXZ/i;
+  const hasChinese = value => /[\u3400-\u9fff]/.test(value);
+  const ordinaryPrefixes = new Set(('KIT NEW BLACK WHITE BLUE RED GREEN SILVER GOLD PURPLE PINK YELLOW BROWN ORANGE GREY GRAY ' +
+    'BEIGE CLEAR TRANSPARENT ORIGINAL MODEL COLOR COLOUR SIZE TYPE VERSION LARGE SMALL MEDIUM MINI MAX PRO PLUS LITE ' +
+    'WIRELESS BLUETOOTH USB HDMI WIFI SMART UNIVERSAL REMOTE CONTROL SPEAKER HEADPHONES EARPHONES MICROPHONE CHARGER ' +
+    'CHARGING CASE CABLE PORTABLE BATTERY RECHARGEABLE REPLACEMENT COMPLETE PACK SET PIECES WITH WITHOUT FOR AND THE ' +
+    'HOT SALE BEST PRODUCT COVER ADAPTER RECEIVER TRANSMITTER HUB PHONE TELEVISION TABLET COMPUTER CAMERA LCD LED ' +
+    'SELF SERVICE CALL SYSTEM DIGITAL ELECTRIC FAN CEILING SWITCH POWER WARRANTY PRETO BRANCO AZUL VERDE NOVO NOVA ' +
+    'CONTROLE REMOTO FONTE CABO CABOS COM PARA SEM QUAT TRAN MAU TRANG DEN XANH GOI KHONG DAY NO BRAND NOBRAND UNBRANDED GENERIC NONE OEM').split(' '));
+
+  function findBrand(source, brand) {
+    const lower = source.toLowerCase(), needle = brand.toLowerCase();
+    let from = 0, start;
+    while ((start = lower.indexOf(needle, from)) !== -1) {
+      const end = start + brand.length;
+      const leftOK = !/^[a-z0-9]/i.test(brand) || !/[a-z0-9]/i.test(source[start - 1] || '');
+      const rightOK = !/[a-z0-9]$/i.test(brand) || !/[a-z0-9]/i.test(source[end] || '');
+      if (leftOK && rightOK) return { start, end, text: source.slice(start, end) };
+      from = end;
+    }
+    return null;
+  }
+
+  function sourceBrand(source, context) {
+    const brand = String(context && context.brand || '').trim();
+    if (brand && !/^(?:no[ -]?brand|unbranded|generic|none|null|n\/?a|无品牌|其他|oem)$/i.test(brand)) {
+      const explicit = findBrand(source, brand);
+      if (explicit) return explicit;
+    }
+    if (!context || context.kind !== 'model') return null;
+    // Infer only an independent Latin uppercase prefix; words such as Vietnamese "Bộ" are descriptions.
+    const match = source.match(/^([A-Z]{2,30})(?=$|[\s:：,，;；])/);
+    if (!match || ordinaryPrefixes.has(match[1])) return null;
+    return { start: 0, end: match[1].length, text: match[1] };
+  }
+
+  function containsBrand(result, brand) {
+    const name = brand.normalize('NFKC').toUpperCase();
+    const parts = name.split(/[\s\p{P}\p{S}]+/u).filter(Boolean);
+    if (!parts.length) return true;
+    const escaped = parts.map(part => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('[\\s\\p{P}\\p{S}]*');
+    const left = /^[A-Z0-9]/.test(parts[0]) ? '(?:^|[^A-Z0-9])' : '';
+    const right = /[A-Z0-9]$/.test(parts[parts.length - 1]) ? '(?:$|[^A-Z0-9])' : '';
+    return new RegExp(left + escaped + right, 'u').test(result.normalize('NFKC').toUpperCase());
+  }
+
+  function parametersPreserved(source, result) {
+    if (root.BuyerTranslation && typeof root.BuyerTranslation.reviewWarnings === 'function') {
+      return !root.BuyerTranslation.reviewWarnings(source, result).some(warning => /^译文可能缺少(?:数字|型号)/.test(warning));
+    }
+    const packed = value => value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const models = source.match(/\b[A-Z]{1,8}[-]?\d+[A-Z0-9-]*\b/g) || [];
+    if (models.some(model => !packed(result).includes(packed(model)))) return false;
+    const numeric = value => new Set((value.match(/(?<![A-Za-z0-9])\d+(?:[.,]\d+)*/g) || []).map(token => token.replace(',', '.')));
+    const output = numeric(result);
+    return [...numeric(source)].every(number => output.has(number));
+  }
+
+  function qualityError(message) {
+    return Object.assign(new Error(message || '参考翻译服务未完整返回译文'), { qualityFailed: true, split: true });
+  }
+
+  function uuid() {
+    if (root.crypto && typeof root.crypto.randomUUID === 'function') return root.crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    if (root.crypto && typeof root.crypto.getRandomValues === 'function') root.crypto.getRandomValues(bytes);
+    else for (let i = 0; i < bytes.length; i++) bytes[i] = Math.floor(Math.random() * 256);
+    bytes[6] = (bytes[6] & 15) | 64;
+    bytes[8] = (bytes[8] & 63) | 128;
+    const hex = [...bytes].map(value => value.toString(16).padStart(2, '0'));
+    return hex.slice(0, 4).join('') + '-' + hex.slice(4, 6).join('') + '-' + hex.slice(6, 8).join('') + '-' + hex.slice(8, 10).join('') + '-' + hex.slice(10).join('');
+  }
+
+  function clientKey() {
+    const navigator = root.navigator || {}, ua = String(navigator.userAgent || '');
+    const browsers = [['edge', /Edg\/([\d.]+)/], ['firefox', /Firefox\/([\d.]+)/], ['chrome', /(?:Chrome|CriOS)\/([\d.]+)/], ['safari', /Version\/([\d.]+).*Safari/]];
+    const browser = browsers.map(([name, pattern]) => { const match = ua.match(pattern); return match ? [name, match[1]] : null; }).find(Boolean) || ['unknown', '0'];
+    const windows = ua.match(/Windows NT ([\d.]+)/);
+    const mac = ua.match(/Mac OS X ([\d_]+)/);
+    const platform = windows ? 'Windows ' + (windows[1] === '10.0' ? '10' : windows[1]) :
+      mac ? 'Mac OS X ' + mac[1].replace(/_/g, '.') : String(navigator.userAgentData && navigator.userAgentData.platform || navigator.platform || 'unknown');
+    return 'browser-' + browser[0] + '-' + browser[1] + '-' + platform + '-' + uuid() + '-' + Date.now();
+  }
+
+  function retryDelay(response) {
+    const value = response.headers && typeof response.headers.get === 'function' ? response.headers.get('Retry-After') : null;
+    if (value == null || String(value).trim() === '') return 1500;
+    const text = String(value).trim(), seconds = /^\d+(?:\.\d+)?$/.test(text) ? Number(text) * 1000 : NaN;
+    if (Number.isFinite(seconds)) return seconds;
+    const date = Date.parse(text);
+    return Number.isFinite(date) ? Math.max(0, date - Date.now()) : 1500;
+  }
+
+  function languageCode(value, fallback) {
+    const text = String(value == null ? fallback : value).trim();
+    if (!/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/i.test(text) && text !== 'auto') throw new TypeError('翻译语种代码无效');
+    return /^zh(?:-|$)/i.test(text) ? 'zh' : text.toLowerCase();
+  }
+
+  function passthrough(source, result) {
+    if (source !== result) return false;
+    if (root.BuyerTranslation && typeof root.BuyerTranslation.passthrough === 'function') return root.BuyerTranslation.passthrough(source);
+    return /^[\u3400-\u9fff\d\s\p{P}\p{S}]+$/u.test(source) ||
+      /^(?=.*\d)[A-Z0-9\s\p{P}\p{S}]+$/u.test(source) || /^(?:USB(?:-C)?|AUX|RCA|HDMI|XLR|FM|AM|AC|DC)$/.test(source);
+  }
+
+  function create(options = {}) {
+    const fetchImpl = options.fetchImpl === undefined ? root.fetch : options.fetchImpl;
+    const timeoutMs = options.timeoutMs === undefined ? 20000 : options.timeoutMs;
+    if (typeof fetchImpl !== 'function') throw new TypeError('当前环境无法发送参考翻译请求');
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0 || timeoutMs > 2147483647) throw new TypeError('timeoutMs 必须是有效的正毫秒数');
+
+    async function request(texts, sourceLanguage, targetLanguage) {
+      const payload = {
+        header: { fn: 'auto_translation', client_key: clientKey() },
+        type: 'plain', model_category: 'normal',
+        source: { lang: sourceLanguage, text_list: texts },
+        target: { lang: targetLanguage }
+      };
+      const controller = new AbortController();
+      let timer;
+      const timeoutError = () => Object.assign(new Error('参考翻译请求超时，请稍后重试'), { timeout: true, pause: true });
+      const deadline = new Promise((resolve, reject) => {
+        timer = setTimeout(() => { reject(timeoutError()); controller.abort(); }, timeoutMs);
+      });
+      const operation = async () => {
+        let response;
+        try {
+          response = await fetchImpl(endpoint, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload), signal: controller.signal, credentials: 'omit'
+          });
+        } catch (error) {
+          if (controller.signal.aborted) throw timeoutError();
+          throw Object.assign(new Error('参考翻译服务连接失败，请稍后重试'), { pause: true, cause: error });
+        }
+        if (response && response.status === 429) {
+          throw Object.assign(new Error('参考翻译服务限流，请稍后重试'), { rateLimited: true, retryAfter: retryDelay(response), pause: true });
+        }
+        if (!response || (response.status !== 200 && !(response.status == null && response.ok === true))) {
+          throw Object.assign(new Error('参考翻译服务连接失败（HTTP ' + (response && response.status || '未知') + '）'), { pause: true });
+        }
+        let data;
+        try { data = await response.json(); }
+        catch (error) { if (controller.signal.aborted) throw timeoutError(); throw qualityError('参考翻译响应不是有效 JSON'); }
+        if (!data || !data.header || data.header.ret_code !== 'succ') {
+          const detail = String(data && (data.message || data.msg || data.header && (data.header.ret_msg || data.header.message)) || '');
+          const unsupported = /unsupported[-_ ]?language|engine|not supported|不支持|语种|引擎/i.test(detail);
+          const error = Object.assign(new Error(unsupported ? '参考翻译服务暂不支持该语种通道' : '参考翻译服务暂不可用，请稍后重试'), { pause: true, providerError: true });
+          if (unsupported) Object.assign(error, { unsupportedLanguage: true, permanent: true });
+          throw error;
+        }
+        const result = data.auto_translation;
+        if (!Array.isArray(result) || result.length !== texts.length || result.some(value => typeof value !== 'string')) {
+          throw qualityError('参考翻译返回条数或文本格式不一致');
+        }
+        return result.map(value => value.trim());
+      };
+      try { return await Promise.race([operation(), deadline]); }
+      finally { clearTimeout(timer); }
+    }
+
+    function usable(source, result, target) {
+      if (!result || /\uFFFD/.test(result) || marker.test(result)) return false;
+      return target !== 'zh' || hasChinese(result) || passthrough(source, result);
+    }
+
+    async function translatePart(texts, source, target) {
+      let result;
+      try { result = await request(texts, source, target); }
+      catch (error) {
+        if (!error.qualityFailed) throw error;
+        if (texts.length === 1) return [''];
+        const middle = Math.ceil(texts.length / 2);
+        return [...await translatePart(texts.slice(0, middle), source, target), ...await translatePart(texts.slice(middle), source, target)];
+      }
+      for (let i = 0; i < result.length; i++) {
+        if (usable(texts[i], result[i], target)) continue;
+        // Preserve good neighboring results; retry only the affected title once as an unmarked single item.
+        result[i] = texts.length > 1 ? (await translatePart([texts[i]], source, target))[0] : '';
+      }
+      return result;
+    }
+
+    async function translateStage(texts, source, target) {
+      const result = texts.map(() => ''), indices = [];
+      for (let i = 0; i < texts.length; i++) if (texts[i]) indices.push(i);
+      if (!indices.length) return result;
+      const values = await translatePart(indices.map(index => texts[index]), source, target);
+      indices.forEach((index, i) => { result[index] = values[i]; });
+      return result;
+    }
+
+    async function translateValues(values, source, target) {
+      const pivot = target === 'zh' && (source === 'th' || source === 'ms');
+      const intermediate = pivot ? await translateStage(values, source, 'en') : values;
+      return translateStage(intermediate, pivot ? 'en' : source, target);
+    }
+
+    async function restoreBrand(sourceText, brand, source, target) {
+      const before = sourceText.slice(0, brand.start);
+      // Prefix brands can be removed without splitting a sentence or changing a compatibility relation.
+      if (!/^[\s\p{P}\p{S}]*$/u.test(before)) return '';
+      const rest = sourceText.slice(brand.end).match(/^([\s\p{P}\p{S}]*)([\s\S]*)$/u);
+      if (!rest[2]) return before + brand.text + rest[1];
+      const description = (await translateValues([rest[2]], source, target))[0];
+      if (!description) return '';
+      const result = before + brand.text + rest[1] + description;
+      return containsBrand(result, brand.text) && parametersPreserved(sourceText, result) ? result : '';
+    }
+
+    async function translateBatch(texts, language = 'auto', options = {}) {
+      if (!Array.isArray(texts)) throw new TypeError('texts 必须是字符串数组');
+      const values = texts.map(text => String(text == null ? '' : text).trim());
+      const source = languageCode(language, 'auto'), target = languageCode(options && options.targetLanguage, 'zh');
+      if (!values.some(Boolean)) return values;
+      const contexts = options && Array.isArray(options.contexts) ? options.contexts : [];
+      const result = await translateValues(values, source, target);
+      let brandFailed = false;
+      for (let i = 0; i < result.length; i++) {
+        if (!result[i]) continue;
+        const brand = sourceBrand(values[i], contexts[i]);
+        if (!brand || containsBrand(result[i], brand.text)) continue;
+        result[i] = await restoreBrand(values[i], brand, source, target);
+        if (!result[i]) brandFailed = true;
+      }
+      if (result.every((text, i) => !values[i] || !text)) {
+        throw Object.assign(qualityError(brandFailed ? '参考译文未能可靠保留品牌和参数，请核对原文' : '参考翻译服务未返回可用译文，请稍后重试'), { permanent: true, brandIntegrityFailed: brandFailed });
+      }
+      return result;
+    }
+
+    return { translateBatch };
+  }
+
+  const api = { create };
+  root.BuyerReferenceTranslation = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script data-buyer-category-translations="v1">
+(function (root, factory) {
+  'use strict';
+  const api = factory();
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.BuyerCategoryTranslations = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  // Whole category names only. This is a curated label dictionary, not an
+  // official cross-market taxonomy, category-ID table, or title translator.
+  const dictionary = Object.freeze({
+    // Existing workbench Audio labels are retained for compatibility.
+    'Audio': '影音娱乐',
+    'Amplifiers & Mixers': '扩音器 & 混音器',
+    'Audio & Video Cables & Converters': '视听器材&转换器',
+    'Home Audio & Speakers': '家用音响',
+    'Media Players': '多媒体播放器',
+    'Microphones': '麦克风',
+    'Others': '其他',
+    'AV Receivers': 'AV接收机',
+    'CD, DVD, & Blu-ray Players': 'CD、DVD & 蓝光播放机',
+    'CD, DVD & Blu-ray Players': 'CD、DVD & 蓝光播放机',
+    'Home Theater Systems': '家庭影院系统',
+    'MP3 & MP4 Players': 'MP3 & MP4 播放机',
+    'Radio & Cassette Players': '收音机 & 卡带收音机',
+    'Speakers': '家用音响',
+    'Voice Recorders': '录音机',
+    'Earphones, Headphones & Headsets': '耳机与耳麦',
+    'Earphones & Headphones': '耳机',
+    'Earphones': '耳塞式耳机',
+    'Headphones': '头戴式耳机',
+    'Headsets': '耳麦',
+    'Headphone Accessories': '耳机配件',
+    'Earphone Accessories': '耳塞式耳机配件',
+    'Audio Accessories': '音频配件',
+    'Portable Speakers': '便携式音箱',
+    'Bluetooth Speakers': '蓝牙音箱',
+    'Soundbars': '回音壁音箱',
+    'Subwoofers': '低音炮',
+    'Amplifiers': '功放',
+    'Audio Mixers': '调音台',
+    'Turntables & Record Players': '黑胶唱机',
+    'Karaoke Systems': '卡拉OK设备',
+
+    // Appliances and consumer electronics: complete phrases, not word rules.
+    'Electronics': '电子产品',
+    'Consumer Electronics': '消费电子',
+    'Home Appliances': '家用电器',
+    'Small Household Appliances': '小型家用电器',
+    'Large Household Appliances': '大型家用电器',
+    'Kitchen Appliances': '厨房电器',
+    'Household Appliances': '家用电器',
+    'Appliance Parts & Accessories': '家电零部件与配件',
+    'Home Appliance Parts': '家电零部件',
+    'Home Appliance Accessories': '家电配件',
+    'Remote Controls': '遥控器',
+    'Remote Control': '遥控器',
+    'Universal Remote Controls': '万能遥控器',
+    'TV Remote Controls': '电视遥控器',
+    'Air Conditioner Remote Controls': '空调遥控器',
+    'Vacuum Cleaners & Floor Care Appliances': '吸尘器与地板清洁电器',
+    'Vacuum Cleaners and Floor Care Appliances': '吸尘器与地板清洁电器',
+    'Vacuum Cleaners': '吸尘器',
+    'Vacuum Cleaner Parts & Accessories': '吸尘器零部件与配件',
+    'Robot Vacuums': '扫地机器人',
+    'Robotic Vacuum Cleaners': '扫地机器人',
+    'Wet & Dry Vacuum Cleaners': '干湿两用吸尘器',
+    'Handheld Vacuum Cleaners': '手持吸尘器',
+    'Steam Cleaners': '蒸汽清洁机',
+    'Steam Mops': '蒸汽拖把',
+    'Floor Polishers': '地板抛光机',
+    'Floor Care Appliances': '地板清洁电器',
+    'Air Conditioners': '空调',
+    'Air Conditioners & Coolers': '空调与冷风机',
+    'Air Coolers': '冷风机',
+    'Fans': '电风扇',
+    'Ceiling Fans': '吊扇',
+    'Standing Fans': '落地扇',
+    'Table Fans': '台扇',
+    'Wall Fans': '壁扇',
+    'Exhaust Fans': '排气扇',
+    'Fan Parts & Accessories': '电风扇零部件与配件',
+    'Air Purifiers': '空气净化器',
+    'Air Purifiers & Dehumidifiers': '空气净化器与除湿机',
+    'Air Treatment': '空气处理设备',
+    'Humidifiers': '加湿器',
+    'Dehumidifiers': '除湿机',
+    'Heaters': '取暖器',
+    'Heating & Cooling Appliances': '制热与制冷电器',
+    'Irons & Steamers': '电熨斗与挂烫机',
+    'Irons': '电熨斗',
+    'Garment Steamers': '挂烫机',
+    'Sewing Machines': '缝纫机',
+    'Fabric Shavers': '毛球修剪器',
+    'Electric Insect Killers': '电子灭蚊器',
+    'Pest Repellents': '驱虫器',
+    'Washing Machines & Dryers': '洗衣机与干衣机',
+    'Washing Machines': '洗衣机',
+    'Dryers': '干衣机',
+    'Spin Dryers': '脱水机',
+    'Refrigerators': '冰箱',
+    'Refrigerators & Freezers': '冰箱与冷柜',
+    'Freezers': '冷柜',
+    'Wine Fridges': '红酒柜',
+    'Water Heaters': '热水器',
+    'Instant Water Heaters': '即热式热水器',
+    'Storage Water Heaters': '储水式热水器',
+    'Water Dispensers': '饮水机',
+    'Water Dispensers & Purifiers': '饮水机与净水器',
+    'Water Purifiers': '净水器',
+    'Water Filters': '滤水器',
+    'Water Filter Replacements': '替换滤芯',
+    'Electric Kettles': '电热水壶',
+    'Kettles': '水壶',
+    'Thermo Pots': '电热水瓶',
+    'Rice Cookers': '电饭煲',
+    'Pressure Cookers': '压力锅',
+    'Electric Pressure Cookers': '电压力锅',
+    'Slow Cookers': '慢炖锅',
+    'Multi Cookers': '多功能料理锅',
+    'Multi-Cookers': '多功能料理锅',
+    'Food Steamers': '电蒸锅',
+    'Electric Lunch Boxes': '电热饭盒',
+    'Electric Pans': '电煎锅',
+    'Electric Grills': '电烤炉',
+    'Electric Grills & Sandwich Makers': '电烤炉与三明治机',
+    'Deep Fryers': '油炸锅',
+    'Air Fryers': '空气炸锅',
+    'Ovens': '烤箱',
+    'Microwaves': '微波炉',
+    'Microwave Ovens': '微波炉',
+    'Toasters': '烤面包机',
+    'Toasters & Sandwich Makers': '烤面包机与三明治机',
+    'Sandwich Makers': '三明治机',
+    'Waffle Makers': '华夫饼机',
+    'Sandwich & Waffle Makers': '三明治机与华夫饼机',
+    'Bread Makers': '面包机',
+    'Blenders': '搅拌机',
+    'Blenders, Mixers & Grinders': '搅拌机、打蛋机与研磨机',
+    'Mixers & Blenders': '打蛋机与搅拌机',
+    'Hand Mixers': '手持打蛋器',
+    'Stand Mixers': '厨师机',
+    'Food Processors': '食物料理机',
+    'Food Choppers': '食物切碎机',
+    'Meat Grinders': '绞肉机',
+    'Coffee Machines & Accessories': '咖啡机与配件',
+    'Coffee Machines': '咖啡机',
+    'Coffee Makers': '咖啡机',
+    'Coffee Grinders': '咖啡研磨机',
+    'Juicers': '榨汁机',
+    'Juicers & Fruit Extractors': '榨汁机与原汁机',
+    'Soy Milk Makers': '豆浆机',
+    'Yogurt Makers': '酸奶机',
+    'Yoghurt Makers': '酸奶机',
+    'Ice Cream Makers': '冰淇淋机',
+    'Ice Makers': '制冰机',
+    'Popcorn Makers': '爆米花机',
+    'Food Dehydrators': '食物烘干机',
+    'Vacuum Sealers': '真空封口机',
+    'Dishwashers': '洗碗机',
+    'Dish Dryers': '烘碗机',
+    'Cooktops & Cookers': '灶具与炊具',
+    'Stoves & Hobs': '炉灶',
+    'Gas Stoves': '燃气灶',
+    'Electric Stoves': '电炉',
+    'Induction Cookers': '电磁炉',
+    'Range Hoods': '抽油烟机',
+    'Hoods': '抽油烟机',
+    'TVs & Accessories': '电视与配件',
+    'Televisions': '电视机',
+    'TVs': '电视机',
+    'TV Accessories': '电视配件',
+    'TV Brackets': '电视支架',
+    'TV Mounts': '电视挂架',
+    'TV Antennas': '电视天线',
+    'Set Top Boxes': '机顶盒',
+    'Set-Top Boxes': '机顶盒',
+    'Projectors': '投影仪',
+    'Projector Screens': '投影幕布',
+    'Projector Accessories': '投影仪配件',
+
+    // Exact English names observed in the local sourcing category columns.
+    'Mobile & Gadgets': '手机与配件',
+    'Accessories': '配件',
+    'Mobile Phones': '手机',
+    'Tablets': '平板电脑',
+    'Walkie Talkies': '对讲机',
+    'Wearable Devices': '穿戴设备',
+    'Cables, Chargers & Converters': '线材、充电器与转换器',
+    'Cases, Covers, & Skins': '保护壳、保护套与机身贴',
+    'Cases, Covers & Skins': '保护壳、保护套与机身贴',
+    'Casting Devices': '投屏设备',
+    'GPS Trackers': 'GPS定位器',
+    'Memory Cards': '存储卡',
+    'Mobile Flashes & Selfie Lights': '手机闪光灯与自拍补光灯',
+    'Mobile Lens': '手机镜头',
+    'Mobile Pouches': '手机袋',
+    'Phone Grips': '手机指环扣与握持配件',
+    'Phone Straps & Keychains': '手机挂绳与钥匙扣',
+    'Pocket Wifi': '随身Wi-Fi',
+    'Powerbanks & Batteries': '移动电源与电池',
+    'Screen Protectors': '屏幕保护膜',
+    'Selfie Accessories': '自拍配件',
+    'Smartwatches & Fitness Trackers': '智能手表与运动手环',
+    'Stylus': '触控笔',
+    'USB & Mobile Fans': 'USB与手机风扇',
+    'USB & Mobile Lights': 'USB与手机灯',
+    'VR Devices': 'VR设备',
+    'Wearable Accessories': '穿戴设备配件',
+    'Mobile Accessories': '手机配件',
+    'Phone Cases': '手机壳',
+    'Phone Holders': '手机支架',
+    'Phone Holders & Stands': '手机支架',
+    'Mobile Phone Holders': '手机支架',
+    'Selfie Sticks': '自拍杆',
+    'Chargers': '充电器',
+    'Wall Chargers': '墙式充电器',
+    'Wireless Chargers': '无线充电器',
+    'Charging Cables': '充电线',
+    'Power Banks': '移动电源',
+    'Powerbanks': '移动电源',
+    'Batteries': '电池',
+    'Replacement Parts': '替换零部件',
+    'Smartwatches': '智能手表',
+    'Fitness Trackers': '运动手环',
+
+    // Common computer, camera and gaming category labels.
+    'Computers & Accessories': '电脑与配件',
+    'Computers & Peripherals': '电脑与外设',
+    'Desktop Computers': '台式电脑',
+    'Desktops': '台式电脑',
+    'Laptops': '笔记本电脑',
+    'Laptop Accessories': '笔记本电脑配件',
+    'Laptop Stands': '笔记本电脑支架',
+    'Laptop Cooling Pads': '笔记本电脑散热垫',
+    'Laptop Batteries': '笔记本电脑电池',
+    'Laptop Chargers & Adaptors': '笔记本电脑充电器与适配器',
+    'Laptop Sleeves & Bags': '笔记本电脑保护套与包',
+    'Monitors': '显示器',
+    'Monitor Arms & Stands': '显示器支架',
+    'Keyboards': '键盘',
+    'Mice': '鼠标',
+    'Keyboards & Mice': '键盘与鼠标',
+    'Mouse Pads': '鼠标垫',
+    'Webcams': '网络摄像头',
+    'USB Hubs': 'USB集线器',
+    'Docking Stations': '扩展坞',
+    'Printers & Scanners': '打印机与扫描仪',
+    'Printers': '打印机',
+    'Scanners': '扫描仪',
+    'Ink & Toners': '墨水与碳粉',
+    'Ink Cartridges': '墨盒',
+    'Toner Cartridges': '硒鼓与碳粉盒',
+    'Printer Accessories': '打印机配件',
+    'Data Storage': '数据存储设备',
+    'Hard Drives': '硬盘',
+    'External Hard Drives': '移动硬盘',
+    'Internal Hard Drives': '内置硬盘',
+    'Solid State Drives': '固态硬盘',
+    'SSD': '固态硬盘',
+    'USB Flash Drives': 'USB闪存盘',
+    'Flash Drives': '闪存盘',
+    'Memory Card Readers': '读卡器',
+    'Network Components': '网络设备',
+    'Networking': '网络设备',
+    'Routers': '路由器',
+    'Modems': '调制解调器',
+    'Network Switches': '网络交换机',
+    'Wireless Adapters': '无线网卡',
+    'Network Cables': '网线',
+    'Repeaters': '无线中继器',
+    'Computer Components': '电脑组件',
+    'Processors': '处理器',
+    'Motherboards': '主板',
+    'Graphics Cards': '显卡',
+    'RAM': '内存',
+    'Memory': '内存',
+    'Power Supply Units': '电脑电源',
+    'PC Cases': '电脑机箱',
+    'Cooling Fans': '散热风扇',
+    'UPS & Stabilizers': '不间断电源与稳压器',
+    'Software': '软件',
+    'Office Equipment': '办公设备',
+    'Cameras & Drones': '相机与无人机',
+    'Cameras': '相机',
+    'Digital Cameras': '数码相机',
+    'DSLR Cameras': '单反相机',
+    'Mirrorless Cameras': '微单相机',
+    'Action Cameras': '运动相机',
+    'Instant Cameras': '拍立得相机',
+    'Film Cameras': '胶片相机',
+    'Video Cameras': '摄像机',
+    'Drones': '无人机',
+    'Drone Accessories': '无人机配件',
+    'Camera Accessories': '相机配件',
+    'Camera Lenses': '相机镜头',
+    'Lenses': '镜头',
+    'Lens Accessories': '镜头配件',
+    'Tripods & Monopods': '三脚架与独脚架',
+    'Gimbals & Stabilizers': '云台与稳定器',
+    'Camera Bags & Cases': '相机包与保护盒',
+    'Camera Batteries & Chargers': '相机电池与充电器',
+    'Flashes': '闪光灯',
+    'Lighting & Studio Equipment': '摄影灯与影棚设备',
+    'CCTV Cameras': '监控摄像头',
+    'Security Cameras': '安防摄像头',
+    'IP Cameras': '网络监控摄像头',
+    'Surveillance Systems': '监控系统',
+    'Games & Consoles': '游戏与主机',
+    'Gaming Consoles': '游戏主机',
+    'Console Games': '主机游戏',
+    'Video Games': '电子游戏',
+    'Gaming Accessories': '游戏配件',
+    'Console Accessories': '游戏主机配件',
+    'Controllers': '游戏手柄',
+    'Game Controllers': '游戏手柄',
+    'Gaming Headsets': '游戏耳麦',
+
+    // Common home and living labels.
+    'Home & Living': '家居生活',
+    'Furniture': '家具',
+    'Home Decor': '家居装饰',
+    'Decoration': '装饰用品',
+    'Bedding': '床上用品',
+    'Bed Sheets': '床单',
+    'Pillows': '枕头',
+    'Pillowcases': '枕套',
+    'Blankets': '毯子',
+    'Mattresses': '床垫',
+    'Curtains & Blinds': '窗帘与百叶窗',
+    'Carpets & Rugs': '地毯',
+    'Cushions': '靠垫',
+    'Storage & Organization': '收纳整理',
+    'Storage Boxes': '收纳盒',
+    'Storage Bags': '收纳袋',
+    'Hangers & Pegs': '衣架与晾衣夹',
+    'Hooks': '挂钩',
+    'Shelves & Racks': '置物架',
+    'Laundry & Cleaning Equipment': '洗晒与清洁用具',
+    'Cleaning Tools': '清洁工具',
+    'Mops': '拖把',
+    'Brooms': '扫帚',
+    'Brushes': '刷子',
+    'Trash Bins': '垃圾桶',
+    'Kitchenware': '厨房用品',
+    'Cookware': '炊具',
+    'Pots & Pans': '锅具',
+    'Kitchen Utensils': '厨房工具',
+    'Knives & Kitchen Scissors': '刀具与厨房剪刀',
+    'Chopping Boards': '砧板',
+    'Food Storage': '食品收纳',
+    'Food Containers': '食品容器',
+    'Lunch Boxes': '饭盒',
+    'Bakeware': '烘焙用具',
+    'Dinnerware': '餐具',
+    'Tableware': '餐桌用品',
+    'Cutlery': '刀叉餐具',
+    'Plates': '餐盘',
+    'Bowls': '碗',
+    'Drinkware': '饮具',
+    'Cups, Mugs & Glasses': '杯子、马克杯与玻璃杯',
+    'Water Bottles': '水瓶',
+    'Flasks': '保温瓶',
+    'Bathroom': '浴室用品',
+    'Bathroom Accessories': '浴室配件',
+    'Bath Towels': '浴巾',
+    'Towels': '毛巾',
+    'Bath Mats': '浴室地垫',
+    'Shower Curtains': '浴帘',
+    'Lighting': '照明灯具',
+    'Light Bulbs': '灯泡',
+    'Ceiling Lights': '吸顶灯',
+    'Wall Lights': '壁灯',
+    'Table Lamps': '台灯',
+    'Floor Lamps': '落地灯',
+    'LED Strips': 'LED灯带',
+    'Night Lights': '小夜灯',
+    'Outdoor Lighting': '户外照明',
+    'Tools & Home Improvement': '工具与家装',
+    'Tools': '工具',
+    'Hand Tools': '手动工具',
+    'Power Tools': '电动工具',
+    'Hardware': '五金',
+    'Electrical Equipment': '电工设备',
+    'Sockets & Switches': '插座与开关',
+    'Extension Cords': '延长线',
+    'Batteries & Accessories': '电池与配件',
+    'Smart Home': '智能家居',
+    'Doorbells': '门铃',
+    'Door Locks': '门锁',
+    'Security & Safety': '安防与安全用品',
+    'Gardening': '园艺',
+    'Gardening Tools': '园艺工具',
+    'Pots & Planters': '花盆与种植容器',
+    'Plants': '植物',
+
+    // Clothing, footwear, bags and personal accessories.
+    'Women Clothes': '女装',
+    "Women's Clothing": '女装',
+    'Men Clothes': '男装',
+    "Men's Clothing": '男装',
+    'Women Shoes': '女鞋',
+    "Women's Shoes": '女鞋',
+    'Men Shoes': '男鞋',
+    "Men's Shoes": '男鞋',
+    'Women Bags': '女包',
+    "Women's Bags": '女包',
+    'Men Bags': '男包',
+    "Men's Bags": '男包',
+    'Fashion Accessories': '时尚配饰',
+    'Watches': '手表',
+    'Watch Accessories': '手表配件',
+    'Jewellery': '珠宝首饰',
+    'Jewelry': '珠宝首饰',
+    'Eyewear': '眼镜',
+    'Sunglasses': '太阳镜',
+    'Belts': '腰带',
+    'Hats & Caps': '帽子',
+    'Hair Accessories': '发饰',
+    'Scarves & Shawls': '围巾与披肩',
+    'Gloves': '手套',
+    'Socks': '袜子',
+    'Tops': '上衣',
+    'T-Shirts': 'T恤',
+    'Shirts': '衬衫',
+    'Blouses': '女式衬衫',
+    'Dresses': '连衣裙',
+    'Skirts': '半身裙',
+    'Pants': '长裤',
+    'Trousers': '长裤',
+    'Shorts': '短裤',
+    'Jeans': '牛仔裤',
+    'Jackets, Coats & Vests': '夹克、大衣与马甲',
+    'Jackets & Coats': '夹克与大衣',
+    'Sweaters & Cardigans': '毛衣与开衫',
+    'Hoodies & Sweatshirts': '连帽衫与卫衣',
+    'Sleepwear & Pajamas': '睡衣',
+    'Underwear': '内衣',
+    'Bras': '文胸',
+    'Panties': '女式内裤',
+    'Sneakers': '运动鞋',
+    'Sandals': '凉鞋',
+    'Slippers': '拖鞋',
+    'Boots': '靴子',
+    'Heels': '高跟鞋',
+    'Flats': '平底鞋',
+    'Backpacks': '双肩包',
+    'Shoulder Bags': '单肩包',
+    'Crossbody & Shoulder Bags': '斜挎包与单肩包',
+    'Handbags': '手提包',
+    'Tote Bags': '托特包',
+    'Wallets': '钱包',
+    'Clutches': '手拿包',
+    'Luggage & Bags': '箱包',
+    'Travel & Luggage': '旅行与箱包',
+    'Luggage': '行李箱',
+    'Travel Bags': '旅行包',
+    'Travel Accessories': '旅行配件',
+    'Muslim Fashion': '穆斯林服饰',
+    'Hijabs': '头巾',
+
+    // Beauty, health, maternal and baby categories.
+    'Beauty': '美妆护肤',
+    'Health': '健康保健',
+    'Skincare': '护肤品',
+    'Skin Care': '护肤品',
+    'Facial Cleansers': '洁面用品',
+    'Toners': '爽肤水',
+    'Moisturizers & Creams': '保湿乳霜',
+    'Serums & Essences': '精华液',
+    'Face Masks': '面膜',
+    'Sunscreen': '防晒用品',
+    'Makeup': '彩妆',
+    'Makeup Removers': '卸妆用品',
+    'Lipstick': '口红',
+    'Lipsticks': '口红',
+    'Foundation': '粉底',
+    'Eye Makeup': '眼部彩妆',
+    'Makeup Tools': '化妆工具',
+    'Makeup Brushes': '化妆刷',
+    'Beauty Tools': '美容工具',
+    'Beauty Devices': '美容仪器',
+    'Hair Care': '头发护理',
+    'Shampoo': '洗发水',
+    'Conditioner': '护发素',
+    'Hair Styling': '头发造型用品',
+    'Hair Dryers': '电吹风',
+    'Hair Straighteners': '直发器',
+    'Hair Curlers': '卷发器',
+    'Hair Styling Tools': '美发造型工具',
+    'Bath & Body Care': '沐浴与身体护理',
+    'Body Wash & Soap': '沐浴露与香皂',
+    'Body Lotions': '身体乳',
+    'Perfumes & Fragrances': '香水与香氛',
+    'Personal Care': '个人护理',
+    'Oral Care': '口腔护理',
+    'Toothbrushes': '牙刷',
+    'Electric Toothbrushes': '电动牙刷',
+    'Toothpaste': '牙膏',
+    'Shaving & Grooming': '剃须与理容',
+    'Electric Shavers': '电动剃须刀',
+    'Hair Clippers': '理发器',
+    'Hair Removal': '脱毛用品',
+    'Nail Care': '美甲护理',
+    'Hand & Foot Care': '手足护理',
+    'Feminine Care': '女性护理',
+    'Health Supplements': '营养补充品',
+    'Medical Supplies': '医疗用品',
+    'Medical Equipment': '医疗器械',
+    'Thermometers': '体温计',
+    'Blood Pressure Monitors': '血压计',
+    'Weighing Scales': '体重秤',
+    'Massage & Therapy': '按摩与理疗用品',
+    'Massagers': '按摩器',
+    'Mother & Baby': '母婴用品',
+    'Mom & Baby': '母婴用品',
+    'Baby & Kids': '婴童用品',
+    'Baby Care': '婴儿护理',
+    'Baby Healthcare': '婴儿健康护理',
+    'Baby Feeding': '婴儿喂养',
+    'Bottle Feeding': '奶瓶喂养用品',
+    'Milk Bottles & Accessories': '奶瓶与配件',
+    'Breastfeeding': '母乳喂养用品',
+    'Breast Pumps': '吸奶器',
+    'Diapers': '纸尿裤',
+    'Diapering & Potty': '尿布与如厕用品',
+    'Baby Wipes': '婴儿湿巾',
+    'Baby Bath & Body Care': '婴儿沐浴与身体护理',
+    'Baby Clothing': '婴儿服装',
+    'Baby & Toddler Toys': '婴幼儿玩具',
+    'Strollers & Travel Systems': '婴儿推车与出行系统',
+    'Baby Carriers': '婴儿背带',
+    'Car Seats': '汽车座椅',
+    'Baby Safety': '婴儿安全用品',
+    'Baby Monitors': '婴儿监视器',
+    'Maternity Care': '孕产妇护理',
+
+    // Toys, sports, pets, food, stationery and vehicles.
+    'Toys & Hobbies': '玩具与爱好',
+    'Toys': '玩具',
+    'Hobbies & Collections': '爱好与收藏',
+    'Collectibles': '收藏品',
+    'Action Figures': '人偶模型',
+    'Dolls & Accessories': '娃娃与配件',
+    'Stuffed Toys': '毛绒玩具',
+    'Plush Toys': '毛绒玩具',
+    'Building Blocks': '积木',
+    'Educational Toys': '益智玩具',
+    'Puzzles': '拼图',
+    'Board Games': '桌面游戏',
+    'Remote Control Toys': '遥控玩具',
+    'Musical Instruments': '乐器',
+    'Guitars': '吉他',
+    'Keyboards & Pianos': '电子琴与钢琴',
+    'Arts & Crafts': '美术与手工',
+    'Sports & Outdoors': '运动户外',
+    'Sports Equipment': '运动器材',
+    'Sports & Outdoor Accessories': '运动与户外配件',
+    'Sportswear': '运动服饰',
+    'Sports Footwear': '运动鞋',
+    'Fitness & Exercise': '健身运动',
+    'Fitness Equipment': '健身器材',
+    'Yoga & Pilates': '瑜伽与普拉提',
+    'Cycling': '骑行',
+    'Bicycles': '自行车',
+    'Bicycle Accessories': '自行车配件',
+    'Running': '跑步',
+    'Swimming': '游泳',
+    'Badminton': '羽毛球',
+    'Basketball': '篮球',
+    'Football': '足球',
+    'Table Tennis': '乒乓球',
+    'Tennis': '网球',
+    'Fishing': '钓鱼',
+    'Camping & Hiking': '露营与徒步',
+    'Camping Equipment': '露营装备',
+    'Tents': '帐篷',
+    'Sleeping Bags': '睡袋',
+    'Pet Food & Accessories': '宠物食品与用品',
+    'Pets': '宠物用品',
+    'Pet Supplies': '宠物用品',
+    'Pet Food': '宠物食品',
+    'Dog Food': '狗粮',
+    'Cat Food': '猫粮',
+    'Pet Treats': '宠物零食',
+    'Pet Grooming': '宠物清洁护理',
+    'Pet Clothing & Accessories': '宠物服饰与配件',
+    'Pet Toys': '宠物玩具',
+    'Pet Beds & Accessories': '宠物窝与配件',
+    'Pet Carriers': '宠物外出包',
+    'Collars, Harnesses & Leashes': '项圈、胸背带与牵引绳',
+    'Cat Litter & Boxes': '猫砂与猫砂盆',
+    'Aquarium Needs': '水族用品',
+    'Food & Beverages': '食品饮料',
+    'Beverages': '饮料',
+    'Coffee': '咖啡',
+    'Tea': '茶',
+    'Milk': '牛奶',
+    'Snacks': '零食',
+    'Biscuits, Cookies & Wafers': '饼干、曲奇与威化',
+    'Chocolate': '巧克力',
+    'Sweets & Candy': '糖果',
+    'Nuts': '坚果',
+    'Dried Snacks': '干货零食',
+    'Breakfast Cereals & Spread': '早餐麦片与涂抹酱',
+    'Cooking Essentials': '烹饪食材与调味品',
+    'Baking Needs': '烘焙原料',
+    'Canned Food': '罐头食品',
+    'Instant Food': '速食食品',
+    'Frozen Food': '冷冻食品',
+    'Fresh & Frozen Food': '生鲜与冷冻食品',
+    'Books & Magazines': '书籍与杂志',
+    'Books': '书籍',
+    'Magazines': '杂志',
+    'Stationery': '文具',
+    'Writing & Correction': '书写与涂改用品',
+    'Pens & Inks': '笔与墨水',
+    'Pencils': '铅笔',
+    'Markers': '马克笔',
+    'Notebooks & Papers': '笔记本与纸张',
+    'Notebooks': '笔记本',
+    'Paper Products': '纸制品',
+    'Office Supplies': '办公用品',
+    'Files & Folders': '文件夹与档案袋',
+    'Adhesives & Tapes': '胶粘剂与胶带',
+    'School Supplies': '学生用品',
+    'Gift & Wrapping': '礼品与包装用品',
+    'Automobiles': '汽车用品',
+    'Automotive': '汽车用品',
+    'Motorcycles': '摩托车用品',
+    'Automotive Accessories': '汽车配件',
+    'Car Accessories': '汽车配件',
+    'Car Interior Accessories': '汽车内饰用品',
+    'Car Exterior Accessories': '汽车外饰用品',
+    'Car Electronics': '汽车电子',
+    'Car Audio': '汽车音响',
+    'Car Cameras': '车载摄像头',
+    'Dash Cameras': '行车记录仪',
+    'Car Chargers': '车载充电器',
+    'Car Phone Holders': '车载手机支架',
+    'Car Care': '汽车养护',
+    'Car Cleaning Tools': '汽车清洁工具',
+    'Automotive Tools': '汽修工具',
+    'Car Replacement Parts': '汽车替换零部件',
+    'Motorcycle Accessories': '摩托车配件',
+    'Motorcycle Parts': '摩托车零部件',
+    'Helmets': '头盔',
+    'Tyres & Wheels': '轮胎与轮毂',
+    'Tires & Wheels': '轮胎与轮毂',
+    'Engine Oils': '发动机机油',
+    'Tickets & Vouchers': '票券与代金券',
+    'Services': '服务',
+    'Other': '其他'
+  });
+
+  function normalize(name) {
+    return typeof name === 'string' ? name.normalize('NFKC').replace(/&amp;|&#0*38;|&#x0*26;/gi, '&')
+      .replace(/[\u2018\u2019]/g, "'").replace(/\u200B/g, '').replace(/\s*&\s*/g, ' & ').replace(/\s+/g, ' ').trim().toLowerCase() : '';
+  }
+  const labels = new Map();
+  for (const [name, label] of Object.entries(dictionary)) {
+    labels.set(normalize(name), label);
+    labels.set(normalize(label), label);
+  }
+  function lookup(name) { return labels.get(normalize(name)) || ''; }
+  function translatePath(names) {
+    if (!Array.isArray(names) || !names.length) return '';
+    const path = names.map(lookup);
+    return path.every(Boolean) ? path.join(' > ') : '';
+  }
+  const sources = Object.freeze([
+    '保留现有工作台 CATEGORY_ZH_NAMES 的 Audio 整短语映射；未使用商品标题拼词。',
+    '本地 scs_sourcing_pool_2025_Table_20261111_193459.xlsx 与 类目优化-全量-2.xlsx 仅核对类目列中的英文名称；未复制商品ID、价格或备注，也未发送给外部服务。',
+    '其他条目为人工整理的常见一级、二级、三级类目完整短语中文译名。不同站点类目体系可能不同，本表不声明为官方全量类目树，也不推断类目层级或ID。',
+    '仅做整短语查表和格式规范；未知名称返回空字符串，路径中任一名称未知时返回空字符串。'
+  ]);
+  return Object.freeze({ lookup, translatePath, dictionary, sources });
+});
+
+</script>
 <script>
 (function(){
 const qaEnabled=new URLSearchParams(location.search).get("qa")==="1";function reportQa(event,detail){if(qaEnabled)console.info("[BuyerQA] "+JSON.stringify({event,...detail}))}
@@ -1673,17 +2600,17 @@ try{workspace=BuyerWorkspace.resolve()}catch(error){const notice=document.getEle
 let workspaceWriter=null,workspaceWritable=false;
 function canEditWorkspace(){return workspaceWritable&&workspaceWriter?.owner===true}
 const H=["是否可开发（添加筛选器）","不可开发原因（添加筛选器）","level1_global_be_category（添加筛选器）","level2_global_be_category（添加筛选器）","level3_global_be_category（添加筛选器）","model状态（添加筛选器）","主图图片","model 图片","Shopee link","item name\n原文（添加筛选器）","item name\n中文（添加筛选器）","Model name\n原文（添加筛选器）","Model name\n中文（添加筛选器）","Non Brand 倒算价","1688链接","1688价格","目标价","C8倒算价\n（默认折叠，点击+号可展开查看）","走C8目标价\n（默认折叠，点击+号可展开查看）","价格check","品牌（默认折叠，点击+号可展开查看）","款式（默认折叠，点击+号可展开查看）","件数（默认折叠，点击+号可展开查看）","是否放前置核价","model备注","邀请ID"];
-const S=["是\n否\n待定-倒算价可做，待1688前置核价\n待定-倒算价可做，1688价格申诉中\n待定-其他\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","26/已开发\n27/已重复\n28/禁售类目\n29/禁运类目\n30/超重限制\n31/IP侵权\n32/敏感词(宗教/政治敏感产品/虚拟/盲盒/定制产品等)\n33/赠品/补差\n34/季节性品-节庆品过季\n35/品牌品-大品牌暂不可开发(无quota)\n36/品牌品-Local品牌且无法在中国source到相似品牌(无quota)\n37/原品链接失效\n38/原品model信息不全无法开发\n39/全网找不到相似款，source难度大\n40/类目错配(备注EL和非EL)\n41/其他原因(需备注)\n41/其他原因-虚标\n41/其他原因-CB品牌暂未入驻/无法提品((且无quota))\n41/其他原因-倒算价小于0.5\n41/其他原园-倒算价>=0.5仍不可开发\n41/其他原因-其他价格原因\n41/其他原因-需要强售前售后支持\n41/其他原因-长尾类目但整个item只有单model\n41/其他原因-高rr，不适用全托管\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","系统抓取level1_global_be_category","系统抓取level2_global_be_category","系统抓取level3_global_be_category","系统抓取下面这几个字段的结果展示\npool_type\nis_top_1k\ncspu_group_type_for_testing\ngrass_region\nasp_tag_by_l1\nsource_type_new\nsourcing_status_daily_refresh\n\n(这个部分集中展示，能买手清晰知道这个品的状态，6个结果)","系统抓取item_image表头字段","系统抓取model_image表头字段，如果值为空默认系统抓取item_image表头字段","系统抓取product_link字段","系统抓取item_name","Google整句翻译；原文问号允许试译；参数差异仅提示；人工译文优先","系统抓取model_name","Google整句翻译；原文问号允许试译；参数差异仅提示；人工译文优先","系统抓取backcal_cogs_non_brand","系统抓取final_1688_link","系统抓取final_1688_price_moq_3","系统自己算，取倒算价和1688价格最低值，min（Non Brand 倒算价&1688价格）","系统抓取backcal_cogs_white_label","系统自己算，取倒算价和1688价格最低值，min（C8倒算价&1688价格）","系统抓取backcal_cogs_non_brand是否≥final_1688_price_moq_3","优先抓取 mall_brand_name；为空时从 item name 原文和 Model name 原文提取\n买手可以手动修改结果","系统抓取item_name和model name归纳\n如白色\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","系统抓取item_name和model name归纳\n3pcs\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","当final_1688_price_moq_3为空值的时候，显示“未前置核价”\n买手可以选择是否放核价：Y/N\n前置核价日期：可双击选择当前年月日\n备注：买手可以自行备注","买手自行备注","买手上传 Model ID 与邀请ID后自动匹配；可编辑" ];
+const S=["是\n否\n待定-倒算价可做，待1688前置核价\n待定-倒算价可做，1688价格申诉中\n待定-其他\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","26/已开发\n27/已重复\n28/禁售类目\n29/禁运类目\n30/超重限制\n31/IP侵权\n32/敏感词(宗教/政治敏感产品/虚拟/盲盒/定制产品等)\n33/赠品/补差\n34/季节性品-节庆品过季\n35/品牌品-大品牌暂不可开发(无quota)\n36/品牌品-Local品牌且无法在中国source到相似品牌(无quota)\n37/原品链接失效\n38/原品model信息不全无法开发\n39/全网找不到相似款，source难度大\n40/类目错配(备注EL和非EL)\n41/其他原因(需备注)\n41/其他原因-虚标\n41/其他原因-CB品牌暂未入驻/无法提品((且无quota))\n41/其他原因-倒算价小于0.5\n41/其他原园-倒算价>=0.5仍不可开发\n41/其他原因-其他价格原因\n41/其他原因-需要强售前售后支持\n41/其他原因-长尾类目但整个item只有单model\n41/其他原因-高rr，不适用全托管\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","系统抓取level1_global_be_category","系统抓取level2_global_be_category","系统抓取level3_global_be_category","系统抓取下面这几个字段的结果展示\npool_type\nis_top_1k\ncspu_group_type_for_testing\ngrass_region\nasp_tag_by_l1\nsource_type_new\nsourcing_status_daily_refresh\n\n(这个部分集中展示，能买手清晰知道这个品的状态，6个结果)","系统抓取item_image表头字段","系统抓取model_image表头字段，如果值为空默认系统抓取item_image表头字段","系统抓取product_link字段","系统抓取item_name","自动整句翻译；导入后自动处理，人工中文优先保留","系统抓取model_name","自动整句翻译；导入后自动处理，人工中文优先保留","系统抓取backcal_cogs_non_brand","系统抓取final_1688_link","系统抓取final_1688_price_moq_3","系统自己算，取倒算价和1688价格最低值，min（Non Brand 倒算价&1688价格）","系统抓取backcal_cogs_white_label","系统自己算，取倒算价和1688价格最低值，min（C8倒算价&1688价格）","系统抓取backcal_cogs_non_brand是否≥final_1688_price_moq_3","优先抓取 mall_brand_name；为空时从 item name 原文和 Model name 原文提取\n买手可以手动修改结果","系统抓取item_name和model name归纳\n如白色\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","系统抓取item_name和model name归纳\n3pcs\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","当final_1688_price_moq_3为空值的时候，显示“未前置核价”\n买手可以选择是否放核价：Y/N\n前置核价日期：可双击选择当前年月日\n备注：买手可以自行备注","买手自行备注","买手上传 Model ID 与邀请ID后自动匹配；可编辑" ];
 const FIELD=H.map((h,i)=>({h:h,s:S[i],i:i,display:h.replace(/[（(][^）)]*[）)]/g,"").trim(),filter:true,foldGroup:i>=17&&i<=18?"c8":i>=20&&i<=22?"attrs":""}));
 
-let rows=[],headers=H.slice(),sourceFileName="",selected=new Set(),filters={},opened=new Set(),groupView=true,showFold=false,showC8=false,showAttrs=false,threshold=90,groupingEnabled=false,historyMode=false,liveSnapshot=null,historyRows=[],hasUnsavedChanges=false,saveWaiters=[];let pageIndex=0,pageSize=50,visibleRows=[],activeHashRun=0,dbPromise=null,saveTimer=null,searchTimer=0,saveAllPending=false,dirtyRows=new Set(),saveInProgress=false,saveFailureNotified=false,activeProductCard="",activeZoomSource="",imageZoomTimer=0;const statusFilterKeys=["pool_type","is_top_1k","cspu_group_type_for_testing","grass_region","asp_tag_by_l1","source_type_new","sourcing_status_daily_refresh"];
+let rows=[],headers=H.slice(),sourceFileName="",selected=new Set(),filters={},opened=new Set(),groupView=true,showFold=false,showC8=false,showAttrs=false,threshold=90,groupingEnabled=false,historyMode=false,liveSnapshot=null,historyRows=[],hasUnsavedChanges=false,saveWaiters=[];let pageIndex=0,pageSize=50,visibleRows=[],activeHashRun=0,dbPromise=null,saveTimer=null,searchTimer=0,saveAllPending=false,dirtyRows=new Set(),saveInProgress=false,saveFailureNotified=false,activeProductCard="",activeZoomSource="",imageZoomTimer=0,imageZoomHoverTimer=0;const statusFilterKeys=["pool_type","is_top_1k","cspu_group_type_for_testing","grass_region","asp_tag_by_l1","source_type_new","sourcing_status_daily_refresh"];
 let buyerCustomOptions={};try{buyerCustomOptions=JSON.parse(localStorage.getItem(workspace.storageKey("pool-buyer-custom-options-v1"))||"{}")}catch(e){};
 const rawLookupCache=new WeakMap(),rawSchemaLookup=new Map();const $=x=>document.getElementById(x),esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),norm=x=>String(x||"").toLowerCase().replace(/[\s_（）():：-]/g,""),number=x=>{if(x==null||String(x).trim()==="")return null;let n=Number(String(x).replace(/[¥,$，\s]/g,""));return Number.isFinite(n)?n:null},toast=x=>{$("toast").textContent=x;setTimeout(()=>$("toast").textContent="",2600)};
 const keyMap=[["是否可开发","dev"],["不可开发原因","reason"],["level1_global_be_category","l1"],["level2_global_be_category","l2"],["level3_global_be_category","l3"],["model状态","status"],["主图图片","main"],["model图片","modelimage"],["shopee link","product"],["item name原文","itemoriginal"],["item name中文","itemchinese"],["model name原文","modeloriginal"],["model name中文","modelchinese"],["non brand倒算价","nb"],["1688链接","ali"],["1688价格","price"],["目标价","target"],["c8倒算价","c8"],["走c8目标价","c8target"],["价格check","check"],["品牌","brand"],["款式","style"],["件数","qty"],["是否放前置核价","pre"],["model备注","note"],["邀请ID","invite"]];
-function key(h){const memo=key.memo||(key.memo=new Map());if(memo.has(h))return memo.get(h);const result=(()=>{let n=norm(h);if(!n)return "";let mapped=keyMap.find(x=>n.includes(norm(x[0]))||norm(x[0]).includes(n));if(mapped)return mapped[1];let aliases=[["item_image","main"],["main_image","main"],["model_image","modelimage"],["product_link","product"],["item_name","itemoriginal"],["model_name","modeloriginal"],["backcal_cogs_non_brand","nb"],["final_1688_link","ali"],["final_1688_price_moq_3","price"],["backcal_cogs_white_label","c8"]];return aliases.find(x=>norm(x[0])===n)?.[1]||""})();memo.set(h,result);return result}
+function key(h){const memo=key.memo||(key.memo=new Map());if(memo.has(h))return memo.get(h);const result=(()=>{let n=norm(h);if(!n)return "";for(const chineseKey of ["itemchinese","modelchinese"])if(aliasFor(chineseKey).some(alias=>norm(alias)===n))return chineseKey;let mapped=keyMap.find(x=>n.includes(norm(x[0]))||norm(x[0]).includes(n));if(mapped)return mapped[1];let aliases=[["item_image","main"],["main_image","main"],["model_image","modelimage"],["product_link","product"],["item_name","itemoriginal"],["model_name","modeloriginal"],["backcal_cogs_non_brand","nb"],["final_1688_link","ali"],["final_1688_price_moq_3","price"],["backcal_cogs_white_label","c8"]];return aliases.find(x=>norm(x[0])===n)?.[1]||""})();memo.set(h,result);return result}
 function safeHttpUrl(value){let text=String(value||"").trim();if(!text)return "";try{let u=new URL(text,location.href);return u.protocol==="https:"||u.protocol==="http:"?u.href:""}catch(e){return ""}}
 function safeImageUrl(value){let text=String(value||"").trim();if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(text))return text;return safeHttpUrl(text)}
-function headerScore(row){let known=new Set(H.concat(FIELD.map(f=>f.display),statusFilterKeys,["item_image","main_image","model_image","product_link","item_name","model_name","model_id","backcal_cogs_non_brand","final_1688_link","final_1688_price_moq_3","backcal_cogs_white_label","invitation_id","invite_id","Invitation ID"]).map(norm));return row.reduce((n,h)=>n+(known.has(norm(h))?1:0),0)}
+function headerScore(row){let known=new Set(H.concat(FIELD.map(f=>f.display),statusFilterKeys,["item_image","main_image","model_image","product_link","item_name","model_name","model_id","backcal_cogs_non_brand","final_1688_link","final_1688_price_moq_3","backcal_cogs_white_label","invitation_id","invite_id","Invitation ID"]).map(norm));return row.reduce((n,h)=>n+(known.has(norm(h))||["itemchinese","modelchinese"].includes(key(h))?1:0),0)}
 function isMetaRow(values){let s=values.map(x=>String(x??"")).join(" ");return /系统抓取|自主选择以上几个选项|默认折叠，点击\+号|这个部分买手可以自主选择/.test(s)}
 function getRaw(r,aliases){if(!getRaw.normalizeAlias){const aliasesMemo=new Map();getRaw.normalizeAlias=alias=>{if(!aliasesMemo.has(alias))aliasesMemo.set(alias,norm(alias));return aliasesMemo.get(alias)}}let raw=r?.raw||{},cache=rawLookupCache.get(raw);if(!cache){let keys=Object.keys(raw),signature=keys.join("\u001f");cache=rawSchemaLookup.get(signature);if(!cache){let exact=new Map(),entries=[];for(let h of keys){let n=norm(h);entries.push([n,h]);if(!exact.has(n))exact.set(n,h)}cache={exact,entries};rawSchemaLookup.set(signature,cache)}rawLookupCache.set(raw,cache)}for(let alias of aliases){let h=cache.exact.get(getRaw.normalizeAlias(alias));if(h!=null&&raw[h]!==""&&raw[h]!=null)return raw[h]}for(let alias of aliases){let n=getRaw.normalizeAlias(alias);for(let [key,h] of cache.entries)if(key.includes(n)&&raw[h]!==""&&raw[h]!=null)return raw[h]}return ""}
 function invalidateRaw(r){if(r?.raw)rawLookupCache.delete(r.raw);if(typeof calc==="function")calc.memo?.delete(r);if(typeof filtered==="function")filtered.memo?.delete(r);if(typeof textTokens==="function")textTokens.memo?.delete(r)}
@@ -1693,7 +2620,7 @@ function format2(n){let x=number(n);return x==null?"":round2(x).toFixed(2)}
 function calc(r,k){const memo=calc.memo||(calc.memo=new WeakMap());let c=memo.get(r);if(!c||c.raw!==r.raw){const raw=r.raw||{},read=(header,aliases)=>Object.prototype.hasOwnProperty.call(raw,header)?raw[header]:getRaw(r,aliases),p=number(read(H[15],['1688价格','final_1688_price_moq_3'])),n=number(read(H[13],['Non Brand 倒算价','backcal_cogs_non_brand'])),white=number(read(H[17],['C8倒算价','backcal_cogs_white_label']));c={raw,p,n,white,target:n!=null&&p!=null?Math.min(n,p):n??p??number(read(H[16],['目标价'])),c8target:white!=null&&p!=null?Math.min(white,p):white??p??number(read(H[18],['走C8目标价']))};memo.set(r,c)}if(k==='_targetNumber')return c.target;if(k==='_price')return c.p;if(k==='_nb')return c.n;if(k==='_c8')return c.white;if(k==='target'||k==='c8target')return c[k]==null?'':format2(c[k]);if(k==='check')return c.n==null||c.p==null?'':c.n>=c.p?'是':'否';return null}
 function value(r,h){if(norm(h).includes("modelid"))return idFor(r);if(norm(h).includes("商品组"))return r.manualGroup||r.group;if(h==="前置核价日期")return r.preDate||"";if(h==="前置核价备注")return r.preNote||"";let k=key(h);if(k==="target"||k==="c8target"||k==="check")return calc(r,k);if(k==="nb")return format2(calc(r,"_nb"));if(k==="c8")return format2(calc(r,"_c8"));if(k==="main")return r.main||getRaw(r,["主图图片","item_image"]);if(k==="modelimage")return r.modelImage||getRaw(r,["model 图片","model_image"])||r.main||"";if(k==="status")return statusLines(r).map(x=>x[1]).join("\n");if(k==="pre")return r.preValue??getRaw(r,["是否放前置核价"]);if(k==="preDate")return r.preDate||"";if(k==="preNote")return r.preNote||"";let raw=r.raw||{},direct=raw[h],edited=(r.userEditedFields||[]).includes(h);if(edited||Object.prototype.hasOwnProperty.call(raw,h))return direct??"";return getRaw(r,aliasFor(k))??""}
 function filterValue(r,h){let k=key(h);if(norm(h).includes("modelid"))return idFor(r);if(k==="main"||k==="modelimage")return String(value(r,h)||"").trim()?"有图片":"空白";return String(value(r,h)??"").trim()}
-function aliasFor(k){let x={dev:["是否可开发"],reason:["不可开发原因"],l1:["level1_global_be_category"],l2:["level2_global_be_category"],l3:["level3_global_be_category"],product:["Shopee link","product_link"],itemoriginal:["item name 原文","item_name"],itemchinese:["item name 中文"],modeloriginal:["Model name 原文","model_name"],modelchinese:["Model name 中文"],nb:["Non Brand 倒算价","backcal_cogs_non_brand"],ali:["1688链接","final_1688_link"],price:["1688价格","final_1688_price_moq_3"],c8:["C8倒算价","backcal_cogs_white_label"],brand:["品牌","mall_brand_name"],style:["款式"],qty:["件数"],note:["model备注"],invite:["邀请ID","invitation_id","invite_id"]};return x[k]||[]}
+function aliasFor(k){let x={dev:["是否可开发"],reason:["不可开发原因"],l1:["level1_global_be_category"],l2:["level2_global_be_category"],l3:["level3_global_be_category"],product:["Shopee link","product_link"],itemoriginal:["item name 原文","item_name"],itemchinese:["item name 中文","item_name_zh","item_name_cn","item_name_chinese","item_name_zh_cn","item中文","商品标题中文","中文标题"],modeloriginal:["Model name 原文","model_name"],modelchinese:["Model name 中文","model_name_zh","model_name_cn","model_name_chinese","model_name_zh_cn","model中文","型号名称中文","中文型号"],nb:["Non Brand 倒算价","backcal_cogs_non_brand"],ali:["1688链接","final_1688_link"],price:["1688价格","final_1688_price_moq_3"],c8:["C8倒算价","backcal_cogs_white_label"],brand:["品牌","mall_brand_name"],style:["款式"],qty:["件数"],note:["model备注"],invite:["邀请ID","invitation_id","invite_id"]};return x[k]||[]}
 function drawOptions(i) {
   let options = [];
   if (i === 0) options = ["是","否","待定-倒算价可做，待1688前置核价","待定-倒算价可做，1688价格申诉中","待定-其他"];
@@ -1726,7 +2653,7 @@ function groupIsOpen(g){return g==="c8"?showC8:showAttrs}
 function visibleFields(){return FIELD.filter(f=>f.foldGroup!==""&&groupIsOpen(f.foldGroup)||!f.foldGroup)}
 function displayColumns(){let out=[],foldAdded=new Set(),openSeen=new Set();for(let f of FIELD){if(f.foldGroup&&!groupIsOpen(f.foldGroup)){if(!foldAdded.has(f.foldGroup)){foldAdded.add(f.foldGroup);out.push({h:f.foldGroup==="c8"?"C8/核价列":"品牌/款式/件数",display:f.foldGroup==="c8"?"C8/核价（2列）":"品牌/款式/件数（3列）",s:"点击加号展开此列组。",k:"fold",foldGroup:f.foldGroup})}continue}let x=Object.assign({},f,{k:key(f.h)});if(f.foldGroup&&!openSeen.has(f.foldGroup)){x.collapseGroup=f.foldGroup;openSeen.add(f.foldGroup)}out.push(x)}return out}
 
-function colSize(f){let w={id:124,select:32,fold:112,dev:82,reason:145,l1:80,l2:80,l3:80,status:170,main:72,modelimage:72,product:88,itemoriginal:112,itemchinese:112,modeloriginal:112,modelchinese:112,nb:80,ali:96,price:72,target:72,c8:76,c8target:82,check:68,brand:72,style:76,qty:48,pre:180,note:220,invite:112};let idWidth=innerWidth<=900?92:w.id,selectWidth=innerWidth<=900?26:w.select;if(f.k==="id")return idWidth;if(f.k==="select")return selectWidth;let columns=displayColumns(),total=columns.reduce((n,c)=>n+(w[c.k]||118),0),box=document.querySelector(".gridbox"),available=Math.max(300,(box?.clientWidth||document.documentElement.clientWidth)-idWidth-selectWidth-2);return Math.max(1,Math.floor(available*(w[f.k]||118)/Math.max(1,total)))}
+function colSize(f){let w={id:124,select:32,fold:112,dev:82,reason:145,l1:80,l2:80,l3:80,status:170,main:126,modelimage:126,product:88,itemoriginal:112,itemchinese:112,modeloriginal:112,modelchinese:112,nb:80,ali:96,price:72,target:72,c8:76,c8target:82,check:68,brand:72,style:76,qty:48,pre:180,note:220,invite:112};let idWidth=innerWidth<=900?92:w.id,selectWidth=innerWidth<=900?26:w.select;if(f.k==="id")return idWidth;if(f.k==="select")return selectWidth;let columns=displayColumns(),total=columns.reduce((n,c)=>n+(w[c.k]||118),0),box=document.querySelector(".gridbox"),available=Math.max(300,(box?.clientWidth||document.documentElement.clientWidth)-idWidth-selectWidth-2);return Math.max(1,Math.floor(available*(w[f.k]||118)/Math.max(1,total)))}
 function updateStats(a,g){$("groupsN").textContent=g.length;$("modelsN").textContent=a.length;$("pendingN").textContent=a.filter(r=>!String(value(r,H[0])||"").trim()).length;$("priceN").textContent=a.filter(r=>calc(r,"_price")==null).length;$("state").textContent=rows.length?(sourceFileName?sourceFileName+" · ":"")+rows.length+" 条源表记录":sourceFileName?sourceFileName+" · 未发现商品数据行":"等待导入商品数据";$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID"}
 function matchesState(state,v){if(!state)return true;let hasValues=Array.isArray(state.values),hasQuery=!!state.query,valueMatch=hasValues&&state.values.includes(String(v??"").trim()),queryMatch=hasQuery&&norm(v).includes(norm(state.query));if(hasValues&&hasQuery)return valueMatch&&queryMatch;if(hasValues)return valueMatch;return hasQuery?queryMatch:true}
 function updateSelectionUI(){let selectedVisible=0;for(let r of visibleRows)if(selected.has(r.uid))selectedVisible++;let all=$("selectVisible");if(all){all.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;all.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length}$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID";document.querySelectorAll("[data-select]").forEach(x=>x.checked=selected.has(x.dataset.select))}function filtered(){if(!filtered.searchText){filtered.memo=new WeakMap();filtered.searchText=r=>{let s=filtered.memo.get(r);if(s===undefined){s=norm(FIELD.filter(f=>f.i!==6&&f.i!==7).map(f=>value(r,f.h)).join(' ')+' '+idFor(r));filtered.memo.set(r,s)}return s}}let q=norm($("search").value),idState=filters["Model ID"],fieldStates=FIELD.filter(f=>filters[f.h]),stateKeys=statusFilterKeys.filter(k=>filters["status:"+k]);if(!q&&!idState&&!fieldStates.length&&!stateKeys.length)return rows.slice();return rows.filter(r=>{if(q&&!filtered.searchText(r).includes(q))return false;if(idState&&!matchesState(idState,idFor(r)))return false;for(let f of fieldStates)if(!matchesState(filters[f.h],filterValue(r,f.h)))return false;for(let k of stateKeys)if(!matchesState(filters["status:"+k],statusValue(r,k)))return false;return true})}
@@ -1765,9 +2692,8 @@ function rowHtml(r, cols, count, gid, isChild) {
     }
     if (k === "note") return "<td><textarea class=\"cell note-editor\" data-edit=\"raw\" data-field=\"" + esc(f.h) + "\" data-id=\"" + esc(r.uid) + "\" placeholder=\"填写 Model 备注\"" + disabled + ">" + esc(v) + "</textarea></td>";
     if (k === "itemchinese" || k === "modelchinese") {
-      const sourceIndex=k==="itemchinese"?9:11,targetIndex=sourceIndex===9?10:12,issue=r[translationWarningField(targetIndex)]||BuyerTranslation.sourceIssue(translationSource(r,sourceIndex));const googleUrl=new URL("https://translate.google.com/");googleUrl.search=new URLSearchParams({sl:"auto",tl:"zh-CN",text:translationSource(r,sourceIndex),op:"translate"}).toString();const tools=historyMode?"":'<div class="translation-cell-tools"><button type="button" class="translation-source-button" data-retranslate-field="'+sourceIndex+'" data-id="'+esc(r.uid)+'">整句重译</button><a href="'+esc(googleUrl.href)+'" target="_blank" rel="noopener noreferrer">Google核对 ↗</a></div>';
-      const note=issue?'<div class="translation-warning">'+esc(issue)+(historyMode?'':' <button type="button" class="translation-source-button" data-translation-source="'+sourceIndex+'" data-id="'+esc(r.uid)+'">修正原文</button>')+'</div>':'';
-      return '<td><textarea rows="4" class="cell translation-editor" data-edit="raw" data-field="'+esc(f.h)+'" data-id="'+esc(r.uid)+'" placeholder="'+(issue?'中文待生成，可重试翻译或人工补全':'Google中文译文，可人工编辑')+'" title="Google整句翻译，买手手工修改会保留"'+disabled+'>'+esc(v)+'</textarea>'+note+tools+'</td>';
+      const targetIndex=k==='itemchinese'?10:12,warning=r[translationWarningField(targetIndex)]||'';
+      return '<td><textarea rows="5" class="cell translation-editor" data-edit="raw" data-field="'+esc(f.h)+'" data-id="'+esc(r.uid)+'" placeholder="正在自动翻译…" title="'+esc(warning||'中文自动生成，可直接修改，人工内容会保留')+'"'+disabled+'>'+esc(v)+'</textarea></td>';
     }
     if (["ali", "price", "brand", "style", "qty", "invite"].includes(k)) {
       const type = k === "price" || k === "qty" ? "type=\"number\" step=\"any\"" : "";
@@ -1785,7 +2711,7 @@ function rowHtml(r, cols, count, gid, isChild) {
 
 function updateCalculatedCells(r){for(let el of document.querySelectorAll("[data-calc-row]"))if(el.dataset.calcRow===r.uid)el.textContent=calc(r,el.dataset.calcType)||"—"}
 function closeProductCard(){document.getElementById("productCard")?.remove();activeProductCard=""}
-function closeImageZoom(){clearTimeout(imageZoomTimer);imageZoomTimer=0;document.getElementById("imageZoom")?.remove();activeZoomSource=""}
+function closeImageZoom(){clearTimeout(imageZoomHoverTimer);clearTimeout(imageZoomTimer);imageZoomTimer=0;document.getElementById("imageZoom")?.remove();activeZoomSource=""}
 function scheduleImageZoomClose(){clearTimeout(imageZoomTimer);imageZoomTimer=setTimeout(()=>{if(!document.querySelector("#imageZoom:hover"))closeImageZoom()},220)}
 function showImageZoom(img){let src=img.currentSrc||img.src;if(!src)return;if(activeZoomSource===src&&document.getElementById("imageZoom")){closeImageZoom();return}closeImageZoom();activeZoomSource=src;let rect=img.getBoundingClientRect(),width=Math.min(560,innerWidth-24),height=Math.min(520,innerHeight-24),left=rect.right+width+12<=innerWidth?rect.right+12:Math.max(12,rect.left-width-12),top=Math.max(12,Math.min(rect.top,innerHeight-height-12)),box=document.createElement("aside");box.id="imageZoom";box.className="image-zoom";box.setAttribute("role","dialog");box.setAttribute("aria-label",img.alt||"图片放大预览");box.style.cssText="position:fixed;z-index:130;width:"+width+"px;height:"+height+"px;left:"+left+"px;top:"+top+"px";box.innerHTML=`<img src="${esc(src)}" alt="${esc(img.alt)}">`;box.onpointerenter=()=>clearTimeout(imageZoomTimer);box.onpointerleave=scheduleImageZoomClose;document.body.append(box)}
 function productDetail(r) {
@@ -1899,101 +2825,77 @@ function sharePreviewChineseValue(record,targetIndex) {
   const source=translationSource(record,targetIndex===10?9:11);
   return BuyerTranslation.usable(source,text)?text:'';
 }
-function editSharePreviewChinese(record,dataset) {
-  if(historyMode||!canEditWorkspace()||rows!==dataset||!rows.includes(record))return;
-  closeProductCard();
-  const overlay=$('overlay');
-  overlay.innerHTML='<div class="modalbg"><section class="modal" id="shareChineseEditor"><h3>补全分享中文</h3><p class="muted">请填写核对后的中文标题和中文型号，实际品牌、型号编码与规格可保留。保存后将保留人工内容。</p><label class="pre-field">中文标题<textarea class="cell" id="shareChineseItem" rows="4"></textarea></label><label class="pre-field" style="margin-top:10px">中文型号<textarea class="cell" id="shareChineseModel" rows="3"></textarea></label><p class="muted" id="shareChineseEditorStatus" role="status"></p><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn" id="cancelShareChinese">取消</button><button class="btn primary" id="saveShareChinese">保存中文并返回卡片</button></div></section></div>';
-  const editor=$('shareChineseEditor');
-  $('shareChineseItem').value=sharePreviewChineseValue(record,10);
-  $('shareChineseModel').value=sharePreviewChineseValue(record,12);
-  $('cancelShareChinese').onclick=()=>{if($('shareChineseEditor')===editor)overlay.innerHTML=''};
-  $('saveShareChinese').onclick=()=>{
-    if($('shareChineseEditor')!==editor)return;
-    const status=$('shareChineseEditorStatus');
-    if(historyMode||!canEditWorkspace()||rows!==dataset||!rows.includes(record)){status.textContent='工作台数据已切换，请关闭后重新打开商品卡片';return}
-    const entries=[[10,$('shareChineseItem').value.trim()],[12,$('shareChineseModel').value.trim()]];
-    for(const [targetIndex,text] of entries){
-      const source=translationSource(record,targetIndex===10?9:11);
-      if(!text||/^(?:[—–-]+|待翻译|翻译中|未提供|待补全)$/.test(text)||!BuyerTranslation.usable(source,text)){
-        status.textContent='请填写完整的'+(targetIndex===10?'中文标题':'中文型号')+'，并核对实际品牌、型号编码与规格';return;
-      }
-    }
-    for(const [targetIndex,text] of entries){record.raw[H[targetIndex]]=text;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])]}
-    record.autoItemChinese=false;record.localTranslatedItem=false;record.autoModelChinese=false;record.localTranslatedModel=false;
-    invalidateRaw(record);markDirty(record);save();overlay.innerHTML='';render();
-    const anchor=Array.from(document.querySelectorAll('[data-share]')).find(button=>button.dataset.share===record.uid);
-    if(anchor)toggleProductCard(record.uid,anchor);else toast('分享中文已保存，请重新打开商品卡片');
-  };
+function sharePreviewCategoryValue(record){
+  const path=String(categoryPath(record)||'').trim();
+  if(!path||/(?:翻译中|待翻译|待补全|待生成)/.test(path))return '';
+  return path.split(/\s*>\s*/).every(part=>hasChinese(part))?path:'';
 }
 function toggleProductCard(uid, anchor) {
-  if (activeProductCard === uid) { closeProductCard(); return; }
+  if(activeProductCard===uid){closeProductCard();return}
   closeProductCard();
-  const dataset=rows,r=dataset.find(x=>x.uid===uid);
-  if (!r) return;
-  const d = productDetail(r), card = document.createElement("aside");
-  card.id = "productCard"; card.className = "product-card";
-  const rect = anchor.getBoundingClientRect(), width = Math.min(480, innerWidth - 16), height = Math.min(760, innerHeight - 24);
-  const left = rect.right + width + 12 < innerWidth ? rect.right + 8 : Math.max(8, rect.left - width - 8);
-  const top = Math.max(8, Math.min(rect.top, innerHeight - height - 8));
-  card.style.cssText = "position:fixed;z-index:120;width:" + width + "px;max-height:" + height + "px;left:" + left + "px;top:" + top + "px";
-  const image = (src,label,badges) => "<figure class=\"product-card-model-figure\">" + (src ? "<img loading=\"lazy\" src=\"" + esc(src) + "\" alt=\"" + esc(label) + "\">" : "<div class=\"product-card-empty\">暂无图片</div>") + "<div class=\"product-card-media-footer\"><figcaption>" + esc(label) + "</figcaption>" + inlineBadgesMarkup(badges) + "</div></figure>";
-  const field = (label,val,attr) => "<div class=\"product-card-block\"><span class=\"product-card-label\">" + esc(label) + "</span><div class=\"product-card-value\"" + (attr || "") + ">" + esc(val || "未提供") + "</div></div>";
-  const link = d.shopee ? d.shopeeUrl ? "<a href=\"" + esc(d.shopeeUrl) + "\" target=\"_blank\" rel=\"noopener\">" + esc(d.shopee) + "</a>" : esc(d.shopee) : "未提供";
-  card.innerHTML = "<button class=\"product-card-close\" type=\"button\" aria-label=\"关闭\">×</button><div class=\"product-card-images\">" + image(d.model,"model 图片（SKU图）",d.badges) + "</div>" + field("中文标题",sharePreviewChineseValue(r,10)||"中文标题待翻译"," data-preview-chinese=\"10\"") + field("中文型号",sharePreviewChineseValue(r,12)||"中文型号待翻译"," data-preview-chinese=\"12\"") + field("上新类目",d.category," data-share-category=\"1\"") + (d.invitation ? field("邀请ID",d.invitation) : "") + "<dl><dt>目标价</dt><dd>" + esc(d.target) + "</dd><dt>Model ID</dt><dd>" + esc(d.id) + "</dd><dt>Shopee link</dt><dd>" + link + "</dd></dl><p class=\"muted\" data-preview-status role=\"status\"></p><div class=\"product-card-actions\" style=\"flex-wrap:wrap;gap:6px\"><button type=\"button\" data-retry-preview>重试翻译</button><button type=\"button\" data-edit-preview>补全中文</button><button type=\"button\" data-generate-single>生成在线链接</button></div><div data-preview-link hidden><input class=\"share-inline-link\" readonly aria-label=\"在线分享链接\"><button type=\"button\" class=\"btn\" data-copy-single>复制链接</button></div>";
+  const dataset=rows,record=dataset.find(row=>row.uid===uid);
+  if(!record)return;
+  const detail=productDetail(record),card=document.createElement('aside');
+  card.id='productCard';card.className='product-card';
+  const rect=anchor.getBoundingClientRect(),width=Math.min(480,innerWidth-16),height=Math.min(760,innerHeight-24);
+  const left=rect.right+width+12<innerWidth?rect.right+8:Math.max(8,rect.left-width-8);
+  const top=Math.max(8,Math.min(rect.top,innerHeight-height-8));
+  card.style.cssText='position:fixed;z-index:120;width:'+width+'px;max-height:'+height+'px;left:'+left+'px;top:'+top+'px';
+  const image=(src,label,badges)=>'<figure class="product-card-model-figure">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(label)+'">':'<div class="product-card-empty">暂无图片</div>')+'<div class="product-card-media-footer"><figcaption>'+esc(label)+'</figcaption>'+inlineBadgesMarkup(badges)+'</div></figure>';
+  const field=(label,text,attribute)=>'<div class="product-card-block"'+(attribute?' data-preview-field="'+attribute+'"':'')+'><span class="product-card-label">'+esc(label)+'</span><div class="product-card-value"'+(attribute==='category'?' data-share-category':attribute?' data-preview-chinese="'+attribute+'"':'')+'>'+esc(text||'')+'</div></div>';
+  const shopee=detail.shopee?(detail.shopeeUrl?'<a href="'+esc(detail.shopeeUrl)+'" target="_blank" rel="noopener">'+esc(detail.shopee)+'</a>':esc(detail.shopee)):'未提供';
+  card.innerHTML='<button class="product-card-close" type="button" aria-label="关闭">×</button><div class="product-card-images">'+image(detail.model,'model 图片（SKU图）',detail.badges)+'</div>'+field('中文标题',sharePreviewChineseValue(record,10),'10')+field('中文型号',sharePreviewChineseValue(record,12),'12')+field('上新类目',sharePreviewCategoryValue(record),'category')+(detail.invitation?field('邀请ID',detail.invitation):'')+'<dl><dt>目标价</dt><dd>'+esc(detail.target)+'</dd><dt>Model ID</dt><dd>'+esc(detail.id)+'</dd><dt>Shopee link</dt><dd>'+shopee+'</dd></dl><p class="muted" data-preview-status role="status" hidden></p><div class="product-card-actions"><button type="button" data-generate-single>生成在线链接</button></div><div data-preview-link hidden><input class="share-inline-link" readonly aria-label="在线分享链接"><button type="button" class="btn" data-copy-single>复制链接</button></div>';
   document.body.append(card);activeProductCard=uid;
-  const current=()=>rows===dataset&&rows.includes(r)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
-  const status=card.querySelector('[data-preview-status]'),retry=card.querySelector('[data-retry-preview]'),generate=card.querySelector('[data-generate-single]'),edit=card.querySelector('[data-edit-preview]'),result=card.querySelector('[data-preview-link]');
-  let translationRun=0;
-  const updateFields=(pending=false)=>{
-    let missing=0;
-    for(const targetIndex of [10,12]){
-      const text=sharePreviewChineseValue(r,targetIndex),label=targetIndex===10?'中文标题':'中文型号';
-      const source=translationSource(r,targetIndex===10?9:11),manual=manualChinese(r,targetIndex);
-      card.querySelector('[data-preview-chinese="'+targetIndex+'"]').textContent=text||(pending&&source&&!manual?'正在翻译'+label+'…':label+'待补全');
-      if(!text)missing++;
+  const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
+  const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
+  let checking=true,generating=false,linkError='',linkSignature='';
+  const snapshot=()=>[sharePreviewChineseValue(record,10),sharePreviewChineseValue(record,12),sharePreviewCategoryValue(record)];
+  const update=()=>{
+    if(!current())return false;
+    const values=snapshot(),ready=values.every(Boolean),signature=JSON.stringify(values);
+    for(const [index,key] of ['10','12','category'].entries()){
+      const field=card.querySelector('[data-preview-field="'+key+'"]');
+      field.hidden=!values[index];
+      card.querySelector(key==='category'?'[data-share-category]':'[data-preview-chinese="'+key+'"]').textContent=values[index];
     }
-    card.querySelector('[data-share-category]').textContent=categoryPath(r);return missing;
+    if(linkSignature&&signature!==linkSignature){result.hidden=true;linkSignature=''}
+    generate.disabled=generating||!ready;
+    const message=!ready&&!checking?'中文尚未完成，请先点击上方“一键翻译”。':linkError;
+    status.textContent=message;status.hidden=!message;
+    return ready;
   };
-  card.refreshChinese=record=>{if(record!==r||!current())return;const missing=updateFields(false);if(!missing)status.textContent='中文已就绪，可以生成在线链接'};
-  const refresh=async(force=false)=>{
-    if(!current())return;
-    const run=++translationRun;
-    if(force&&!historyMode&&canEditWorkspace()){
-      translationLastError='';translationUserPaused=false;translationQueue.failedUntil.clear();translationQueue.setPaused(false);scheduleTranslationStatus();
-    }
-    retry.disabled=true;updateFields(true);status.textContent='正在补齐分享中文与类目…';result.hidden=true;
-    const ensure=typeof ensureChineseForShare==='function'?ensureChineseForShare:ensureProductTranslations;
-    const outcomes=await Promise.allSettled([Promise.resolve().then(()=>ensure([r])),Promise.resolve().then(()=>ensureCategoryTranslations([r]))]);
-    if(!current()||run!==translationRun)return;
-    retry.disabled=false;
-    const missing=updateFields(),failed=outcomes.find(outcome=>outcome.status==='rejected');
-    if(outcomes[1].status==='rejected'&&categoryPath(r)==='类目翻译中')card.querySelector('[data-share-category]').textContent='类目翻译未完成，请重试';
-    status.textContent=failed?'中文尚未补齐：'+(failed.reason?.message||'翻译连接失败')+'。可重试翻译或补全中文。':missing?'缺少中文标题或中文型号，请补全中文后分享。':'中文标题、型号与类目已就绪。';
-  };
+  card.refreshChinese=changedRecord=>{if(!changedRecord||changedRecord===record)update()};
+  card.refreshCategory=card.refreshChinese;
   card.querySelector('.product-card-close').onclick=closeProductCard;
-  edit.disabled=historyMode||!canEditWorkspace();edit.onclick=()=>{if(current())editSharePreviewChinese(r,dataset)};
-  retry.onclick=()=>refresh(true);
   generate.onclick=async()=>{
-    if(!current())return;
-    generate.disabled=true;result.hidden=true;status.textContent='正在核对中文并生成在线链接…';
+    if(!current()||generating)return;
+    if(!update()){checking=false;update();return}
+    generating=true;linkError='';result.hidden=true;update();
     try{
-      const url=await buildOnlineShareLink([r]);
+      const url=await buildOnlineShareLink([record]);
       if(!current())return;
-      if(updateFields())throw new Error('请补全中文标题和中文型号后分享');
-      result.querySelector('input').value=url;result.hidden=false;status.textContent='在线链接已生成，可复制分享。';
-      result.querySelector('[data-copy-single]').onclick=async event=>{event.currentTarget.textContent=await copyShareText(url)?'已复制':'复制失败'};
-    }catch(error){if(current()){updateFields();status.textContent='链接生成失败：'+(error?.message||'请重试')+'。可重试翻译或补全中文。'}}
-    finally{if(current())generate.disabled=false}
+      if(!update())throw new Error('分享中文未完成');
+      result.querySelector('input').value=url;result.hidden=false;linkSignature=JSON.stringify(snapshot());
+      result.querySelector('[data-copy-single]').onclick=async event=>{const button=event.currentTarget;button.textContent=await copyShareText(url)?'已复制':'复制失败'};
+    }catch(error){if(current()){linkError='链接生成失败，请先确认上方“一键翻译”已完成。';result.hidden=true}}
+    finally{if(current()){generating=false;checking=false;update()}}
   };
-  refresh();
+  update();
+  const watch=()=>{if(!current())return;update();setTimeout(watch,400)};
+  setTimeout(watch,400);
+  const productTask=Promise.resolve().then(()=>ensureProductTranslations([record]));
+  const categoryTask=Promise.resolve().then(()=>ensureCategoryTranslations([record]));
+  productTask.then(()=>card.refreshChinese(record),()=>card.refreshChinese(record));
+  categoryTask.then(()=>card.refreshCategory(record),()=>card.refreshCategory(record));
+  Promise.allSettled([productTask,categoryTask]).then(()=>{if(current()){checking=false;update()}});
 }
+
 async function uploadRowImage(input){
   if(!canEditWorkspace()||historyMode)return;const file=input.files?.[0],record=rows.find(r=>r.uid===input.dataset.image);if(!file||!record)return;
   if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>8*1024*1024){toast("请选择不超过 8MB 的 PNG/JPEG/WebP/GIF 图片");return}
   try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file)});if(!canEditWorkspace()||historyMode||!rows.includes(record))return;const kind=input.dataset.kind==="modelImage"?"modelImage":"main",field=kind==="main"?H[6]:H[7];record[kind]=data;record.raw[field]=data;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),field])];record.hash="";invalidateRaw(record);markDirty(record);save();render();toast("图片已更新并加入自动保存")}catch(error){toast("图片读取失败："+(error.message||"请重试"))}
 }
-function bindTable(){document.querySelectorAll("[data-retranslate-field]").forEach(button=>button.onclick=()=>retranslateOneField(button.dataset.id,Number(button.dataset.retranslateField)));document.querySelectorAll("[data-image]").forEach(input=>input.onchange=()=>uploadRowImage(input));document.querySelectorAll("[data-edit=preDate]").forEach(input=>input.ondblclick=()=>{if(historyMode||!canEditWorkspace())return;const now=new Date();input.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");input.dispatchEvent(new Event("change",{bubbles:true}))});document.querySelectorAll("[data-child-page]").forEach(button=>button.onclick=()=>{render.childOffsets.set(button.dataset.childPage,Number(button.dataset.offset));render()});document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onclick=e=>{e.stopPropagation();showImageZoom(x)};x.onpointerleave=scheduleImageZoomClose});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;if(k==="raw"){r.raw[field]=x.value;invalidateRaw(r);if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
+function bindTable(){document.querySelectorAll("[data-retranslate-field]").forEach(button=>button.onclick=()=>retranslateOneField(button.dataset.id,Number(button.dataset.retranslateField)));document.querySelectorAll("[data-image]").forEach(input=>input.onchange=()=>uploadRowImage(input));document.querySelectorAll("[data-edit=preDate]").forEach(input=>input.ondblclick=()=>{if(historyMode||!canEditWorkspace())return;const now=new Date();input.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");input.dispatchEvent(new Event("change",{bubbles:true}))});document.querySelectorAll("[data-child-page]").forEach(button=>button.onclick=()=>{render.childOffsets.set(button.dataset.childPage,Number(button.dataset.offset));render()});document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onpointerenter=()=>{clearTimeout(imageZoomHoverTimer);clearTimeout(imageZoomTimer);imageZoomHoverTimer=setTimeout(()=>{if(x.isConnected&&x.matches(":hover")&&(activeZoomSource!==(x.currentSrc||x.src)||!$("imageZoom")))showImageZoom(x)},130)};x.onclick=e=>{e.stopPropagation();if(activeZoomSource!==(x.currentSrc||x.src)||!$("imageZoom"))showImageZoom(x)};x.onpointerleave=()=>{clearTimeout(imageZoomHoverTimer);scheduleImageZoomClose()}});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;if(k==="raw"){r.raw[field]=x.value;invalidateRaw(r);if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
 function filterPopup(h,anchor){
   if(key(h)==="status"){statusFilterPopup(anchor);return}
   document.querySelector(".filterpop")?.remove();
@@ -2046,8 +2948,84 @@ function dbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>
 async function loadWorkbenchState(){let db=await openWorkbenchDB(),tx=db.transaction(["records","meta"],"readonly"),rowsReq=tx.objectStore("records").getAll(),metaReq=tx.objectStore("meta").get("current"),result=await Promise.all([dbRequest(rowsReq),dbRequest(metaReq)]);return{rows:result[0]||[],meta:result[1]||null}}
 function localDateKey(d=new Date()){return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")}
 async function listVersions(){let db=await openWorkbenchDB(),tx=db.transaction(["versions"],"readonly");return (await dbRequest(tx.objectStore("versions").getAll())).sort((a,b)=>b.createdAt-a.createdAt)}
-async function refreshVersions(selectId=""){let versions=await listVersions(),el=$("versionSelect");el.innerHTML=versions.length?versions.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label)+" · "+v.rowCount+" 条</option>").join(""):'<option value="">暂无历史版本</option>';if(selectId&&versions.some(v=>v.id===selectId))el.value=selectId;historyRows=versions;return versions}
-async function openVersionManager(){let versions=await listVersions(),box=$("versionManager");box.innerHTML='<div class="modalbg" id="versionManagerBackdrop"><div class="modal version-modal"><div class="version-head"><h3>管理历史版本</h3><button type="button" class="btn" id="closeVersionManager" aria-label="关闭">×</button></div><p class="muted">勾选要删除的版本；删除后，该版本及其本机快照记录会一起移除。</p><div class="version-list" id="versionDeleteList">'+(versions.length?versions.map(v=>'<label class="version-row"><input type="checkbox" data-version-delete="'+esc(v.id)+'"><span><b>'+esc(v.label)+'</b><small>'+esc(new Date(v.createdAt).toLocaleString('zh-CN'))+' · '+v.rowCount+' 条记录</small></span></label>').join(""):'<div class="empty">当前没有历史版本</div>')+'</div><div class="version-actions"><label><input type="checkbox" id="selectAllVersions"> 全选</label><div><button type="button" class="btn" id="cancelVersionDelete">关闭</button><button type="button" class="btn primary" id="deleteSelectedVersions" '+(versions.length?'':'disabled')+'>删除所选版本（0）</button></div></div></div></div>';let backdrop=$("versionManagerBackdrop"),all=$("selectAllVersions"),del=$("deleteSelectedVersions");$("closeVersionManager").onclick=$("cancelVersionDelete").onclick=()=>box.innerHTML="";backdrop.onclick=e=>{if(e.target===backdrop)box.innerHTML=""};function update(){let checks=[...box.querySelectorAll("[data-version-delete]")],n=checks.filter(x=>x.checked).length;del.disabled=!n;del.textContent="删除所选版本（"+n+"）";all.checked=checks.length>0&&n===checks.length;all.indeterminate=n>0&&n<checks.length}box.querySelectorAll("[data-version-delete]").forEach(x=>x.onchange=update);all.onchange=()=>{box.querySelectorAll("[data-version-delete]").forEach(x=>x.checked=all.checked);update()};del.onclick=async()=>{if(!canEditWorkspace()||historyMode)return;let ids=[...box.querySelectorAll("[data-version-delete]:checked")].map(x=>x.dataset.versionDelete);if(!ids.length)return;if(!confirm("确定永久删除所选 "+ids.length+" 个历史版本及对应快照记录吗？"))return;del.disabled=true;try{let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["versions","versionRecords"],"readwrite"),versionsStore=tx.objectStore("versions"),recordIndex=tx.objectStore("versionRecords").index("versionId");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("删除历史版本失败"));tx.onabort=()=>reject(tx.error||Error("删除历史版本已中断"));for(let id of ids){versionsStore.delete(id);let req=recordIndex.openCursor(IDBKeyRange.only(id));req.onsuccess=e=>{let cursor=e.target.result;if(cursor){cursor.delete();cursor.continue()}}}});box.innerHTML="";await refreshVersions();toast("已删除 "+ids.length+" 个历史版本及其快照记录")}catch(e){console.error(e);toast("删除历史版本失败："+(e?.message||"本机存储异常"));del.disabled=false}};update()}
+async function refreshVersions(selectId=""){
+  const el=$("versionSelect"),wanted=selectId||el.value,context={workspace,dataset:rows,history:historyMode},versions=await listVersions();
+  if(workspace!==context.workspace||rows!==context.dataset||historyMode!==context.history)return versions;
+  el.innerHTML=versions.length?versions.map(version=>'<option value="'+esc(version.id)+'">'+esc(version.label||version.id)+" · "+version.rowCount+" 条</option>").join(""):'<option value="">暂无历史版本</option>';
+  if(wanted&&versions.some(version=>version.id===wanted))el.value=wanted;
+  historyRows=versions;return versions;
+}
+async function openVersionManager(){
+  const context={workspace,dataset:rows,history:historyMode},versions=await listVersions(),box=$("versionManager");
+  if(workspace!==context.workspace||rows!==context.dataset||historyMode!==context.history)return;
+  const editable=canEditWorkspace()&&!historyMode;
+  box.innerHTML='<div class="modalbg" id="versionManagerBackdrop"><div class="modal version-modal"><div class="version-head"><h3>管理历史版本</h3><button type="button" class="btn" id="closeVersionManager" aria-label="关闭">×</button></div><p class="muted">可修改版本名称（去除首尾空格，最多 100 个字符）；记录及快照编号保持不变。勾选后可删除对应版本与快照。</p><div class="version-list" id="versionDeleteList">'+(versions.length?versions.map(version=>'<div class="version-row"><input type="checkbox" data-version-delete="'+esc(version.id)+'" aria-label="选择删除 '+esc(version.label||version.id)+'"><span><b data-version-title="'+esc(version.id)+'">'+esc(version.label||version.id)+'</b><small>'+esc(version.id)+' · '+esc(new Date(version.createdAt).toLocaleString('zh-CN'))+' · '+version.rowCount+' 条记录</small><span style="display:flex;gap:6px;margin-top:7px"><input class="cellinput" data-version-label="'+esc(version.id)+'" aria-label="版本名称" value="'+esc(version.label||version.id)+'" style="min-width:0;flex:1"'+(editable?'':' disabled')+'><button type="button" class="btn" data-version-rename="'+esc(version.id)+'"'+(editable?'':' disabled')+'>保存名称</button></span></span></div>').join(""):'<div class="empty">当前没有历史版本</div>')+'</div><div class="version-actions"><label><input type="checkbox" id="selectAllVersions"> 全选</label><div><button type="button" class="btn" id="cancelVersionDelete">关闭</button><button type="button" class="btn primary" id="deleteSelectedVersions" '+(versions.length&&editable?'':'disabled')+'>删除所选版本（0）</button></div></div></div></div>';
+  const backdrop=$("versionManagerBackdrop"),all=$("selectAllVersions"),del=$("deleteSelectedVersions");
+  $("closeVersionManager").onclick=$("cancelVersionDelete").onclick=()=>box.innerHTML="";
+  backdrop.onclick=event=>{if(event.target===backdrop)box.innerHTML=""};
+  function update(){const checks=[...box.querySelectorAll("[data-version-delete]")],count=checks.filter(check=>check.checked).length;del.disabled=!count||!canEditWorkspace()||historyMode;del.textContent="删除所选版本（"+count+"）";all.checked=checks.length>0&&count===checks.length;all.indeterminate=count>0&&count<checks.length}
+  box.querySelectorAll("[data-version-delete]").forEach(check=>check.onchange=update);
+  all.onchange=()=>{box.querySelectorAll("[data-version-delete]").forEach(check=>check.checked=all.checked);update()};
+  box.querySelectorAll("[data-version-rename]").forEach(button=>button.onclick=async()=>{
+    if(!canEditWorkspace()||historyMode){toast("请先返回当前可编辑工作区再修改名称");return}
+    const id=button.dataset.versionRename,input=[...box.querySelectorAll("[data-version-label]")].find(element=>element.dataset.versionLabel===id),dataset=rows,namespace=workspace;
+    if(!input)return;button.disabled=true;
+    try{
+      const renamed=await renameVersion(id,input.value);
+      if(button.isConnected===false||rows!==dataset||workspace!==namespace||historyMode||!canEditWorkspace())return;
+      input.value=renamed.label;const title=[...box.querySelectorAll("[data-version-title]")].find(element=>element.dataset.versionTitle===id);if(title)title.textContent=renamed.label;
+      toast("历史版本已改名："+renamed.label);
+    }catch(error){toast(error?.message||"修改版本名称失败")}
+    finally{if(button.isConnected!==false)button.disabled=!canEditWorkspace()||historyMode}
+  });
+  del.onclick=async()=>{
+    if(!canEditWorkspace()||historyMode)return;
+    const ids=[...box.querySelectorAll("[data-version-delete]:checked")].map(check=>check.dataset.versionDelete);
+    if(!ids.length||!confirm("确定永久删除所选 "+ids.length+" 个历史版本及对应快照记录吗？"))return;
+    const dataset=rows,namespace=workspace;del.disabled=true;
+    try{
+      const db=await openWorkbenchDB();if(rows!==dataset||workspace!==namespace||historyMode||!canEditWorkspace())throw Error("工作台数据已切换，未删除历史版本");
+      await new Promise((resolve,reject)=>{const tx=db.transaction(["versions","versionRecords"],"readwrite"),versionsStore=tx.objectStore("versions"),recordIndex=tx.objectStore("versionRecords").index("versionId");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("删除历史版本失败"));tx.onabort=()=>reject(tx.error||Error("删除历史版本已中断"));for(const id of ids){versionsStore.delete(id);const request=recordIndex.openCursor(IDBKeyRange.only(id));request.onsuccess=event=>{const cursor=event.target.result;if(cursor){cursor.delete();cursor.continue()}}}});
+      if(rows!==dataset||workspace!==namespace||historyMode||!canEditWorkspace())return;
+      box.innerHTML="";await refreshVersions();toast("已删除 "+ids.length+" 个历史版本及其快照记录");
+    }catch(error){console.error(error);toast("删除历史版本失败："+(error?.message||"本机存储异常"));del.disabled=false}
+  };
+  update();
+}
+async function renameVersion(id,name){
+  const label=String(name??"").trim();
+  if(!id)throw Error("请先选择历史版本");
+  if(!label)throw Error("版本名称不能为空");
+  if(Array.from(label).length>100)throw Error("版本名称最多 100 个字符");
+  if(!canEditWorkspace())throw Error("当前工作区不可写，无法修改历史版本名称");
+  if(historyMode)throw Error("请先返回当前数据再修改版本名称");
+  const dataset=rows,namespace=workspace,current=()=>rows===dataset&&workspace===namespace&&!historyMode&&canEditWorkspace(),db=await openWorkbenchDB();
+  if(!current())throw Error("工作台数据已切换，未修改历史版本名称");
+  const renamed=await new Promise((resolve,reject)=>{
+    let updated,failure;const tx=db.transaction(["versions"],"readwrite"),store=tx.objectStore("versions");
+    const stop=message=>{failure=Error(message);if(typeof tx.abort==="function")tx.abort();else reject(failure)};
+    tx.oncomplete=()=>updated?resolve(updated):reject(failure||Error("历史版本不存在或已删除"));tx.onerror=()=>reject(failure||tx.error||Error("修改版本名称失败"));tx.onabort=()=>reject(failure||tx.error||Error("修改版本名称已中断"));
+    const request=store.get(id);
+    request.onsuccess=()=>{
+      if(!current()){stop("工作台数据已切换，未修改历史版本名称");return}
+      if(!request.result){stop("历史版本不存在或已删除");return}
+      updated={...request.result,label};const write=store.put(updated);
+      if(write&&"onsuccess" in write)write.onsuccess=()=>{if(!current())stop("工作台数据已切换，未修改历史版本名称")};
+    };
+  });
+  if(current())await refreshVersions(id);return renamed;
+}
+async function renameSelectedVersion(){
+  if(!canEditWorkspace()||historyMode){toast("请先返回当前可编辑工作区再修改名称");return}
+  const id=$("versionSelect").value;if(!id){toast("请先选择历史版本");return}
+  const dataset=rows,namespace=workspace;
+  try{
+    await openVersionManager();if(rows!==dataset||workspace!==namespace||historyMode||!canEditWorkspace())return;
+    const input=[...$("versionManager").querySelectorAll("[data-version-label]")].find(element=>element.dataset.versionLabel===id);
+    if(!input)throw Error("历史版本不存在或已删除");
+    input.scrollIntoView?.({block:"center"});input.focus();input.select();
+  }catch(error){toast(error?.message||"修改版本名称失败")}
+}
 async function saveVersion(){
   if(!canEditWorkspace()){toast("此工作区已在其他标签编辑，请关闭旧标签后刷新");return}
   if(historyMode){toast("请先返回当前数据再保存版本");return}
@@ -2093,7 +3071,7 @@ function similarProduct(a,b){let t=Math.max(1,Math.min(100,Number(threshold)||90
 function escapeRe(s){return s.replace(/[.*+?^$()|[\]\\]/g,"\\$&")}
 const referenceTranslationCache=new Map();
 // translation-state-v3:start
-const TRANSLATION_VERSION='google-v5-20261117';
+const TRANSLATION_VERSION='reference-v7-20261117';
 const translationCache = new Map();
 let translationStatusTimer=0, visibleTranslationTimer=0, translationLastError='', translationBackgroundRun=0;
 let translationDataset=null, translationRecordSet=new Set(), translationBackgroundDataset=null;
@@ -2105,7 +3083,7 @@ let translationPersistTimer=0;
 const translationCacheReady=(async()=>{
   try {
     translationCacheDb=await new Promise((resolve,reject)=>{
-      const request=indexedDB.open('buyer-title-translations-google-v5',1);
+      const request=indexedDB.open('buyer-title-translations-reference-v7',1);
       request.onupgradeneeded=()=>request.result.createObjectStore('translations',{keyPath:'source'});
       request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
     });
@@ -2153,7 +3131,7 @@ function extractStyle(text){let a=[];for(let [re,label] of [[/\bblack\b|preto|ne
 function extractQty(text){let m=text.match(/\b(\d+)\s*(?:pcs?|pieces?|packs?|sets?|count|ct|unidades?|unids?|piezas?|pçs?|cai|chiec|ชิ้น|ชุด)\b/i)||text.match(/\b(?:pack|set)\s*(?:of\s*)?(\d+)\b/i)||text.match(/(?:^|\s)(\d+)\s*(?:个|件|只|支|套)(?:\s|$)/);return m?m[1]:""}
 function categoryKey(value) { return String(value == null ? "" : value).trim().replace(/\s+/g," ").replace(/\s*&\s*/g,"&").toLowerCase(); }
 const CATEGORY_ZH_NAMES={"Audio":"影音娱乐","Amplifiers & Mixers":"扩音器 & 混音器","Audio & Video Cables & Converters":"视听器材&转换器","Home Audio & Speakers":"家用音响","Media Players":"多媒体播放器","Microphones":"麦克风","Others":"其他","AV Receivers":"AV接收机","CD, DVD, & Blu-ray Players":"CD、DVD & 蓝光播放机","CD, DVD & Blu-ray Players":"CD、DVD & 蓝光播放机","Home Theater Systems":"家庭影院系统","MP3 & MP4 Players":"MP3 & MP4 播放机","Radio & Cassette Players":"收音机 & 卡带收音机","Speakers":"家用音响","Voice Recorders":"录音机"};
-const categoryTranslationCache=new Map(Object.entries(CATEGORY_ZH_NAMES).map(([a,b])=>[categoryKey(a),b]));try{const savedCategoryTranslations=JSON.parse(localStorage.getItem("pool-category-translation-google-v5")||"{}");for(const [k,v] of Object.entries(savedCategoryTranslations))if(v)categoryTranslationCache.set(k,v)}catch(e){}
+const categoryTranslationCache=new Map(Object.entries(CATEGORY_ZH_NAMES).map(([a,b])=>[categoryKey(a),b]));try{const savedCategoryTranslations=JSON.parse(localStorage.getItem("pool-category-translation-reference-v7")||"{}");for(const [k,v] of Object.entries(savedCategoryTranslations))if(v)categoryTranslationCache.set(k,v)}catch(e){}
 function categoryValues(r) {
   return ["level1_global_be_category","level2_global_be_category","level3_global_be_category"].map(alias => String(getRaw(r,[alias]) || "").trim()).filter(Boolean);
 }
@@ -2161,17 +3139,27 @@ function categoryLabel(name) {
   const raw = String(name == null ? "" : name).trim();
   if (!raw) return "";
   if (hasChinese(raw)) return raw;
+  const builtIn=typeof BuyerCategoryTranslations!=='undefined'?BuyerCategoryTranslations.lookup(raw):'';if(builtIn)return builtIn;
   const known = categoryTranslationCache.get(categoryKey(raw));
   if (known) return known;
   const local = translateTitle(raw);
   return local !== raw && hasChinese(local) ? local : "";
 }
-function categoryPath(r) {
-  const names = categoryValues(r);
-  if (!names.length) return "未提供类目";
-  const labels = names.map(categoryLabel);
-  return labels.every(Boolean) ? labels.join(" > ") : "类目翻译中";
+function categoryExactChinese(r,aliases){
+  const normalized=value=>String(value).toLowerCase().replace(/[\s_（）()\-]/g,'');
+  const wanted=new Set(aliases.map(normalized));for(const [key,text]of Object.entries(r.raw||{}))if(wanted.has(normalized(key))&&hasChinese(text))return String(text).trim();return '';
 }
+function categoryPath(r){
+  const path=categoryExactChinese(r,['上新类目中文','中文类目路径','类目中文路径','category_path_zh','category_path_cn']);
+  if(path&&path.split(/[>›/]/).every(part=>hasChinese(part)))return path;
+  const labels=[];for(const level of [1,2,3]){
+    const chinese=categoryExactChinese(r,['level'+level+'_global_be_category_zh','level'+level+'_global_be_category_cn','level'+level+'_global_be_category_chinese','level'+level+'_category_cn','l'+level+'_category_zh',['一级','二级','三级'][level-1]+'类目中文','中文'+['一级','二级','三级'][level-1]+'类目']);
+    const raw=String(getRaw(r,['level'+level+'_global_be_category','scs_level'+level+'_global_be_category'])||'').trim();
+    if(!raw&&!chinese)continue;const label=chinese||categoryLabel(raw);if(!label)return '类目翻译中';labels.push(label);
+  }
+  return labels.length?labels.join(' > '):'未提供类目';
+}
+
 function deriveRecord(r){let item=translationSource(r,9),model=translationSource(r,11),mix=item+" "+model;deriveChineseField(r,9,10,"autoItemChinese","localTranslatedItem","translationItemSource");deriveChineseField(r,11,12,"autoModelChinese","localTranslatedModel","translationModelSource");let brand=String(getRaw(r,["品牌"])||"").trim(),style=String(getRaw(r,["款式"])||"").trim(),qty=String(getRaw(r,["件数"])||"").trim();if(!brand)r.autoBrand=true;if((r.userEditedFields||[]).includes(H[21]))r.autoStyle=false;else if(!style)r.autoStyle=true;if((r.userEditedFields||[]).includes(H[22]))r.autoQty=false;else if(!qty)r.autoQty=true;let mallBrand=String(getRaw(r,["mall_brand_name"])||"").trim();if((r.userEditedFields||[]).includes(H[20]))r.autoBrand=false;else{r.autoBrand=true;r.raw[H[20]]=mallBrand||extractBrand(mix)};if(r.autoStyle)r.raw[H[21]]=extractStyle(mix);if(r.autoQty)r.raw[H[22]]=extractQty(mix);invalidateRaw(r)}
 // translation-integration-v3:start
 function hasChinese(text){return /[\u3400-\u9fff]/.test(String(text||''))}
@@ -2238,33 +3226,49 @@ function syncTranslationDataset(){
 }
 function scheduleTranslationStatus(){if(!translationStatusTimer)translationStatusTimer=setTimeout(()=>{translationStatusTimer=0;updateTranslationStatus()},300)}
 function updateTranslationStatus(){
-  const el=$('translationState');if(!el)return;
-  syncTranslationDataset();
-  const queued=translationQueue.jobs.size;
-  el.textContent=(chromeTranslationMode?'Chrome 本地中文已生成 ':'中文已生成 ')+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+
-    (syncTranslationDataset.pending?' · 后台统计中':'')+
-    (historyMode?' · 历史版本只读':translationUserPaused?' · 已暂停':translationQueue.cooldown>Date.now()?' · Google 服务限流，等待重试':queued?' · 正在翻译，待处理 '+queued+' 条文本':translationLastError&&translationReadyCount<rows.length?' · '+translationLastError:'');
-  const review=rows.filter(r=>r.translationItemWarning||r.translationModelWarning).length;
-  if(review)el.textContent+=' · 原文需核对 '+review.toLocaleString()+' 款';
-  const pause=$('pauseTranslation');if(pause)pause.textContent=translationUserPaused?'继续翻译':'暂停翻译';
+  const el=$('translationState');if(!el)return;syncTranslationDataset();
+  const queued=translationQueue.jobs.size,pending=Math.max(0,rows.length-translationReadyCount);
+  el.textContent='中文已完成 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+(historyMode?' · 历史版本只读':queued?' · 正在自动翻译':pending&&translationLastError?' · 部分未完成，可点一键翻译重试':pending?' · 正在处理':'');
+  el.title=translationLastError||'导入后自动翻译，人工中文优先保留';
 }
+
 let chromeTranslationMode=false;let chromeTranslationLanguages=new Set(),chromeTranslationBridges=new Set(),chromeTranslationPending=new Set();
 const chromeTranslationProvider=typeof BuyerChromeTranslation!=='undefined'?BuyerChromeTranslation.create():null;
 const translationSourceProviders=new Map();
+const referenceTranslationProvider=typeof BuyerReferenceTranslation!=='undefined'?BuyerReferenceTranslation.create({fetchImpl:fetch}):null;
 const googleTranslationProvider=BuyerGoogleTranslation.create({fetchImpl:fetch,validate:BuyerTranslation.usable});
 async function requestGoogleChinese(text,language='auto',context={}){return googleTranslationProvider.translate(text,language,context)}
 async function translateQueuedBatch(texts,language,contexts=[]){
-  if(texts.length!==1)throw Object.assign(new Error('每个商品须独立整句翻译'),{split:true});
-  const local=chromeTranslationMode&&chromeTranslationLanguages.has(language),bridge=local&&chromeTranslationBridges.has(language);
-  let result;if(bridge){const english=await chromeTranslationProvider.translate(texts[0],language,{targetLanguage:'en'});result=await chromeTranslationProvider.translate(english,'en')}else result=local?await chromeTranslationProvider.translate(texts[0],language):await requestGoogleChinese(texts[0],language,contexts[0]||{});
-  translationSourceProviders.set(texts[0],bridge?'chrome-local-via-en':local?'chrome-local':'google-online');return [result];
+  const direct=texts.map(text=>SIMPLE_CHINESE[String(text).trim().toLowerCase()]||''),needed=[];
+  for(let i=0;i<texts.length;i++)if(!direct[i])needed.push(i);
+  if(!needed.length)return direct;
+  const source=needed.map(index=>texts[index]);let translated,fallbackIndices=[];
+  try{
+    if(!referenceTranslationProvider)throw Object.assign(new Error('参考翻译模块未加载'),{fallback:true});
+    translated=await referenceTranslationProvider.translateBatch(source,language,{contexts:needed.map(index=>contexts[index]||{})});
+    needed.forEach((index,i)=>{direct[index]=translated[i]||'';if(direct[index])translationSourceProviders.set(texts[index],'tencent-transmart-reference');else fallbackIndices.push(index)});
+  }catch(error){
+    if(!error.fallback&&!error.unsupportedLanguage&&!error.pause&&!error.qualityFailed)throw error;
+    fallbackIndices=needed;
+  }
+  // Fall back only for failed entries; keep correctly mapped neighboring translations.
+  let fallbackError;
+  for(const index of fallbackIndices){const local=chromeTranslationMode&&chromeTranslationLanguages.has(language),bridge=local&&chromeTranslationBridges.has(language);let result;
+    try{
+      if(bridge){const english=await chromeTranslationProvider.translate(texts[index],language,{targetLanguage:'en'});result=await chromeTranslationProvider.translate(english,'en')}
+      else result=local?await chromeTranslationProvider.translate(texts[index],language):await requestGoogleChinese(texts[index],language,contexts[index]||{});
+      direct[index]=result;translationSourceProviders.set(texts[index],bridge?'chrome-local-via-en':local?'chrome-local':'google-online');
+    }catch(error){fallbackError=error;if(error.rateLimited||error.pause)break}
+  }
+  if(fallbackError){if(!direct.some(Boolean))throw fallbackError;translationLastError='部分中文暂未完成，已有译文保留，可点击一键翻译重试';scheduleTranslationStatus()}
+  return direct;
 }
 
 const translationQueue=new BuyerTranslation.Queue({
-  cache:translationCache,concurrency:3,batchSize:1,maxChars:2400,
+  cache:translationCache,concurrency:2,batchSize:8,maxChars:1800,
   simple:()=>'',requestBatch:translateQueuedBatch,
   onCache:(source,chinese)=>{translationCacheDirty.set(source,chinese);saveTranslationCache()},
-  onActivity:scheduleTranslationStatus,onError:error=>{translationLastError=error?.rateLimited?'Google 服务限流，译文待补齐；稍后点击补齐全部中文重试':error?.timeout?'Google 翻译连接超时，稍后重试':error?.permanent?'部分原文或译文需核对，可修正原文后重试':'Google 翻译暂不可用，原文和已保存译文保留；稍后重试';if(typeof reportQa==='function')reportQa('translation-error',{rateLimited:!!error?.rateLimited,timeout:!!error?.timeout,quality:!!error?.permanent});scheduleTranslationStatus()}
+  onActivity:scheduleTranslationStatus,onError:error=>{translationLastError=error?.rateLimited?'翻译服务暂时繁忙，稍后点击一键翻译重试':error?.timeout?'翻译连接超时，稍后点击一键翻译重试':error?.permanent?'部分原文或译文需核对，可修正原文后重试':'部分中文暂未完成，已有译文保留，可点击一键翻译重试';if(typeof reportQa==='function')reportQa('translation-error',{rateLimited:!!error?.rateLimited,timeout:!!error?.timeout,quality:!!error?.permanent});scheduleTranslationStatus()}
 });
 function translateCn(text,options={}){return translationQueue.request(text,{...options,language:options.language||translationLanguage(text)})}
 function translationRegionHint(r){return ({BR:'pt',VN:'vi',TH:'th',MY:'ms',ID:'id',TW:'en',SG:'en',PH:'en',MX:'es',CO:'es',CL:'es'})[String(getRaw(r,['grass_region'])||'').trim().toUpperCase()]||''}
@@ -2307,6 +3311,7 @@ async function translateVisible(list,priority=0){
   await Promise.all(jobs);scheduleTranslationStatus();
 }
 async function startBackgroundTranslation(force=false){
+  if(typeof automaticChineseEnabled!=='undefined'&&!automaticChineseEnabled)return;
   if(!canEditWorkspace()||historyMode||translationUserPaused||!rows.length)return;
   if(!force&&translationBackgroundDataset===rows)return;
   const dataset=rows,run=++translationBackgroundRun;translationBackgroundDataset=dataset;
@@ -2321,6 +3326,7 @@ async function startBackgroundTranslation(force=false){
 }
 function queueVisibleTranslation(){
   clearTimeout(visibleTranslationTimer);syncTranslationDataset();refreshTranslationEditors();
+  if(typeof automaticChineseEnabled!=='undefined'&&!automaticChineseEnabled){scheduleTranslationStatus();return}
   if(historyMode){translationBackgroundRun++;translationBackgroundDataset=null;translationQueue.cancelQueued();scheduleTranslationStatus();return}
   if(!rows.length||translationUserPaused){scheduleTranslationStatus();return}
   translationQueue.demoteQueued();
@@ -2334,6 +3340,90 @@ function retryVisibleTranslation(){
   refreshTranslationEditors();translationQueue.demoteQueued();
   translateVisible(visibleRows.slice(),0).catch(console.warn);startBackgroundTranslation();scheduleTranslationStatus();
 }
+// automatic-chinese-v7:start
+let automaticChineseEnabled=true,automaticChineseRun=0,automaticChinesePreparing=false;
+function automaticChineseLanguages(dataset){
+  const languages=new Set();
+  for(const record of dataset)for(const [sourceIndex,targetIndex,flag]of [[9,10,'autoItemChinese'],[11,12,'autoModelChinese']]){
+    const source=translationSource(record,sourceIndex),current=String(value(record,H[targetIndex])||'').trim();
+    if(!source||manualChinese(record,targetIndex)||record[flag]===false||BuyerTranslation.passthrough(source))continue;
+    if(record[flag]!==true&&current&&BuyerTranslation.usable(source,current)&&current!==source)continue;
+    languages.add(translationLanguage(source,translationRegionHint(record)));
+  }
+  if(dataset.some(record=>categoryValues(record).some(name=>!categoryLabel(name))))languages.add('en');
+  return [...languages];
+}
+async function prepareAutomaticFallback(languages,interactive){
+  if(!chromeTranslationProvider||typeof globalThis.Translator==='undefined'||!languages.length)return {ready:[],bridges:[]};
+  let direct=languages.slice(),pivots=languages.filter(language=>language!=='en'&&language!=='zh'),english=pivots.length?['en']:[];
+  if(!interactive){
+    const [directStates,pivotStates,enStates]=await Promise.all([Promise.all(direct.map(lang=>chromeTranslationProvider.available(lang))),Promise.all(pivots.map(lang=>chromeTranslationProvider.available(lang,'en'))),Promise.all(english.map(lang=>chromeTranslationProvider.available(lang)))]);
+    direct=direct.filter((lang,i)=>directStates[i]==='available');pivots=pivots.filter((lang,i)=>pivotStates[i]==='available');english=english.filter((lang,i)=>enStates[i]==='available');
+  }
+  // On the single visible translation button, all create calls begin in this click stack.
+  const directPromise=direct.length?chromeTranslationProvider.prepareLanguages(direct):Promise.resolve([]);
+  const pivotPromise=pivots.length?chromeTranslationProvider.prepareLanguages(pivots,{targetLanguage:'en'}):Promise.resolve([]);
+  const englishPromise=english.length?chromeTranslationProvider.prepareLanguages(english):Promise.resolve([]);
+  const [results,via,en]=await Promise.all([directPromise,pivotPromise,englishPromise]);
+  const ready=results.filter(result=>result.status==='available').map(result=>result.sourceLanguage),bridges=[];
+  if(en.some(result=>result.status==='available')||ready.includes('en'))for(const result of via)if(result.status==='available'&&!ready.includes(result.sourceLanguage)){ready.push(result.sourceLanguage);bridges.push(result.sourceLanguage)}
+  return {ready,bridges};
+}
+function useAutomaticFallback(result){
+  if(!result.ready.length)return false;
+  for(const language of result.ready)chromeTranslationLanguages.add(language);
+  for(const language of result.bridges)chromeTranslationBridges.add(language);
+  chromeTranslationMode=chromeTranslationLanguages.size>0;return true;
+}
+async function translateDatasetCategories(dataset,run){
+  const names=[...new Set(dataset.flatMap(categoryValues))].filter(name=>!categoryLabel(name));
+  for(let start=0;start<names.length;start+=24){
+    if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
+    const result=await Promise.all(names.slice(start,start+24).map(async name=>[name,await translateCn(name,{priority:1,language:translationLanguage(name,'en')})]));
+    if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
+    for(const [name,chinese]of result)if(chinese&&hasChinese(chinese))categoryTranslationCache.set(categoryKey(name),chinese);
+    document.getElementById('productCard')?.refreshCategory?.();
+    await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  try{localStorage.setItem('pool-category-translation-reference-v7',JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(error){}
+}
+function launchAutomaticChinese(dataset,options={}){
+  if(rows!==dataset||historyMode||!canEditWorkspace())return;
+  const run=++automaticChineseRun,languages=automaticChineseLanguages(dataset);
+  let preparing;
+  try{preparing=prepareAutomaticFallback(languages,!!options.interactive)}catch(error){preparing=Promise.resolve({ready:[],bridges:[]})}
+  automaticChineseEnabled=true;translationUserPaused=false;translationQueue.setPaused(false);translationQueue.failedUntil.clear();translationLastError='';translationBackgroundDataset=null;
+  queueVisibleTranslation();startBackgroundTranslation(true);translateDatasetCategories(dataset,run).catch(()=>{});scheduleTranslationStatus();
+  Promise.resolve(preparing).then(result=>{
+    if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
+    if(useAutomaticFallback(result)&&translationReadyCount<dataset.length){translationQueue.failedUntil.clear();translationBackgroundDataset=null;startBackgroundTranslation(true);queueVisibleTranslation()}
+  }).catch(()=>{});
+}
+async function oneClickChinese(){
+  if(!canEditWorkspace()||historyMode)return;if(!rows.length){toast('请先导入商品数据');return}if(oneClickChinese.running)return;
+  const dataset=rows,languages=automaticChineseLanguages(dataset);
+  // Prepare fallback models immediately on this user gesture, while the reference service starts automatically.
+  const preparing=prepareAutomaticFallback(languages,true).catch(()=>({ready:[],bridges:[]}));
+  oneClickChinese.running=true;const button=$('translateAll');if(button)button.disabled=true;
+  try{
+    translationQueue.cancelQueued();translationBackgroundRun++;
+    for(let i=0;i<dataset.length;i++){
+      if(rows!==dataset||historyMode||!canEditWorkspace())return;const record=dataset[i];
+      for(const [sourceIndex,targetIndex,flag,done]of [[9,10,'autoItemChinese','localTranslatedItem'],[11,12,'autoModelChinese','localTranslatedModel']]){
+        if(manualChinese(record,targetIndex)||record[flag]===false)continue;
+        const source=translationSource(record,sourceIndex),existing=String(value(record,H[targetIndex])||'').trim();
+        if(record[flag]!==true&&existing&&existing!==source&&BuyerTranslation.usable(source,existing)){record[flag]=false;markDirty(record);continue}
+        translationCache.delete(translationSource(record,sourceIndex));record[translationVersionField(targetIndex)]='';record[done]=false;record[flag]=true;markDirty(record);
+      }
+      if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    save(true);launchAutomaticChinese(dataset);
+    preparing.then(result=>{if(rows!==dataset||historyMode||!canEditWorkspace())return;if(useAutomaticFallback(result)){translationQueue.failedUntil.clear();translationBackgroundDataset=null;startBackgroundTranslation(true);queueVisibleTranslation()}});
+    toast('已开始翻译整张工作表，已有中文和人工修改会保留');
+  }finally{oneClickChinese.running=false;if(button?.isConnected)button.disabled=false}
+}
+// automatic-chinese-v7:end
+
 function translateAllChinese(){
   translationLastError='';translationUserPaused=false;translationQueue.failedUntil.clear();translationQueue.setPaused(false);
   translationBackgroundDataset=null;retryVisibleTranslation();
@@ -2464,7 +3554,7 @@ async function importGoogleDocumentResult(file,id){
       else{const targetIndex=reference.field===H[10]?10:reference.field===H[12]?12:0,sourceIndex=targetIndex===10?9:11;for(const record of byId.get(reference.modelId)||[]){if(!targetIndex||translationSource(record,sourceIndex)!==reference.source||manualChinese(record,targetIndex)||record[targetIndex===10?'autoItemChinese':'autoModelChinese']===false){skipped++;continue}record.raw[H[targetIndex]]=translated.translation;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])];record[targetIndex===10?'autoItemChinese':'autoModelChinese']=false;record[targetIndex===10?'localTranslatedItem':'localTranslatedModel']=true;record[targetIndex===10?'translationItemSource':'translationModelSource']=reference.source;record[translationVersionField(targetIndex)]=TRANSLATION_VERSION;record[targetIndex===10?'translationItemProvider':'translationModelProvider']='google-document';record[translationWarningField(targetIndex)]=(BuyerTranslation.reviewWarnings?.(reference.source,translated.translation)||[]).join('；');invalidateRaw(record);markDirty(record);updated++}}
       if(++processed%100===0){googleDocumentStatus('回填中文 '+processed+' 项');await new Promise(resolve=>setTimeout(resolve,0))}
     }
-    if(rows!==dataset||historyMode||!canEditWorkspace())return;try{localStorage.setItem('pool-category-translation-google-v5',JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(error){}save(true);render();googleDocumentStatus('回填完成：'+updated+' 个中文字段、'+categories+' 个类目；保留人工/已变更原文 '+skipped+' 项，待补译 '+result.missing+' 条。');
+    if(rows!==dataset||historyMode||!canEditWorkspace())return;try{localStorage.setItem('pool-category-translation-reference-v7',JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(error){}save(true);render();googleDocumentStatus('回填完成：'+updated+' 个中文字段、'+categories+' 个类目；保留人工/已变更原文 '+skipped+' 项，待补译 '+result.missing+' 条。');
   }catch(error){console.warn(error);googleDocumentStatus(error.message||'回填失败，原有内容已保留')}
 }
 // google-document-v1:end
@@ -2488,7 +3578,7 @@ async function ensureProductTranslations(records){
   const missing=records.filter(r=>!ready(r));
   if(missing.length)throw new Error('还有 '+missing.length+' 款缺少完整中文标题或型号；'+(translationLastError||'请重试翻译或在卡片中补全中文后分享'));
 }
-async function ensureCategoryTranslations(records){const names=Array.from(new Set((records||[]).flatMap(categoryValues)));const missing=names.filter(name=>!categoryLabel(name));if(!missing.length)return;const translated=await Promise.all(missing.map(async name=>[name,await translateCn(name,{priority:-1})]));for(const [name,value] of translated)if(value&&hasChinese(value))categoryTranslationCache.set(categoryKey(name),value);try{localStorage.setItem("pool-category-translation-google-v5",JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(e){}const unresolved=missing.filter(name=>!categoryLabel(name));if(unresolved.length)throw new Error("部分上新类目没有获得中文翻译："+unresolved.slice(0,3).join("、"))}
+async function ensureCategoryTranslations(records){const names=Array.from(new Set((records||[]).flatMap(categoryValues)));const missing=names.filter(name=>!categoryLabel(name));if(!missing.length)return;const translated=await Promise.all(missing.map(async name=>[name,await translateCn(name,{priority:-1})]));for(const [name,value] of translated)if(value&&hasChinese(value))categoryTranslationCache.set(categoryKey(name),value);try{localStorage.setItem("pool-category-translation-reference-v7",JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(e){}const unresolved=missing.filter(name=>!categoryLabel(name));if(unresolved.length)throw new Error("部分上新类目没有获得中文翻译："+unresolved.slice(0,3).join("、"))}
 
 async function regroup() {
   const MAX_CANDIDATES = 128;
@@ -2732,7 +3822,7 @@ function zip(files){
   return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
 function exportXlsx(list){let x=exportRows(list),cols=x.headers,rr=[];function c(i,r,v){return '<c r="'+colName(i)+r+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v)+'</t></is></c>'}rr.push('<row r="1">'+cols.map((v,i)=>c(i,1,v)).join("")+"</row>");x.data.forEach((data,j)=>{let row=j+2;rr.push('<row r="'+row+'">'+data.map((v,i)=>c(i,row,v)).join("")+"</row>")});let end=colName(cols.length-1)+(x.data.length+1),sheet='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><sheetData>'+rr.join("")+'</sheetData><autoFilter ref="A1:'+end+'"/></worksheet>',ct='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',wb='<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="寻品工作看板" sheetId="1" r:id="rId1"/></sheets></workbook>',re='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',br='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';return zip([{n:"[Content_Types].xml",d:ct},{n:"_rels/.rels",d:re},{n:"xl/workbook.xml",d:wb},{n:"xl/_rels/workbook.xml.rels",d:br},{n:"xl/worksheets/sheet1.xml",d:sheet}])}
-function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let old of previous||[]){let id=idFor(old);if(id&&!byId.has(id))byId.set(id,old)}for(let r of incoming){let old=byId.get(idFor(r));if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(old,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(old,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&old.localTranslatedItem){r.raw[H[10]]=old.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=old.translationItemSource;r.translationItemVersion=old.translationItemVersion}if(sameModel&&old.localTranslatedModel){r.raw[H[12]]=old.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=old.translationModelSource;r.translationModelVersion=old.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
+function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let old of previous||[]){let id=idFor(old);if(id&&!byId.has(id))byId.set(id,old)}for(let r of incoming){let old=byId.get(idFor(r));if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(old,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(old,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&old.localTranslatedItem&&!BuyerTranslation.usable(translationSource(r,9),String(value(r,H[10])||"").trim())){r.raw[H[10]]=old.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=old.translationItemSource;r.translationItemVersion=old.translationItemVersion}if(sameModel&&old.localTranslatedModel&&!BuyerTranslation.usable(translationSource(r,11),String(value(r,H[12])||"").trim())){r.raw[H[12]]=old.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=old.translationModelSource;r.translationModelVersion=old.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
 async function runDeferredProcessing(token){
   const dataset=rows;
   try{
@@ -2749,6 +3839,7 @@ async function runDeferredProcessing(token){
 }
 async function importFile(f){
   if(!canEditWorkspace()){toast('当前工作区不可写，请关闭其他编辑标签后刷新');return}if(!f)return;if(historyMode)returnToCurrent();
+  automaticChineseEnabled=false;automaticChineseRun++;translationBackgroundRun++;translationQueue.cancelQueued();
   importFile.activeController?.abort();const controller=new AbortController();importFile.activeController=controller;importFile.running=true;
   const hashToken=++activeHashRun,oldRows=rows,oldHeaders=headers,oldSource=sourceFileName,oldGrouping=groupingEnabled,started=Date.now();
   $('cancelImport').hidden=false;$('state').textContent=f.name+' · 正在读取';
@@ -2758,10 +3849,10 @@ async function importFile(f){
     if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;if(!parsed.rows.length)throw new Error('文件没有商品数据行，已保留原工作台数据');
     headers=parsed.headers;rows=mergeBuyerEdits(parsed.rows,oldRows);sourceFileName=f.name;groupingEnabled=false;
     for(const r of rows){r.manualGroup='';r.group='UNGROUPED-'+r.uid}opened.clear();selected.clear();filters={};pageIndex=0;
-    $('groupState').textContent='数据已载入 · 默认平铺；识图归类按需执行';save(true);render();
+    $('groupState').textContent='数据已载入 · 默认平铺；识图归类按需执行';save(true);render();setTimeout(()=>{if(hashToken===activeHashRun)launchAutomaticChinese(rows)},0);
     if(typeof reportQa==='function')reportQa('import',{rows:rows.length,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
     toast(rows.length?'已导入 '+rows.length.toLocaleString()+' 个 Model ID；正在后台整理字段':'未发现商品数据行，请检查文件');setTimeout(()=>runDeferredProcessing(hashToken),30);
-  }catch(error){if(hashToken!==activeHashRun)return;rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;render();if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast('导入失败：'+(error.message||'请检查文件格式'))}}
+  }catch(error){if(hashToken!==activeHashRun)return;rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;automaticChineseEnabled=true;render();launchAutomaticChinese(rows);if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast('导入失败：'+(error.message||'请检查文件格式'))}}
   finally{if(hashToken===activeHashRun){importFile.running=false;importFile.activeController=null;$('cancelImport').hidden=true}}
 }
 
@@ -2844,8 +3935,9 @@ function showBlankWorkbenchLink(){
 }
 $('shareBlank').onclick=showBlankWorkbenchLink;$('cancelImport').onclick=()=>importFile.activeController?.abort();
 $("import").onclick=()=>$("file").click();$("file").onchange=()=>{let f=$("file").files[0];if(f)importFile(f);$("file").value=""};$("importTranslations").onclick=()=>$("translationFile").click();$("translationFile").onchange=()=>{let f=$("translationFile").files[0];if(f)importTranslations(f);$("translationFile").value=""};$("importInvitations").onclick=()=>$("invitationFile").click();$("invitationFile").onchange=()=>{let f=$("invitationFile").files[0];if(f)importInvitations(f);$("invitationFile").value=""};$("export").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'xlsx');return}download(exportXlsx(a),"寻品工作看板_筛选结果.xlsx");toast("Excel 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("Excel 导出失败："+(e?.message||"请重试"))}};$("exportCsv").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'csv');return}download(exportCsv(a),"寻品工作看板_筛选结果.csv");toast("CSV 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("CSV 导出失败："+(e?.message||"请重试"))}};$("search").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,140)};$("sort").onchange=()=>{clearTimeout(searchTimer);render()};$("clear").onclick=()=>{clearTimeout(searchTimer);filters={};$("search").value="";render()};$("schemaBtn").onclick=()=>drawer("schema");$("allFilters").onclick=()=>drawer("filter");$("bulkEdit").onclick=batch;$("bulkPreApply").onclick=()=>{if(!canEditWorkspace()||historyMode)return;let state=$("bulkPreValue").value,date=$("bulkPreDate").value,targets=rows.filter(x=>selected.has(x.uid));if(!targets.length){toast("请先勾选 Model ID");return}if(!state&&!date){toast("请选择 Y/N 或核价日期");return}for(let r of targets){if(state)r.preValue=state;if(date)r.preDate=date;r.preTouched=true;markDirty(r)}save();render();toast("已批量更新 "+targets.length+" 个 Model ID 的前置核价信息")};$("merge").onclick=()=>merge(true);$("splitGroup").onclick=splitSelectedFromGroups;$("unmerge").onclick=()=>merge(false);$("shareSelected").onclick=()=>{let list=sorted(rows.filter(r=>selected.has(r.uid)));if(list.length)showShareLinkDialog(list);else toast("请先勾选要分享的 Model ID")};$("unselect").onclick=()=>{selected.clear();render()};
-$("googleDocumentTools").onclick=()=>openGoogleDocumentTools().catch(error=>toast(error.message));$("googleDocumentFile").onchange=()=>{const input=$("googleDocumentFile"),file=input.files[0],id=input.dataset.taskId;if(file&&id)importGoogleDocumentResult(file,id);input.value=""};$("retranslateAutomatic").onclick=retranslateAutomaticChinese;$("enableChromeTranslation").onclick=enableChromeTranslation;if(typeof globalThis.Translator==="undefined"){$("enableChromeTranslation").disabled=true;$("chromeTranslationState").textContent="本浏览器不支持本地模型"}$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=translateAllChinese;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
+$("googleDocumentTools").onclick=()=>openGoogleDocumentTools().catch(error=>toast(error.message));$("googleDocumentFile").onchange=()=>{const input=$("googleDocumentFile"),file=input.files[0],id=input.dataset.taskId;if(file&&id)importGoogleDocumentResult(file,id);input.value=""};$("retranslateAutomatic").onclick=retranslateAutomaticChinese;$("enableChromeTranslation").onclick=enableChromeTranslation;if(typeof globalThis.Translator==="undefined"){$("enableChromeTranslation").disabled=true;$("chromeTranslationState").textContent="本浏览器不支持本地模型"}$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=()=>oneClickChinese().catch(error=>toast(error.message));$("renameVersion").onclick=renameSelectedVersion;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
 let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layoutResizeTimer);layoutResizeTimer=setTimeout(()=>render(),180)});async function start(){
+  automaticChineseEnabled=false;
   $('import').disabled=true;
   $('workspaceInfo').textContent=workspace.workspaceLabel()+' · 数据保存在当前浏览器。请收藏当前网址，下次继续本工作区。';
   workspaceWriter=await BuyerWorkspace.acquireWriter(workspace);workspaceWritable=workspaceWriter.owner;
@@ -2855,7 +3947,7 @@ let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layou
     $('retryWorkspace').onclick=()=>location.reload();document.querySelector('main').inert=true;
     $('export').disabled=true;$('exportCsv').disabled=true;return;
   }
-  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false;$("enableChromeTranslation").disabled=typeof globalThis.Translator==="undefined"}
+  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false;$("enableChromeTranslation").disabled=typeof globalThis.Translator==="undefined";launchAutomaticChinese(rows)}
 start().catch(e=>{console.error(e);$("import").disabled=false;$("saveState").textContent="本机数据读取失败";toast("恢复本机工作台失败："+(e?.message||"请刷新页面"))});})();</script></body></html>
 
 

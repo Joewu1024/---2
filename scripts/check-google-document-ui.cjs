@@ -78,7 +78,7 @@ test('shuffled results backfill exact Model IDs and persist the manual Google-do
   const h=harness(),a=record(h,'000000000000000000001','Wireless speaker FICT-DOC-D','Black variant FICT-DOC-D'),b=record(h,'12345678901234567890','Wireless microphone FICT-DOC-E');h.api.setRows([a,b]);
   const task=await taskFor(h);h.api.setRows([b,a]);await h.api.importGoogleDocumentResult(csv(translatedMatrix(task)),task.id);
   assert.equal(a.raw[h.api.H[10]],'Google 虚构中文：Wireless speaker FICT-DOC-D');assert.equal(a.raw[h.api.H[12]],'Google 虚构中文：Black variant FICT-DOC-D');assert.equal(b.raw[h.api.H[10]],'Google 虚构中文：Wireless microphone FICT-DOC-E');
-  for(const r of [a,b]){assert.ok(r.userEditedFields.includes(h.api.H[10]));assert.equal(r.autoItemChinese,false);assert.equal(r.localTranslatedItem,true);assert.equal(r.translationItemProvider,'google-document');assert.equal(r.translationItemVersion,'google-v5-20261117')}
+  for(const r of [a,b]){assert.ok(r.userEditedFields.includes(h.api.H[10]));assert.equal(r.autoItemChinese,false);assert.equal(r.localTranslatedItem,true);assert.equal(r.translationItemProvider,'google-document');assert.equal(r.translationItemVersion,'reference-v7-20261117')}
   assert.equal(a.raw['Model ID'],'000000000000000000001');assert.equal(b.raw['Model ID'],'12345678901234567890');assert.deepEqual([...h.controls.dirty].sort(),[a.uid,b.uid].sort());assert.deepEqual(h.controls.saves,[true]);
 });
 

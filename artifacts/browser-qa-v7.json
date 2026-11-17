@@ -1,0 +1,45 @@
+{
+  "version": "reference-v7-20261117",
+  "date": "2026-11-17",
+  "synthetic_only": true,
+  "browser": "Codex in-app Chromium on Windows",
+  "translation": {
+    "primary": "Tencent Transmart, native text_list whole-sentence requests",
+    "live_fixture_rows": 4,
+    "automatic_fields": 6,
+    "provided_buyer_fields": 2,
+    "ready_rows_after_automatic_import": 4,
+    "ready_rows_after_one_click_refresh": 4,
+    "provided_zh_columns_preserved": true,
+    "model_brand_preserved_after_refresh": true,
+    "visible_translation_buttons": ["一键翻译", "导入翻译"],
+    "scope": "Live English, Portuguese and Vietnamese synthetic product titles/model names. Successful nonempty Chinese and brand retention verified; no claim of exact Google wording or perfect semantic accuracy for every title. Network availability and language support remain external dependencies."
+  },
+  "ui": {
+    "history_rename_saved_and_selected_label_updated": true,
+    "thumbnail_pointer_entry_opens_zoom_without_click": true,
+    "pointer_leave_closes_zoom": true,
+    "share_category_immediately_chinese": "家用电器 > 遥控器",
+    "share_has_no_retry_or_complete_translation_buttons": true,
+    "small_fixture_console_errors": 0
+  },
+  "large_csv": {
+    "rows": 20000,
+    "pretranslated_fixture": true,
+    "worker_first_display_ms": 3182,
+    "current_page_rows": 50,
+    "visible_chinese_editors": 100,
+    "ready_rows": 20000,
+    "saved_and_restored_after_reload": true,
+    "next_page_verified": "51–100 / 20000",
+    "console_errors_observed_after_import": 0,
+    "scope": "Actual browser import, local persistence/reload and pagination. Translation throughput for 20,000 unique live titles was not measured. Browser download capture did not complete, so v7 export validation uses the production Worker readback plus independent strict ZIP/XML checks rather than a claimed browser download pass."
+  },
+  "independent_export_readback": {
+    "bulk_rows": 20000,
+    "bulk_cells": 240012,
+    "strict_xml_documents": 10,
+    "zip_crc_verified": true,
+    "control_characters_surrogates_and_utf16_limits_verified": true
+  }
+}

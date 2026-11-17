@@ -1,8 +1,9 @@
 'use strict';
 
 // Exercises the actual marked workbench functions with a fake DOM and IndexedDB.
-// No application boot code or external transport is run. Provider fixtures
-// validate routing and exact propagation; they do not prove live Google/Chrome quality.
+// Browser startup dependencies and network are simulated. The actual start()
+// also runs against fabricated saved state. Provider fixtures validate routing
+// and exact propagation; they do not prove live translation-service quality.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -10,12 +11,15 @@ const vm = require('node:vm');
 const { test, afterEach, mock } = require('node:test');
 const BuyerTranslation = require('../translation-engine.js');
 const BuyerGoogleTranslation = require('../translation-google-provider.js');
+const BuyerReferenceTranslation = require('../translation-reference-provider.js');
+const BuyerCategoryTranslations = require('../category-translations.js');
+const WorkbenchImport = require('../workbench-import.js');
 const root = path.join(__dirname, '..');
 const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const html = Array.from(documentHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)).at(-1)[1];
 const lines = html.split(/\r?\n/);
 const instances = new Set();
-const TRANSLATION_VERSION = 'google-v5-20261117';
+const TRANSLATION_VERSION = 'reference-v7-20261117';
 
 function block(label) {
   const start = html.indexOf('// ' + label + ':start');
@@ -58,7 +62,7 @@ async function waitFor(condition, message, timeout = 3000) {
 
 function harness(options = {}) {
   const timers = new Set(), elements = new Map();
-  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, shareSnapshots: [], parse: null };
+  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, shareSnapshots: [], parse: null, savedState: {rows:[],meta:null}, loadGate: null };
   const cacheGate = options.cacheGate || { promise: Promise.resolve() };
   const setTimer = (callback, delay, ...args) => {
     const timer = setTimeout(() => { timers.delete(timer); callback(...args); }, delay);
@@ -69,7 +73,7 @@ function harness(options = {}) {
   const document = {
     activeElement: null,
     getElementById(id) {
-      if (!elements.has(id)) elements.set(id, { textContent: '', value: '', disabled: false });
+      if (!elements.has(id)) elements.set(id, { textContent: '', value: '', disabled: false, isConnected: true, title: '' });
       return elements.get(id);
     },
     querySelectorAll(selector) {
@@ -97,42 +101,54 @@ function harness(options = {}) {
   };
   const transport = options.transport || mock.fn(async texts => texts.map(chineseFor));
   const context = vm.createContext({
-    BuyerTranslation, BuyerGoogleTranslation, controls, document, console,
+    BuyerTranslation, BuyerGoogleTranslation, BuyerCategoryTranslations, WorkbenchImport, controls, document, console,
+    // Legacy Google/Chrome fixtures deliberately request the internal fallback;
+    // primaryReference fixtures below exercise the actual reference transport.
+    BuyerReferenceTranslation: options.referenceProvider || (options.primaryReference ? BuyerReferenceTranslation : {create:()=>({async translateBatch(){throw Object.assign(new Error('Fabricated primary fallback'),{fallback:true})}})}),
+    BuyerWorkspace: { async acquireWriter(){return {owner:true,status:'owner'}} },
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
     Translator: options.chromeProvider ? {} : undefined,
-    workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
+    workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
     setTimeout: setTimer, clearTimeout: clearTimer, queueMicrotask,
     localStorage: { getItem: key => key === 'sourcing-cn-cache-v2' && options.localCache ? JSON.stringify(options.localCache) : null },
     indexedDB: { open(name) { controls.cacheDatabases.push(name); const request = {}; queueMicrotask(() => { request.result = db; request.onsuccess?.(); }); return request; } },
     window: { addEventListener() {} },
     fetch: options.fetch || (() => { throw new Error('Network access is forbidden in translation-integration checks'); }),
-    AbortController, URL, TextEncoder,
+    AbortController, URL, TextEncoder,TextDecoder,Blob,
     location: { hostname: 'buyer.example.test', protocol: 'https:', href: 'https://buyer.example.test/index.html' },
     crypto: { randomUUID: () => 'fabricated-test-id' },
     transport
   });
   const extracted = [
     lineStarting('const H='),
+    lineStarting('const S='),lineStarting('const FIELD='),html.match(/const statusFilterKeys=\[[^\]]*\];/)[0],
     lineStarting('const rawLookupCache='),
     lineStarting('const keyMap='),
-    ...['key', 'getRaw', 'invalidateRaw', 'value', 'aliasFor', 'deriveRecord', 'bindTable', 'markDirty', 'save', 'writeRecordBatches', 'mergeBuyerEdits'].map(name => lineStarting('function ' + name + '(')),
+    ...['key', 'getRaw', 'invalidateRaw', 'value', 'aliasFor', 'deriveRecord', 'bindTable', 'markDirty', 'save', 'writeRecordBatches','headerScore','isMetaRow'].map(name => lineStarting('function ' + name + '(')),
+    between('function mergeBuyerEdits(', 'async function runDeferredProcessing('),
+    ...(options.realCsv?[between('function selectImportHeader(', 'async function workbookHasEmbeddedImages(')]:[]),
     between('async function importFile(', 'async function importInvitations('),
     between('async function importTranslations(', 'function download('),
+    between('function categoryKey(', 'function deriveRecord('),
     block('translation-state-v3'), block('translation-integration-v3'),
     between('function shareChineseFieldReady(', 'async function ensureCategoryTranslations('),
+    between('async function start(){','start().catch('),
     between('async function buildOnlineShareLink(', 'async function copyShareText(')
   ].join('\n');
   const api = vm.runInContext(`(function(){
     let rows=[], visibleRows=[], historyMode=false, dirtyRows=new Set();
     let hasUnsavedChanges=false, saveAllPending=false, saveTimer=null;
-    let headers=[], sourceFileName='', groupingEnabled=false, activeHashRun=0;
+    let headers=[], sourceFileName='', groupingEnabled=false, activeHashRun=0,threshold=90,workspaceWriter=null,workspaceWritable=false;
     let opened=new Set(), selected=new Set(), filters={}, pageIndex=0;
     function canEditWorkspace(){return controls.writable}
     function extractBrand(){return ''} function extractStyle(){return ''} function extractQty(){return ''}
     function idFor(r){return String(getRaw(r,['Model ID'])||r.uid)}
     function normalizeModelId(value){return String(value||'')}
     function updateCalculatedCells(){} function rememberBuyerOption(){}
+    function refreshBuyerDatalists(){}async function refreshVersions(){}
+    function filtered(){}filtered.searchText=()=>'';
+    async function loadWorkbenchState(){if(controls.loadGate)await controls.loadGate;return controls.savedState}
     async function regroup(){}
     async function ensureCategoryTranslations(){controls.categoryCalls++}
     function productDetail(r){
@@ -148,18 +164,20 @@ function harness(options = {}) {
       controls.flushes++;controls.persisted=rows.map(r=>({uid:r.uid,raw:{...r.raw}}));
       dirtyRows.clear();saveAllPending=false;hasUnsavedChanges=false;return true;
     }
-    async function parseCsv(file){return controls.parse(file)}
+    ${options.realCsv?'':'async function parseCsv(file){return controls.parse(file)}'}
     async function parseXlsx(file){return controls.parse(file)}
     function returnToCurrent(){historyMode=false}
     function runDeferredProcessing(){}
     ${extracted}
     if(!${!!options.actualTransport})translationQueue.options.requestBatch=transport;
     return {
-      H, queue:translationQueue, cache:translationCache, ready:translationCacheReady,
+      H,value,key,mergeBuyerEdits, queue:translationQueue, cache:translationCache, ready:translationCacheReady,
       deriveRecord, translateVisible, startBackgroundTranslation, queueVisibleTranslation,
       refreshTranslationEditors, updateTranslationStatus, bindTable, importFile, importTranslations,
       ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,
       retranslateAutomaticChinese, enableChromeTranslation,
+      start,launchAutomaticChinese,oneClickChinese,categoryLabel,categoryPath,categoryTranslationCache,
+      setAutomaticEnabled(value){automaticChineseEnabled=value},
       get chromeMode(){return chromeTranslationMode},
       get chromeLanguages(){return Array.from(chromeTranslationLanguages)},
       get chromePending(){return Array.from(chromeTranslationPending)},
@@ -170,7 +188,7 @@ function harness(options = {}) {
       },
       setRaw(r,index,value){r.raw[H[index]]=value;invalidateRaw(r)},
       setPaused(value){translationUserPaused=value;translationQueue.setPaused(value)},
-      stop(){translationUserPaused=true;translationBackgroundRun++;translationQueue.setPaused(true);translationQueue.cancelQueued()}
+      stop(){automaticChineseEnabled=false;automaticChineseRun++;translationUserPaused=true;translationBackgroundRun++;translationQueue.setPaused(true);translationQueue.cancelQueued()}
     };
   })()`, context, { filename: 'extracted-workbench-integration.js' });
   const instance = { ...api, api, controls, document, elements, timers, transport };
@@ -192,6 +210,10 @@ function record(h, id, item, chinese) {
   const r = { uid: id, raw: { [h.api.H[9]]: item, [h.api.H[11]]: '' } };
   if (chinese !== undefined) r.raw[h.api.H[10]] = chinese;
   return r;
+}
+
+function csvFile(text,name='fabricated-standard-chinese.csv'){
+  const file=new Blob([text],{type:'text/csv'});file.name=name;return file;
 }
 
 function editor(h, r, field = h.api.H[10]) {
@@ -235,7 +257,7 @@ test('cache loading filters bad baked/local entries and completes before request
   assert.equal(r.raw[h.api.H[10]], chineseFor(source));
   assert.equal(h.api.cache.has('Wireless speaker FICT702'), false);
   assert.equal(h.api.cache.has('Wireless speaker FICT703'), false);
-  assert.deepEqual(h.controls.cacheDatabases, ['buyer-title-translations-google-v5']);
+  assert.deepEqual(h.controls.cacheDatabases, ['buyer-title-translations-reference-v7']);
 });
 
 test('provider migration ignores valid-looking baked, local and unversioned database translations', { timeout: 5000 }, async () => {
@@ -408,7 +430,7 @@ test('Google receives each intact title separately and mock semantics reach the 
   assert.equal(r.translationItemVersion, TRANSLATION_VERSION);
 });
 
-test('a Google outage leaves translation pending without a silent Tencent fallback', { timeout: 6000 }, async () => {
+test('a Google fallback outage leaves translation pending without fabricating Chinese', { timeout: 6000 }, async () => {
   const fetch = mock.fn(async input => {
     assert.equal(new URL(input).hostname, 'translate.googleapis.com');
     return { ok: false, status: 503, headers: { get: () => null } };
@@ -682,7 +704,7 @@ test('retranslating all automatic fields invalidates their caches without cleari
   const auto=[1720,1721].map(n=>{const source='Wireless speaker FICT'+n,r=record(h,'force-'+n,source,'旧自动译文 FICT'+n);Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:TRANSLATION_VERSION});h.api.cache.set(source,r.raw[h.api.H[10]]);return r});
   const manual=record(h,'force-manual','Wireless speaker FICT1722','买手指定的中文 FICT1722');Object.assign(manual,{autoItemChinese:true,userEditedFields:[h.api.H[10]],translationItemVersion:'google-v4-20261116'});
   const provided=record(h,'force-provided','Wireless speaker FICT1723','导入保留的中文 FICT1723');provided.autoItemChinese=false;
-  h.api.setRows([...auto,manual,provided]);await h.api.retranslateAutomaticChinese();await waitFor(()=>transport.mock.callCount()===2,'automatic retranslation dispatch');
+  h.api.setRows([...auto,manual,provided]);await h.api.retranslateAutomaticChinese();await waitFor(()=>transport.mock.calls.flatMap(call=>call.arguments[0]).length===2,'automatic retranslation dispatch');
   for(const [i,r]of auto.entries())assert.equal(r.raw[h.api.H[10]],'旧自动译文 FICT'+(1720+i));
   gate.resolve();await waitFor(()=>auto.every(r=>r.raw[h.api.H[10]].startsWith('整句重译结果')),'all automatic replacements');
   assert.equal(manual.raw[h.api.H[10]],'买手指定的中文 FICT1722');assert.equal(provided.raw[h.api.H[10]],'导入保留的中文 FICT1723');
@@ -759,4 +781,130 @@ test('partial Chrome preparation retries pending languages before a later click 
   await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,true);assert.deepEqual(new Set(h.api.chromeLanguages),new Set(['en','vi']));assert.equal(h.api.chromePending.length,0);assert.equal(button.textContent,'切回 Google 在线');
   const prepared=chrome.prepareLanguages.mock.callCount();await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,false);assert.equal(button.textContent,'启用 Chrome 本地翻译');assert.equal(chrome.prepareLanguages.mock.callCount(),prepared);
   assert.equal(chrome.translate.mock.callCount(),0);assert.equal(fetch.mock.callCount(),0);
+});
+
+test('importing starts reference translation for item, model and missing categories without sending business fields',async()=>{
+  const item='Wireless speaker FICT1800 with charging case',model='Black variant FICT1801 with cable',category='Fictional Musical Room Components';
+  const outputs=new Map([[item,'无线音箱 FICT1800，附充电盒'],[model,'黑色型号 FICT1801，附电缆'],[category,'虚构音乐房配件']]),payloads=[];
+  const fetch=mock.fn(async(input,init)=>{assert.equal(input,'https://transmart.qq.com/api/imt');assert.equal(init.method,'POST');assert.equal(init.credentials,'omit');const payload=JSON.parse(init.body);payloads.push(payload);assert.deepEqual(Object.keys(payload.source).sort(),['lang','text_list']);assert.doesNotMatch(init.body,/PRIVATE-BUSINESS-ID|PRIVATE-BUYER-NOTE|987654\.321/);assert.ok(payload.source.text_list.length<=8);assert.ok(payload.source.text_list.every(text=>outputs.has(text)));return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(text=>outputs.get(text))})}});
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),automatic=record(h,'PRIVATE-BUSINESS-ID',item),manual=record(h,'private-manual','Wireless manual speaker FICT1802','买手标题保留');
+  Object.assign(automatic.raw,{[h.api.H[11]]:model,[h.api.H[13]]:'987654.321',[h.api.H[24]]:'PRIVATE-BUYER-NOTE',level1_global_be_category:category});manual.raw[h.api.H[11]]='Manual model FICT1803';manual.raw[h.api.H[12]]='买手型号保留';manual.userEditedFields=[h.api.H[10],h.api.H[12]];
+  h.controls.parse=async()=>({headers:Array.from(h.api.H),rows:[automatic,manual]});await h.api.importFile({name:'fabricated-auto.csv',type:'text/csv'});
+  await waitFor(()=>automatic.localTranslatedItem&&automatic.localTranslatedModel&&h.api.categoryLabel(category)==='虚构音乐房配件','automatic import title/model/category translation');
+  assert.equal(automatic.raw[h.api.H[10]],outputs.get(item));assert.equal(automatic.raw[h.api.H[12]],outputs.get(model));assert.equal(automatic.translationItemProvider,'tencent-transmart-reference');assert.equal(automatic.translationItemVersion,TRANSLATION_VERSION);
+  assert.equal(manual.raw[h.api.H[10]],'买手标题保留');assert.equal(manual.raw[h.api.H[12]],'买手型号保留');assert.deepEqual(new Set(payloads.flatMap(payload=>payload.source.text_list)),new Set(outputs.keys()));
+  assert.equal(h.api.queue.limit,2);assert.equal(h.api.queue.batchSize,8);assert.equal(h.api.queue.maxChars,1800);
+});
+
+test('restoring local data pauses requests until recovery completes then starts the same automatic pipeline',async()=>{
+  const responseGate=deferred(),readGate=deferred(),source='Wireless restored speaker FICT1810';let called=0;
+  const fetch=mock.fn(async(input,init)=>{assert.equal(input,'https://transmart.qq.com/api/imt');const payload=JSON.parse(init.body);called++;await responseGate.promise;return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(()=> '恢复后自动生成的无线音箱 FICT1810')})}});
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),r=record(h,'restored-primary',source,'保留的旧版中文 FICT1810');Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:'google-v5-20261117'});
+  h.controls.savedState={rows:[r],meta:{headers:Array.from(h.api.H),sourceFileName:'fabricated-restored.csv',threshold:90,groupingEnabled:false}};h.controls.loadGate=readGate.promise;
+  const startup=h.api.start();await new Promise(resolve=>setTimeout(resolve,20));assert.equal(called,0);assert.equal(h.document.getElementById('import').disabled,true);
+  readGate.resolve();await startup;await waitFor(()=>called>0,'reference request after local recovery');assert.equal(r.raw[h.api.H[10]],'保留的旧版中文 FICT1810');assert.equal(r.raw[h.api.H[9]],source);
+  responseGate.resolve();await waitFor(()=>r.localTranslatedItem&&r.translationItemVersion===TRANSLATION_VERSION,'restored automatic translation');assert.equal(r.raw[h.api.H[10]],'恢复后自动生成的无线音箱 FICT1810');assert.equal(r.raw[h.api.H[9]],source);assert.equal(h.document.getElementById('import').disabled,false);
+});
+
+test('one-click translation refreshes automatic fields across the whole table while preserving manual Chinese',async()=>{
+  const gate=deferred(),sent=[],fetch=mock.fn(async(input,init)=>{assert.equal(input,'https://transmart.qq.com/api/imt');const payload=JSON.parse(init.body);sent.push(...payload.source.text_list);await gate.promise;return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(text=>'整表中文 '+text.match(/FICT\d+/)[0])})}});
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),auto=[1820,1821].map(n=>{const source='Wireless speaker FICT'+n,r=record(h,'whole-'+n,source,'旧自动中文 FICT'+n);Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:n===1820?TRANSLATION_VERSION:'google-v5-20261117'});h.api.cache.set(source,r.raw[h.api.H[10]]);return r});
+  const manual=record(h,'whole-manual','Wireless manual speaker FICT1822','买手确认中文保持');manual.userEditedFields=[h.api.H[10]];h.api.setRows([...auto,manual],{visible:[auto[0]]});
+  await h.api.oneClickChinese();await waitFor(()=>sent.length===2,'whole-table reference dispatch');assert.equal(auto[1].raw[h.api.H[10]],'旧自动中文 FICT1821');gate.resolve();
+  await waitFor(()=>auto.every(r=>r.raw[h.api.H[10]].startsWith('整表中文')),'off-page automatic Chinese');assert.equal(manual.raw[h.api.H[10]],'买手确认中文保持');assert.deepEqual(new Set(sent),new Set(auto.map(r=>r.raw[h.api.H[9]])));assert.equal(h.document.getElementById('translateAll').disabled,false);
+});
+
+test('one-click protects imported buyer Chinese even before deferred field derivation has marked its provenance',async()=>{
+  const h=harness();await h.api.ready;const r=record(h,'not-yet-derived','Wireless speaker FICT1823','导入文件中的买手中文');h.api.setRows([r]);
+  await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(r.raw[h.api.H[10]],'导入文件中的买手中文');assert.equal(r.autoItemChinese,false);assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('a late primary response from an imported dataset cannot update a replacement with the same UID',async()=>{
+  const gate=deferred(),oldSource='Wireless old speaker FICT1830',newSource='Wireless new speaker FICT1831';let oldRequested=false;
+  const fetch=mock.fn(async(input,init)=>{assert.equal(input,'https://transmart.qq.com/api/imt');const payload=JSON.parse(init.body);if(payload.source.text_list.includes(oldSource)){oldRequested=true;await gate.promise}return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(text=>text===oldSource?'旧数据返回中文 FICT1830':'新数据返回中文 FICT1831')})}});
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),old=record(h,'same-imported-uid',oldSource),current=record(h,'same-imported-uid',newSource);h.controls.parse=async file=>({headers:Array.from(h.api.H),rows:[file.name==='old-auto.csv'?old:current]});
+  await h.api.importFile({name:'old-auto.csv',type:'text/csv'});await waitFor(()=>oldRequested,'old import translation');await h.api.importFile({name:'new-auto.csv',type:'text/csv'});await waitFor(()=>current.localTranslatedItem,'replacement translation');
+  gate.resolve();await waitFor(()=>h.api.queue.active===0,'late old primary result');assert.equal(old.raw[h.api.H[10]],'');assert.equal(current.raw[h.api.H[10]],'新数据返回中文 FICT1831');assert.equal(current.raw[h.api.H[9]],newSource);
+});
+
+test('category dictionaries and supplied Chinese paths take priority over generated cache text',()=>{
+  const h=harness();h.api.categoryTranslationCache.set('home&living','不应覆盖字典的旧缓存');assert.equal(h.api.categoryLabel('Home & Living'),'家居生活');
+  const path=record(h,'category-path','');Object.assign(path.raw,{level1_global_be_category:'Unknown Original Category',category_path_zh:'用户提供一级 > 用户提供二级'});assert.equal(h.api.categoryPath(path),'用户提供一级 > 用户提供二级');
+  const levels=record(h,'category-levels','');Object.assign(levels.raw,{level1_global_be_category:'Home & Living',level2_global_be_category:'Home Decor',level1_global_be_category_zh:'自带一级',level2_global_be_category_cn:'自带二级'});assert.equal(h.api.categoryPath(levels),'自带一级 > 自带二级');
+  const dictionary=record(h,'category-dictionary','');dictionary.raw.level1_global_be_category='Electronics';assert.equal(h.api.categoryPath(dictionary),'电子产品');assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('the reference service can fall back internally to Google without exposing a provider choice',async()=>{
+  const source='Wireless fallback speaker FICT1840',hosts=[],fetch=mock.fn(async(input,init)=>{const host=new URL(input).hostname;hosts.push(host);if(host==='transmart.qq.com')return {status:503};assert.equal(host,'translate.googleapis.com');assert.equal(new URL(input).searchParams.get('q'),source);return {status:200,json:async()=>[[['备用通道完整中文 FICT1840']]]}});
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),r=record(h,'reference-fallback',source);h.api.setRows([r]);await h.api.translateVisible([r]);assert.equal(r.raw[h.api.H[10]],'备用通道完整中文 FICT1840');assert.equal(r.translationItemProvider,'google-online');assert.deepEqual(hosts,['transmart.qq.com','translate.googleapis.com']);
+});
+
+test('the visible translation UI has only one-click and import actions and no per-cell translation tools',()=>{
+  const markup=documentHtml.slice(0,documentHtml.indexOf('<script data-buyer-translation-engine'));
+  const advanced=markup.match(/<div\b[^>]*id="advancedTranslationControls"[^>]*>[\s\S]*?<\/div>/);assert.ok(advanced);assert.match(advanced[0],/\bhidden\b/);
+  const visible=markup.replace(advanced[0],''),buttons=Array.from(visible.matchAll(/<button\b([^>]*)>([\s\S]*?)<\/button>/g)).map(match=>({id:match[1].match(/\bid="([^"]+)"/)?.[1],text:match[2].replace(/<[^>]*>/g,'').trim()})).filter(button=>/翻译|译文|模型|Google/.test(button.text));
+  assert.deepEqual(buttons,[{id:'translateAll',text:'一键翻译'},{id:'importTranslations',text:'导入翻译'}]);assert.doesNotMatch(between('function rowHtml(', 'function updateCalculatedCells('),/translation-cell-tools|data-retranslate-field|Google核对/);
+  assert.ok(/["']translateAll["']\)\.onclick\s*=\s*(?:\(\)\s*=>\s*)?oneClickChinese/.test(html),'the visible action invokes the unified one-click pipeline');
+});
+
+test('the supplied browser CSV keeps its fourth buyer-Chinese row out of automatic transport',async()=>{
+  // Same four synthetic records as qa-v7/buyer-test-auto-reference.csv;
+  // the committed fixture omits image bytes so the regression is self-contained.
+  const sent=[],fetch=mock.fn(async(input,init)=>{assert.equal(input,'https://transmart.qq.com/api/imt');const payload=JSON.parse(init.body);sent.push(...payload.source.text_list);assert.doesNotMatch(init.body,/AUTO-TEST-|QATEST|backcal_cogs|item_name_zh|model_name_zh/);return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(chineseFor)})}});
+  const h=harness({actualTransport:true,primaryReference:true,realCsv:true,fetch}),file=csvFile(fs.readFileSync(path.join(__dirname,'fixtures','buyer-test-auto-reference.csv'),'utf8'),'buyer-test-auto-reference.csv');await h.api.importFile(file);
+  const buyer=h.api.rows.find(r=>r.raw['Model ID']==='AUTO-TEST-4'),foreign=h.api.rows.filter(r=>r!==buyer);assert.ok(buyer);assert.equal(h.api.rows.length,4);
+  await waitFor(()=>foreign.every(r=>r.localTranslatedItem&&r.localTranslatedModel)&&h.api.queue.active===0,'the first three fixture records translate automatically');
+  const check=()=>{assert.equal(h.api.value(buyer,h.api.H[10]),'买手确认的中文音箱标题 5 W');assert.equal(h.api.value(buyer,h.api.H[12]),'买手确认的黑色型号 1 件');assert.equal(buyer.autoItemChinese,false);assert.equal(buyer.autoModelChinese,false);assert.ok(!sent.includes(buyer.raw.item_name));assert.ok(!sent.includes(buyer.raw.model_name))};check();
+  const before=sent.length;await h.api.oneClickChinese();await waitFor(()=>sent.length>before&&foreign.every(r=>r.localTranslatedItem&&r.localTranslatedModel)&&h.api.queue.active===0,'the one-click rerun completes for automatic fixture fields');check();
+});
+
+for(const suffix of ['zh','cn'])test('main-file standard _'+suffix+' Chinese headers remain buyer text before automatic translation',async()=>{
+  const h=harness({realCsv:true}),text='Model ID,item_name,model_name,item_name_'+suffix+',model_name_'+suffix+'\r\nSTANDARD-'+suffix+',Wireless standard speaker FICT1910,Black variant FICT1911,文件买手中文标题,文件买手中文型号';
+  await h.api.importFile(csvFile(text));await waitFor(()=>h.api.rows[0]?.autoItemChinese===false&&h.api.rows[0]?.autoModelChinese===false,'standard Chinese fields classified as buyer text');const r=h.api.rows[0];
+  assert.equal(h.api.key('item_name_'+suffix),'itemchinese');assert.equal(h.api.key('model_name_'+suffix),'modelchinese');assert.equal(h.api.value(r,h.api.H[10]),'文件买手中文标题');assert.equal(h.api.value(r,h.api.H[12]),'文件买手中文型号');assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('new main-file Chinese takes priority over previous automatic translations for the same source',async()=>{
+  const h=harness({realCsv:true}),item='Wireless merge speaker FICT1920',model='Black merge variant FICT1921',old=record(h,'MERGE-NEW-CHINESE',item,'旧自动标题');old.raw[h.api.H[11]]=model;old.raw[h.api.H[12]]='旧自动型号';
+  Object.assign(old,{autoItemChinese:true,autoModelChinese:true,localTranslatedItem:true,localTranslatedModel:true,translationItemSource:item,translationModelSource:model,translationItemVersion:TRANSLATION_VERSION,translationModelVersion:TRANSLATION_VERSION});h.api.setRows([old]);
+  await h.api.importFile(csvFile('Model ID,item_name,model_name,item_name_zh,model_name_cn\r\nMERGE-NEW-CHINESE,'+item+','+model+',本次文件中文标题,本次文件中文型号'));await waitFor(()=>h.api.rows[0]?.autoItemChinese===false&&h.api.rows[0]?.autoModelChinese===false,'incoming Chinese preserved over old automatic provenance');
+  const current=h.api.rows[0];assert.equal(h.api.value(current,h.api.H[10]),'本次文件中文标题');assert.equal(h.api.value(current,h.api.H[12]),'本次文件中文型号');assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('previous explicit buyer edits retain priority over new main-file standard Chinese columns',async()=>{
+  const h=harness({realCsv:true}),item='Wireless buyer speaker FICT1930',model='Black buyer variant FICT1931',old=record(h,'MERGE-BUYER-CHINESE',item,'本机买手手改标题');old.raw[h.api.H[11]]=model;old.raw[h.api.H[12]]='本机买手手改型号';old.userEditedFields=[h.api.H[10],h.api.H[12]];old.autoItemChinese=false;old.autoModelChinese=false;h.api.setRows([old]);
+  await h.api.importFile(csvFile('Model ID,item_name,model_name,item_name_cn,model_name_zh\r\nMERGE-BUYER-CHINESE,'+item+','+model+',新文件标题,新文件型号'));await new Promise(resolve=>setTimeout(resolve,20));const current=h.api.rows[0];
+  assert.equal(h.api.value(current,h.api.H[10]),'本机买手手改标题');assert.equal(h.api.value(current,h.api.H[12]),'本机买手手改型号');assert.ok(current.userEditedFields.includes(h.api.H[10]));assert.ok(current.userEditedFields.includes(h.api.H[12]));assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('the Chinese import action accepts two-column _zh and _cn files with the actual CSV parser',async()=>{
+  const h=harness({realCsv:true}),r=record(h,'STANDARD-TRANSLATION','Wireless import speaker FICT1940');r.raw[h.api.H[11]]='Black import variant FICT1941';h.api.setRows([r]);
+  await h.api.importTranslations(csvFile('Model ID,item_name_zh\r\nSTANDARD-TRANSLATION,标准列导入中文标题'));
+  await h.api.importTranslations(csvFile('Model ID,model_name_cn\r\nSTANDARD-TRANSLATION,标准列导入中文型号'));
+  assert.equal(h.api.value(r,h.api.H[10]),'标准列导入中文标题');assert.equal(h.api.value(r,h.api.H[12]),'标准列导入中文型号');assert.ok(r.userEditedFields.includes(h.api.H[10]));assert.ok(r.userEditedFields.includes(h.api.H[12]));await new Promise(resolve=>setTimeout(resolve,80));assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('invalid incoming foreign text in Chinese columns does not displace a saved valid automatic translation',()=>{
+  const h=harness(),source='Wireless saved speaker FICT1950',old=record(h,'MERGE-INVALID',source,'已保存有效自动中文'),incoming=record(h,'MERGE-INVALID',source);incoming.raw.item_name_zh='Different English description';
+  Object.assign(old,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:TRANSLATION_VERSION});h.api.mergeBuyerEdits([incoming],[old]);
+  assert.equal(h.api.value(incoming,h.api.H[10]),'已保存有效自动中文');assert.equal(incoming.translationItemSource,source);assert.equal(incoming.raw[h.api.H[9]],source);
+});
+
+test('a missing reference entry alone uses Google fallback while its successful neighbor stays untouched',async()=>{
+  const good='Wireless speaker FICT1960',missing='Black variant FICT1961',referenceTexts=[],googleTexts=[];
+  const fetch=mock.fn(async(input,init)=>{
+    if(new URL(input).hostname==='transmart.qq.com'){const payload=JSON.parse(init.body);referenceTexts.push(...payload.source.text_list);return {status:200,json:async()=>({header:{ret_code:'succ'},auto_translation:payload.source.text_list.map(text=>text===good?'参考成功音箱 FICT1960':'')})}}
+    assert.equal(new URL(input).hostname,'translate.googleapis.com');const source=new URL(input).searchParams.get('q');googleTexts.push(source);assert.equal(source,missing);return {status:200,json:async()=>[[['备用补齐黑色型号 FICT1961']]]};
+  });
+  const h=harness({actualTransport:true,primaryReference:true,fetch}),r=record(h,'partial-reference',good);r.raw[h.api.H[11]]=missing;h.api.setRows([r]);await h.api.translateVisible([r]);
+  assert.equal(r.raw[h.api.H[10]],'参考成功音箱 FICT1960');assert.equal(r.raw[h.api.H[12]],'备用补齐黑色型号 FICT1961');assert.equal(r.translationItemProvider,'tencent-transmart-reference');assert.equal(r.translationModelProvider,'google-online');assert.deepEqual(googleTexts,[missing]);assert.equal(referenceTexts.filter(text=>text===good).length,1);
+});
+
+test('a failed fallback entry cannot discard a successful reference neighbor in the same batch',async()=>{
+  const good='Wireless good speaker FICT1970',missing='Black missing variant FICT1971',calls=[];
+  const provider={create:()=>({async translateBatch(texts){calls.push(...texts);return texts.map(text=>text===good?'已成功返回的音箱中文 FICT1970':'')}})};
+  const fetch=mock.fn(async input=>{assert.equal(new URL(input).hostname,'translate.googleapis.com');assert.equal(new URL(input).searchParams.get('q'),missing);return {status:200,json:async()=>[[['UNTRANSLATED']]]}});
+  const h=harness({actualTransport:true,referenceProvider:provider,fetch}),r=record(h,'failed-partial-fallback',good);r.raw[h.api.H[11]]=missing;h.api.setRows([r]);await h.api.translateVisible([r]);
+  assert.equal(r.raw[h.api.H[10]],'已成功返回的音箱中文 FICT1970');assert.equal(r.localTranslatedItem,true);assert.equal(r.raw[h.api.H[12]],'');assert.equal(r.localTranslatedModel,false);assert.equal(calls.filter(text=>text===good).length,1);
 });

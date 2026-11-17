@@ -37,7 +37,7 @@ function fakeDatabase() {
         objectStore(name) {
           const store = stores[name];
           return {
-            getAll: () => request([...store.values()]), get: key => request(store.get(key) ?? null),
+            getAll: () => request([...store.values()]), get(key) { const req=request(store.get(key)??null);db.beforeGet?.(name,key);return req; },
             put(value) { store.set(keyOf(name, value), plain(value)); const req={onsuccess:null};queueMicrotask(()=>req.onsuccess?.({target:req}));return req; },
             add(value) { if(store.has(keyOf(name,value)))throw Error('ConstraintError: duplicate key');return this.put(value); },
             delete: key => store.delete(key), clear: () => store.clear(),
@@ -64,14 +64,17 @@ function fakeDatabase() {
   return db;
 }
 
-function harness() {
-  const elements = new Map(), controls = { writable: true, batch: [], editors: [], checks: [], calculations: [], downloads: [], renders: 0, parse: null }, db = fakeDatabase();
+function harness(options={}) {
+  const elements = new Map(), controls = { writable: true, batch: [], editors: [], checks: [], versionLabels: [], versionRenames: [], versionTitles: [], calculations: [], downloads: [], renders: 0, parse: null, dbGate: null, promptValue: null }, db = options.db||fakeDatabase();
   const selectAll = selector => {
     if (selector === '[data-batch]') return controls.batch;
     if (selector === '[data-edit]') return controls.editors;
     if (selector === '[data-calc-row]') return controls.calculations;
     if (selector === '[data-version-delete]') return controls.checks;
     if (selector === '[data-version-delete]:checked') return controls.checks.filter(x => x.checked);
+    if (selector === '[data-version-label]') return controls.versionLabels;
+    if (selector === '[data-version-rename]') return controls.versionRenames;
+    if (selector === '[data-version-title]') return controls.versionTitles;
     return [];
   };
   function element(id) {
@@ -93,13 +96,14 @@ function harness() {
     between('function rowHtml(', 'function closeProductCard('),
     line('function bindTable('), between('function batch()', 'function openWorkbenchDB('),
     ...['dbRequest','localDateKey','writeRecordBatches'].map(n=>line('function '+n+'(')),
-    ...['listVersions','refreshVersions','openVersionManager','readVersion','showVersion'].map(n=>line('async function '+n+'(')),
+    ...['listVersions','readVersion','showVersion'].map(n=>line('async function '+n+'(')),
+    between('async function refreshVersions(', 'async function saveVersion('),
     between('async function saveVersion(', 'async function readVersion('),
     line('function returnToCurrent('), line('async function restoreVersionAsCurrent('), line('function markDirty('), line('function save('), line('async function flushSave('),
     ...['textTokens','titleSimilarity','imageDistance','imageKey','sameImage','imageSimilarity','similarityPercent','similarProduct','escapeRe','extractBrand','extractStyle','extractQty','deriveRecord'].map(n=>line('function '+n+'(')),
     between('async function regroup(', 'async function prepareImageHashes('), line('function parseDelimited('), between('function selectImportHeader(', 'async function workbookHasEmbeddedImages('),
     between('function xmlEsc(', 'function mergeBuyerEdits('),
-    line('function mergeBuyerEdits('), between('async function importFile(', 'async function importInvitations('),
+    between('function mergeBuyerEdits(', 'async function runDeferredProcessing('), between('async function importFile(', 'async function importInvitations('),
     between('async function importInvitations(', 'async function importTranslations('),
     between('async function importTranslations(', 'function download('),
     // This binding also contains other handlers, whose actions remain uncalled.
@@ -110,13 +114,15 @@ function harness() {
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
     innerWidth: 1400, location: { href: 'https://offline.example.test/index.html' },
     localStorage: { getItem() { return null; }, setItem() {} },
-    setTimeout(callback,delay) { return delay===0?setTimeout(callback,0):null; }, clearTimeout(timer) { if(timer!==null)clearTimeout(timer); }, confirm: () => true,
+    setTimeout(callback,delay) { return delay===0?setTimeout(callback,0):null; }, clearTimeout(timer) { if(timer!==null)clearTimeout(timer); }, confirm: () => true, prompt:()=>controls.promptValue,
     IDBKeyRange: { only: value => value }, fetch() { throw Error('Network forbidden'); }
   });
   const api = vm.runInContext(`(function(){
+    let automaticChineseEnabled=true,automaticChineseRun=0,translationBackgroundRun=0;
+    const translationQueue={cancelQueued(){}};function launchAutomaticChinese(){automaticChineseEnabled=true}
     ${extracted}
     function canEditWorkspace(){return controls.writable}
-    async function openWorkbenchDB(){return db}
+    async function openWorkbenchDB(){if(controls.dbGate)await controls.dbGate;return db}
     function refreshTranslationReadiness(){} function scheduleTranslationStatus(){}
     function closeProductCard(){} function closeImageZoom(){} function queueVisibleTranslation(){}
     function translationSource(r,index){return value(r,H[index])} function deriveChineseField(){}
@@ -127,11 +133,11 @@ function harness() {
     return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,
       batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,
       updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,importFile,importInvitations,importTranslations,
-      writeRecordBatches,saveVersion,listVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,flushSave,save,
+      writeRecordBatches,saveVersion,listVersions,refreshVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,renameVersion,renameSelectedVersion,flushSave,save,
       get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},
       setRows(next){rows=next;headers=H.slice();sourceFileName='fabricated.csv'},setFilters(next){filters=next},
       setSelected(ids){selected=new Set(ids)},setGrouping(value){groupingEnabled=value},setOpened(ids){opened=new Set(ids)},
-      setFolds(c8,attrs){showC8=c8;showAttrs=attrs},setHistory(value){historyMode=value},setThreshold(value){threshold=value}
+      setFolds(c8,attrs){showC8=c8;showAttrs=attrs},setHistory(value){historyMode=value},setThreshold(value){threshold=value},setWorkspace(value){globalThis.workspace=value}
     };
   })()`, context, { filename: 'offline-workbench-functions.js' });
   return { api, element, controls, db };
@@ -253,11 +259,13 @@ test('deleting V2 between V1/V3 then saving uses V4 without overwriting V3',asyn
   const h=harness(),r=record(h,'a');h.api.setRows([r]);
   for(let i=1;i<=3;i++){r.raw.revision='revision-'+i;await h.api.saveVersion();}
   const versions=await h.api.listVersions(),v2=versions.find(v=>v.id.endsWith('-V2')),v3=versions.find(v=>v.id.endsWith('-V3'));
+  await h.api.renameVersion(v3.id,'买手复核 V900 自定义名称');
   h.controls.checks=versions.map(v=>({dataset:{versionDelete:v.id},checked:v.id===v2.id}));
   await h.api.openVersionManager();await h.element('deleteSelectedVersions').onclick();
   assert.equal(h.db.stores.versions.has(v2.id),false);assert.equal([...h.db.stores.versionRecords.values()].some(r=>r.versionId===v2.id),false);
   r.raw.revision='revision-4';await h.api.saveVersion();
   assert.equal((await h.api.readVersion(v3.id)).rows[0].raw.revision,'revision-3');
+  assert.equal((await h.api.readVersion(v3.id)).meta.label,'买手复核 V900 自定义名称');
   assert.ok((await h.api.listVersions()).some(v=>v.id.endsWith('-V4')));
 });
 
@@ -412,4 +420,57 @@ for(const kind of ['translation','invitation'])test('a '+kind+' import rechecks 
   if(kind==='translation')await h.api.importTranslations(csvFile(csv));else await h.api.importInvitations(csvFile(csv));
   assert.equal(switched,true);assert.ok(historical.every(r=>r.raw[h.api.H[10]]==='Historical Chinese'&&r.raw[h.api.H[25]]==='Historical invitation'));
   assert.equal(original[1504].raw[h.api.H[kind==='translation'?10:25]],undefined);assert.equal(h.db.transactions.filter(t=>t.mode==='readwrite').length,0);
+});
+
+test('renaming a history version changes only its label and survives refresh and historical inspection',async()=>{
+  const h=harness(),r=record(h,'rename-snapshot',{item_name:'Immutable snapshot item'});h.api.setRows([r]);await h.api.saveVersion();
+  const [before]=await h.api.listVersions(),snapshots=plain([...h.db.stores.versionRecords.entries()]);
+  const renamed=await h.api.renameVersion(before.id,'  买手复核通过 · 十一月  ');
+  assert.equal(renamed.label,'买手复核通过 · 十一月');assert.deepEqual({...plain(renamed),label:before.label},plain(before));
+  assert.deepEqual(plain([...h.db.stores.versionRecords.entries()]),snapshots);assert.equal(h.db.stores.versions.size,1);assert.equal(h.element('versionSelect').value,before.id);
+  assert.match(h.element('versionSelect').innerHTML,/买手复核通过 · 十一月/);
+  const reopened=harness({db:h.db});await reopened.api.refreshVersions(before.id);assert.match(reopened.element('versionSelect').innerHTML,/买手复核通过 · 十一月/);
+  await reopened.api.showVersion(before.id);assert.equal(reopened.api.rows[0].raw.item_name,'Immutable snapshot item');assert.equal(reopened.element('groupState').textContent,'历史只读 · 买手复核通过 · 十一月');
+});
+
+test('history names trim whitespace, support Chinese and Unicode, enforce the limit and escape dropdown markup',async()=>{
+  const h=harness();h.api.setRows([record(h,'rename-validation')]);await h.api.saveVersion();const [version]=await h.api.listVersions(),original=plain(version);
+  for(const invalid of ['', ' \t\n ', '中'.repeat(101)])await assert.rejects(h.api.renameVersion(version.id,invalid),/不能为空|最多 100/);
+  await assert.rejects(h.api.renameVersion('missing-version','合法名称'),/不存在|已删除/);assert.deepEqual(plain(h.db.stores.versions.get(version.id)),original);
+  await h.api.renameVersion(version.id,'中'.repeat(100));assert.equal((await h.api.listVersions())[0].label.length,100);
+  await h.api.renameVersion(version.id,'😀'.repeat(100));assert.equal(Array.from((await h.api.listVersions())[0].label).length,100);
+  await h.api.renameVersion(version.id,'  复核 <买手> & 中文名称  ');assert.equal((await h.api.listVersions())[0].label,'复核 <买手> & 中文名称');
+  assert.match(h.element('versionSelect').innerHTML,/复核 &lt;买手&gt; &amp; 中文名称/);assert.doesNotMatch(h.element('versionSelect').innerHTML,/<买手>/);
+});
+
+test('a history rename cancels while awaiting storage when data, history, ownership or workspace changes',async()=>{
+  for(const change of ['dataset','history','ownership','workspace']){
+    const h=harness();h.api.setRows([record(h,'rename-context')]);await h.api.saveVersion();const [version]=await h.api.listVersions();
+    let resume;h.controls.dbGate=new Promise(resolve=>{resume=resolve});const pending=h.api.renameVersion(version.id,'不能写入的新名称');
+    if(change==='dataset')h.api.setRows([record(h,'replacement')]);else if(change==='history')h.api.setHistory(true);else if(change==='ownership')h.controls.writable=false;else h.api.setWorkspace({id:'replacement-workspace'});
+    resume();await assert.rejects(pending,/已切换/);assert.equal(h.db.stores.versions.get(version.id).label,version.label);
+  }
+});
+
+test('a history rename rechecks ownership when its metadata read completes',async()=>{
+  const h=harness();h.api.setRows([record(h,'rename-read-race')]);await h.api.saveVersion();const [version]=await h.api.listVersions();
+  h.db.beforeGet=(store,key)=>{if(store==='versions'&&key===version.id){h.db.beforeGet=null;h.controls.writable=false}};
+  await assert.rejects(h.api.renameVersion(version.id,'不能写入的名称'),/已切换/);assert.equal(h.db.stores.versions.get(version.id).label,version.label);
+});
+
+test('the version manager saves a row name immediately and rejects a stale rename control in history mode',async()=>{
+  const h=harness();h.api.setRows([record(h,'rename-manager')]);await h.api.saveVersion();const [version]=await h.api.listVersions();
+  const input={dataset:{versionLabel:version.id},value:'  管理窗口保存的名称  '},button={dataset:{versionRename:version.id},isConnected:true,disabled:false},title={dataset:{versionTitle:version.id},textContent:version.label};
+  h.controls.versionLabels=[input];h.controls.versionRenames=[button];h.controls.versionTitles=[title];await h.api.openVersionManager();
+  assert.match(h.element('versionManager').innerHTML,/data-version-label/);await button.onclick();
+  assert.equal(input.value,'管理窗口保存的名称');assert.equal(title.textContent,'管理窗口保存的名称');assert.equal(button.disabled,false);assert.match(h.element('versionSelect').innerHTML,/管理窗口保存的名称/);
+  h.api.setHistory(true);input.value='历史只读时不能保存';await button.onclick();assert.equal(h.db.stores.versions.get(version.id).label,'管理窗口保存的名称');
+});
+
+test('the selected-version rename action opens and focuses its editor without requiring a native prompt',async()=>{
+  const h=harness();h.api.setRows([record(h,'rename-selected')]);await h.api.saveVersion();const [version]=await h.api.listVersions();h.element('versionSelect').value=version.id;
+  let focused=0,selected=0,scrolled=0;const input={dataset:{versionLabel:version.id},value:version.label,focus(){focused++},select(){selected++},scrollIntoView(){scrolled++}},button={dataset:{versionRename:version.id},isConnected:true,disabled:false};
+  h.controls.versionLabels=[input];h.controls.versionRenames=[button];await h.api.renameSelectedVersion();assert.equal(focused,1);assert.equal(selected,1);assert.equal(scrolled,1);assert.match(h.element('versionManager').innerHTML,/保存名称/);
+  h.element('closeVersionManager').onclick();assert.equal(h.db.stores.versions.get(version.id).label,version.label);
+  await h.api.renameSelectedVersion();input.value='  下拉选中版本的新名称  ';await button.onclick();assert.equal(h.db.stores.versions.get(version.id).label,'下拉选中版本的新名称');assert.equal(h.element('versionSelect').value,version.id);
 });
