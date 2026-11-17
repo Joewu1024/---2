@@ -1,0 +1,176 @@
+'use strict';
+
+// Synthetic files only. Actual main-import functions and the shipped CSV/XLSX
+// Worker sources run offline with a fake DOM. This is not a browser/IDB test.
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const { test, afterEach } = require('node:test');
+const { Worker: NodeWorker } = require('node:worker_threads');
+const { resolveObjectURL } = require('node:buffer');
+const { performance } = require('node:perf_hooks');
+const XLSX = require('../vendor/xlsx.full.min.js');
+const BuyerTranslation = require('../translation-engine.js');
+const root = path.join(__dirname, '..'), html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const lines = html.split(/\r?\n/), workers = [], vendorPath = require.resolve('../vendor/xlsx.full.min.js');
+const vendorUrl = 'https://offline.example.test/vendor/xlsx.full.min.js';
+const line = prefix => { const found = lines.find(text => text.startsWith(prefix));assert.ok(found, 'Missing actual definition: ' + prefix);return found; };
+const between = (start, end) => { const a = html.indexOf(start), b = html.indexOf(end, a);assert.ok(a >= 0 && b > a, 'Missing actual source range: ' + start);return html.slice(a, b); };
+const plain = value => JSON.parse(JSON.stringify(value));
+
+class BrowserWorkerShim {
+  constructor(url) {
+    this.pending = [];this.stopped = false;workers.push(this);
+    resolveObjectURL(url).text().then(source => {
+      if (this.stopped) return;
+      const prefix = 'const {parentPort}=require("node:worker_threads");globalThis.fetch=()=>{throw Error("Network forbidden")};globalThis.self={postMessage:value=>parentPort.postMessage(value)};' +
+        'globalThis.importScripts=url=>{if(url!==' + JSON.stringify(vendorUrl) + ')throw Error("Unexpected library URL");self.XLSX=require(' + JSON.stringify(vendorPath) + ')};';
+      this.worker = new NodeWorker(prefix + source + ';parentPort.on("message",data=>self.onmessage({data}));', { eval: true });
+      this.worker.on('message', data => { if (!this.stopped) this.onmessage?.({ data }); });
+      this.worker.on('error', error => { if (!this.stopped) this.onerror?.(error); });
+      this.pending.forEach(message => this.worker.postMessage(message));this.pending = [];
+    }).catch(error => { if (!this.stopped) this.onerror?.(error); });
+  }
+  postMessage(message) { if (this.worker) this.worker.postMessage(message);else this.pending.push(message); }
+  terminate() { this.stopped = true;this.termination = this.worker ? this.worker.terminate() : Promise.resolve(); }
+}
+afterEach(async () => { for (const worker of workers.splice(0)) { if (!worker.stopped) worker.terminate();await worker.termination; } });
+
+function harness() {
+  const elements = new Map(), controls = { writable: true, saves: [], renders: 0, yields: 0, beforeYield: null, beforeDedup: null, reports: [], errors: [] };
+  const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', hidden: false, value: '', disabled: false });return elements.get(id); };
+  const context = vm.createContext({
+    BuyerTranslation, controls, Blob, TextEncoder, TextDecoder, Uint8Array, DataView, AbortController,
+    Worker: BrowserWorkerShim, URL, location: { protocol: 'https:', href: 'https://offline.example.test/index.html', origin: 'https://offline.example.test' },
+    document: { getElementById: element, baseURI: 'https://offline.example.test/index.html' },
+    console: { ...console, error: error => controls.errors.push(error), warn: error => controls.errors.push(error) },
+    fetch() { throw Error('Network forbidden'); },
+    setTimeout(callback, delay) { if (delay !== 0) return null;controls.yields++;return setTimeout(() => { controls.beforeYield?.();callback(); }, 0); },clearTimeout
+  });
+  for (const file of ['workbench-import.js','workbench-xlsx.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context);
+  const source = [
+    line('const H='),line('const S='),line('const FIELD='),line('let rows='),line('const rawLookupCache='),line('const keyMap='),
+    ...['key','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','aliasFor','headerScore','isMetaRow','statusValue','statusLines'].map(name => line('function ' + name + '(')),
+    between('function selectImportHeader(', 'function xmlEsc('),
+    between('// import-deduplication:start', '// import-deduplication:end'),
+    line('function mergeBuyerEdits('),
+    between('async function importFile(', 'function download(')
+  ].join('\n');
+  const api = vm.runInContext(`(function(){
+    let automaticChineseEnabled=true,automaticChineseRun=0,translationBackgroundRun=0;
+    const translationQueue={cancelQueued(){}};
+    function canEditWorkspace(){return controls.writable}function returnToCurrent(){historyMode=false}
+    function save(){controls.saves.push(rows.slice())}function render(){controls.renders++}
+    function launchAutomaticChinese(){}function runDeferredProcessing(){}function deriveRecord(){}
+    function translationSource(r,index){return value(r,H[index])}function markDirty(){}
+    function refreshTranslationReadiness(){}function scheduleTranslationStatus(){}
+    function reportQa(type,detail){controls.reports.push({type,...detail})}
+    async function parseXlsxLegacy(){throw Error('Unexpected legacy XLSX path in a non-image fixture')}
+    ${source}
+    const actualDeduplicate=deduplicateImportedRows;
+    deduplicateImportedRows=async function(records,options){controls.beforeDedup?.(records,options);return actualDeduplicate(records,options)};
+    return {H,idFor,normalizeModelId,value,parseCsv,parseXlsx,importFile,importTranslations,importInvitations,deduplicateImportedRows,mergeBuyerEdits,
+      get rows(){return rows},setRows(next){rows=next},cancelImport(){importFile.activeController?.abort()}};
+  })()`, context, { filename: 'actual-import-deduplication-functions.js' });
+  return { api, controls, element };
+}
+function record(h,id,nb,extra={}) { return { uid: extra.uid || 'row-' + id, excelRow: extra.excelRow || 2, raw: { 'Model ID': id, backcal_cogs_non_brand: nb, ...extra.raw }, ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== 'raw')) }; }
+function fileFor(format,matrix) {
+  if(format==='csv') { const cell=value=>/[",\r\n]/.test(String(value??''))?'"'+String(value).replace(/"/g,'""')+'"':String(value??'');const file=new Blob([matrix.map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv'});file.name='fabricated-duplicates.csv';return file; }
+  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(matrix),'Synthetic products');
+  const file=new Blob([XLSX.write(book,{type:'buffer',bookType:'xlsx',compression:true})]);file.name='fabricated-duplicates.xlsx';return file;
+}
+
+test('deduplication compares full-precision Non Brand rather than target price and retains the whole winning row',async()=>{
+  const h=harness(),first=record(h,'1001','12.001',{uid:'low',raw:{final_1688_price_moq_3:'100',item_name:'LOW ROW',item_id:'111',model_image:'https://example.test/low.png'}}),winner=record(h,'1001','12.004',{uid:'winner',excelRow:3,raw:{final_1688_price_moq_3:'1',item_name:'WINNING ROW',item_id:'222',model_image:'https://example.test/winner.png'}});
+  const before=plain([first,winner]),result=await h.api.deduplicateImportedRows([first,winner]);
+  assert.equal(result.rows.length,1);assert.equal(result.rows[0],winner);assert.deepEqual(plain([first,winner]),before);
+  assert.equal(result.sourceCount,2);assert.equal(result.removedCount,1);assert.equal(result.duplicateIdCount,1);
+  assert.equal(result.rows[0].raw.item_id,'222');assert.equal(result.rows[0].raw.item_name,'WINNING ROW');assert.equal(result.rows[0].raw.model_image,'https://example.test/winner.png');
+});
+
+test('ties retain the earliest source row and invalid prices rank below zero and negative valid numbers',async()=>{
+  const h=harness(),rows=[record(h,'tie','10',{uid:'earliest'}),record(h,'tie','10.000',{uid:'later',excelRow:3}),record(h,'zero','',{uid:'blank'}),record(h,'zero','0',{uid:'zero'}),record(h,'negative','garbage',{uid:'invalid'}),record(h,'negative','-2',{uid:'negative'}),record(h,'all-invalid','NaN',{uid:'first-invalid'}),record(h,'all-invalid','Infinity',{uid:'last-invalid'})];
+  const result=await h.api.deduplicateImportedRows(rows);assert.deepEqual(Array.from(result.rows,row=>row.uid),['earliest','zero','negative','first-invalid']);
+});
+
+test('normalized IDs merge formatting variants while long IDs, distinct leading zeros and missing IDs remain separate',async()=>{
+  const h=harness(),a=record(h,' 12,345.0 ','1',{uid:'formatted'}),b=record(h,'12345','2',{uid:'normalized'}),long='900719925474099312345',rows=[a,b,record(h,long,'3',{uid:'long'}),record(h,'00012345','4',{uid:'leading-zero'}),record(h,'','9',{uid:'missing-1',raw:{_modelId:'AUTO-00002',shop_model_id:'12345'}}),record(h,'','8',{uid:'missing-2',raw:{_modelId:'AUTO-00002',shop_model_id:'12345'}})];
+  delete rows.at(-1).raw['Model ID']; // No source-ID column at all, rather than merely an empty value.
+  const result=await h.api.deduplicateImportedRows(rows);assert.deepEqual(Array.from(result.rows,row=>row.uid),['normalized','long','leading-zero','missing-1','missing-2']);
+  assert.equal(result.rows[1].raw['Model ID'],long);
+});
+
+for(const format of ['csv','xlsx'])test(format+' main import deduplicates before merging buyer edits and preserves winner data',async()=>{
+  const h=harness(),old=record(h,'12,345.0','1',{raw:{[h.api.H[10]]:'买手人工商品中文',[h.api.H[24]]:'买手保留备注',[h.api.H[25]]:'INV-BUYER'},userEditedFields:[h.api.H[10],h.api.H[24],h.api.H[25]],preTouched:true,preValue:'N',preDate:'2026-11-17',preNote:'人工核价备注'});h.api.setRows([old]);
+  await h.api.importFile(fileFor(format,[['Model ID','item_name','model_name','backcal_cogs_non_brand','final_1688_price_moq_3','item_id'],['12345','Losing source','Losing model','10','100','111'],['12345','Winning source','Winning model','20','1','222'],['12345','Later tied source','Later tied model','20.000','99','444'],['67890','Other source','Other model','5','4','333']]));
+  assert.equal(h.api.rows.length,2);const winner=h.api.rows.find(row=>h.api.idFor(row)==='12345');assert.ok(winner);
+  assert.equal(winner.raw.item_name,'Winning source');assert.equal(winner.raw.item_id,'222');assert.equal(winner.raw.backcal_cogs_non_brand,'20');
+  assert.equal(h.api.value(winner,h.api.H[10]),'买手人工商品中文');assert.equal(h.api.value(winner,h.api.H[24]),'买手保留备注');assert.equal(h.api.value(winner,h.api.H[25]),'INV-BUYER');
+  for(const key of ['preTouched','preValue','preDate','preNote'])assert.equal(winner[key],old[key]);
+  assert.equal(h.controls.saves.length,1);assert.equal(h.controls.saves[0].length,2);assert.ok(h.controls.reports.some(report=>report.type==='import'&&report.sourceRows===4&&report.duplicateRows===2&&report.duplicateIds===1));
+});
+
+for(const format of ['csv','xlsx'])test(format+' translation and invitation side imports keep their existing last-row behavior',async()=>{
+  const h=harness(),row=record(h,'12345','5');h.api.setRows([row]);
+  await h.api.importTranslations(fileFor(format,[['Model ID','item_name_zh','backcal_cogs_non_brand'],['12345','第一条高价译文','99'],['12345','第二条最终译文','1']]));
+  assert.equal(h.api.value(row,h.api.H[10]),'第二条最终译文');
+  await h.api.importInvitations(fileFor(format,[['Model ID','邀请ID','backcal_cogs_non_brand'],['12345','INV-FIRST-HIGH','99'],['12345','INV-LAST-LOW','1']]));
+  assert.equal(h.api.value(row,h.api.H[25]),'INV-LAST-LOW');assert.equal(h.api.rows.length,1);
+});
+
+test('historical duplicate rows contribute all nonconflicting buyer edits without mutating previous records',()=>{
+  const h=harness(),first=record(h,'12,345.0','1',{uid:'old-first',raw:{[h.api.H[10]]:'第一行人工商品中文'},userEditedFields:[h.api.H[10]],preTouched:false,preValue:'Y',preDate:'IGNORED',preNote:'not touched'}),second=record(h,'12345','2',{uid:'old-second',raw:{[h.api.H[24]]:'第二行买手备注',[h.api.H[25]]:'INV-SECOND'},userEditedFields:[h.api.H[24],h.api.H[25]],preTouched:true,preValue:'N',preDate:'2026-11-17',preNote:'第二行人工核价备注'}),previous=[first,second],before=plain(previous);
+  const incoming=record(h,'12345','20',{uid:'new-winner',raw:{item_name:'Winning source'}}),merged=h.api.mergeBuyerEdits([incoming],previous)[0];
+  assert.equal(merged.raw.item_name,'Winning source');assert.equal(merged.raw.backcal_cogs_non_brand,'20');
+  assert.equal(h.api.value(merged,h.api.H[10]),'第一行人工商品中文');assert.equal(h.api.value(merged,h.api.H[24]),'第二行买手备注');assert.equal(h.api.value(merged,h.api.H[25]),'INV-SECOND');
+  assert.deepEqual(Array.from(merged.userEditedFields),[h.api.H[10],h.api.H[24],h.api.H[25]]);
+  for(const field of ['preTouched','preValue','preDate','preNote'])assert.equal(merged[field],second[field]);
+  assert.deepEqual(plain(previous),before);assert.notEqual(merged.raw,first.raw);assert.notEqual(merged.raw,second.raw);
+  merged.raw[h.api.H[24]]='new current edit';merged.userEditedFields.push('new field');assert.deepEqual(plain(previous),before);
+});
+
+test('the earliest duplicate manual field and preTouched tuple win conflicts including intentional blanks',()=>{
+  const h=harness(),fields=[h.api.H[12],h.api.H[24],h.api.H[0]],first=record(h,'12345','1',{uid:'earliest-manual',raw:{[fields[0]]:'',[fields[1]]:'',[fields[2]]:'首行人工判断'},userEditedFields:fields.slice(),preTouched:true,preValue:'',preDate:'',preNote:''}),later=record(h,'12345','99',{uid:'later-manual',raw:{[fields[0]]:'后行中文型号',[fields[1]]:'后行备注',[fields[2]]:'后行判断',[h.api.H[25]]:'INV-LATER'},userEditedFields:[...fields,h.api.H[25]],preTouched:true,preValue:'Y',preDate:'2026-12-01',preNote:'后行核价备注'}),previous=[first,later],before=plain(previous);
+  const incoming=record(h,'12345','20',{raw:{[fields[0]]:'文件提供中文型号',[fields[1]]:'文件提供备注'}}),merged=h.api.mergeBuyerEdits([incoming],previous)[0];
+  for(const field of fields)assert.equal(merged.raw[field],first.raw[field]);assert.equal(merged.raw[h.api.H[25]],'INV-LATER');
+  assert.equal(merged.autoModelChinese,false);assert.ok(merged.userEditedFields.includes(fields[0]));
+  assert.equal(merged.preTouched,true);for(const field of ['preValue','preDate','preNote'])assert.equal(merged[field],'');
+  assert.deepEqual(plain(previous),before);
+});
+
+test('20,000 source rows deduplicate with bounded reads and yields without mutating input',async()=>{
+  const h=harness();let reads=0;const source=Array.from({length:20000},(_,index)=>record(h,String(Math.floor(index/2)),String(index%2?20.004:20.001),{uid:'fabricated-'+index}));
+  const tracked=new Proxy(source,{get(target,key,receiver){if(/^\d+$/.test(String(key)))reads++;return Reflect.get(target,key,receiver)}}),result=await h.api.deduplicateImportedRows(tracked);
+  assert.equal(result.rows.length,10000);assert.equal(result.removedCount,10000);assert.equal(result.duplicateIdCount,10000);
+  assert.ok(result.rows.every(row=>Number(row.uid.slice('fabricated-'.length))%2===1));assert.equal(source.length,20000);
+  assert.ok(reads<source.length*10,'bounded source-row reads rather than repeated per-ID rescans');assert.ok(h.controls.yields>0,'the event loop is yielded without a machine-speed threshold');
+});
+
+for(const format of ['csv','xlsx'])test('20,000 real '+format+' rows pass the complete main import and retain 10,000 winning records',async()=>{
+  const h=harness(),started=performance.now(),headers=['Model ID','item_name','model_name','backcal_cogs_non_brand','final_1688_price_moq_3','item_id','model备注'];
+  const rows=Array.from({length:20000},(_,index)=>{const id=String(900719925474099312345n+BigInt(Math.floor(index/2))),winning=index%2===1;return [id,(winning?'Winning':'Losing')+' source '+id,(winning?'Winning':'Losing')+' model '+id,winning?'20.004':'20.001',winning?'1':'100',(winning?'WIN-ITEM-':'LOSE-ITEM-')+id,(winning?'Winning':'Losing')+' note '+id]});
+  const file=fileFor(format,[headers,...rows]),prepared=performance.now();await h.api.importFile(file);const imported=performance.now();
+  assert.equal(h.api.rows.length,10000);assert.equal(h.controls.saves.length,1);assert.equal(h.controls.saves[0].length,10000);
+  assert.equal(new Set(Array.from(h.api.rows,row=>h.api.idFor(row))).size,10000);
+  for(const row of h.api.rows){const id=h.api.idFor(row);assert.equal(row.raw.item_name,'Winning source '+id);assert.equal(row.raw.model_name,'Winning model '+id);assert.equal(row.raw.backcal_cogs_non_brand,'20.004');assert.equal(row.raw.final_1688_price_moq_3,'1');assert.equal(row.raw.item_id,'WIN-ITEM-'+id);assert.equal(row.raw['model备注'],'Winning note '+id)}
+  const report=h.controls.reports.find(value=>value.type==='import');assert.ok(report);
+  assert.equal(report.rows,10000);assert.equal(report.sourceRows,20000);assert.equal(report.duplicateRows,10000);assert.equal(report.duplicateIds,10000);
+  assert.equal(report.reader,format==='csv'?'CSV Worker':'Excel Worker');assert.equal(h.controls.errors.length,0);
+  console.log('Node '+format.toUpperCase()+' 20,000 → 10,000: fixture '+(prepared-started).toFixed(1)+' ms; parse/map/deduplicate/import '+(imported-prepared).toFixed(1)+' ms (offline Worker + fake DOM/save).');
+});
+
+test('cancelling a yielding deduplication leaves every original row untouched',async()=>{
+  const h=harness(),controller=new AbortController(),source=Array.from({length:2000},(_,index)=>record(h,String(index%100),'10',{uid:'cancel-'+index})),before=plain(source);
+  h.controls.beforeYield=()=>controller.abort();await assert.rejects(h.api.deduplicateImportedRows(source,{signal:controller.signal}),error=>error.name==='AbortError');
+  assert.deepEqual(plain(source),before);
+});
+
+test('cancelling during main-import deduplication preserves the existing workbench and makes no save',async()=>{
+  const h=harness(),old=record(h,'old','1',{raw:{item_name:'Existing workbench'}});h.api.setRows([old]);
+  h.controls.beforeDedup=()=>{h.controls.beforeYield=()=>h.api.cancelImport()};
+  const matrix=[['Model ID','item_name','backcal_cogs_non_brand'],...Array.from({length:1200},(_,index)=>[String(index%100),'Fabricated '+index,'10'])];
+  await h.api.importFile(fileFor('csv',matrix));assert.equal(h.api.rows.length,1);assert.equal(h.api.rows[0],old);assert.equal(h.controls.saves.length,0);
+  assert.match(h.element('toast').textContent,/已取消/);
+});

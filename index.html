@@ -4037,7 +4037,40 @@ function zip(files){
   return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
 function exportXlsx(list){let x=exportRows(list),cols=x.headers,rr=[];function c(i,r,v){return '<c r="'+colName(i)+r+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v)+'</t></is></c>'}rr.push('<row r="1">'+cols.map((v,i)=>c(i,1,v)).join("")+"</row>");x.data.forEach((data,j)=>{let row=j+2;rr.push('<row r="'+row+'">'+data.map((v,i)=>c(i,row,v)).join("")+"</row>")});let end=colName(cols.length-1)+(x.data.length+1),sheet='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><sheetData>'+rr.join("")+'</sheetData><autoFilter ref="A1:'+end+'"/></worksheet>',ct='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',wb='<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="寻品工作看板" sheetId="1" r:id="rId1"/></sheets></workbook>',re='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',br='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';return zip([{n:"[Content_Types].xml",d:ct},{n:"_rels/.rels",d:re},{n:"xl/workbook.xml",d:wb},{n:"xl/_rels/workbook.xml.rels",d:br},{n:"xl/worksheets/sheet1.xml",d:sheet}])}
-function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let old of previous||[]){let id=idFor(old);if(id&&!byId.has(id))byId.set(id,old)}for(let r of incoming){let old=byId.get(idFor(r));if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(old,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(old,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&old.localTranslatedItem&&!BuyerTranslation.usable(translationSource(r,9),String(value(r,H[10])||"").trim())){r.raw[H[10]]=old.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=old.translationItemSource;r.translationItemVersion=old.translationItemVersion}if(sameModel&&old.localTranslatedModel&&!BuyerTranslation.usable(translationSource(r,11),String(value(r,H[12])||"").trim())){r.raw[H[12]]=old.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=old.translationModelSource;r.translationModelVersion=old.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
+function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let source of previous||[]){let id=idFor(source);if(!id)continue;let state=byId.get(id);if(!state){state={first:source,old:{...source,raw:{...(source.raw||{})},userEditedFields:[],preTouched:false},fields:new Set(),preCopied:false};byId.set(id,state)}for(let h of source.userEditedFields||[])if(!state.fields.has(h)&&source.raw&&Object.prototype.hasOwnProperty.call(source.raw,h)){state.fields.add(h);state.old.userEditedFields.push(h);state.old.raw[h]=source.raw[h]}if(source.preTouched&&!state.preCopied){state.preCopied=true;state.old.preTouched=true;state.old.preValue=source.preValue||"";state.old.preDate=source.preDate||"";state.old.preNote=source.preNote||""}}for(let r of incoming){let state=byId.get(idFor(r)),old=state?.old,first=state?.first;if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(first,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(first,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&first.localTranslatedItem&&!fields.includes(H[10])&&!BuyerTranslation.usable(translationSource(r,9),String(value(r,H[10])||"").trim())){r.raw[H[10]]=first.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=first.translationItemSource;r.translationItemVersion=first.translationItemVersion}if(sameModel&&first.localTranslatedModel&&!fields.includes(H[12])&&!BuyerTranslation.usable(translationSource(r,11),String(value(r,H[12])||"").trim())){r.raw[H[12]]=first.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=first.translationModelSource;r.translationModelVersion=first.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
+// import-deduplication:start
+async function deduplicateImportedRows(sourceRows,options={}){
+  const unique=[],byId=new Map(),duplicateIds=new Set(),total=sourceRows.length;
+  let removedCount=0;
+  const checkCancelled=()=>{if(options.signal?.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'})};
+  checkCancelled();
+  for(let i=0;i<total;i++){
+    checkCancelled();
+    const record=sourceRows[i],raw=record.raw||{};
+    // Only a real source Model ID identifies a duplicate; generated fallback IDs do not.
+    const idHeader=Object.keys(raw).find(header=>header!=='_modelId'&&['modelid','模型id'].includes(norm(header)));
+    const id=normalizeModelId(idHeader===undefined?'':raw[idHeader]);
+    if(!id)unique.push(record);
+    else{
+      const price=number(Object.prototype.hasOwnProperty.call(raw,H[13])?raw[H[13]]:getRaw(record,aliasFor('nb')));
+      const previous=byId.get(id);
+      if(!previous){byId.set(id,{index:unique.length,price});unique.push(record)}
+      else{
+        removedCount++;duplicateIds.add(id);
+        if(price!=null&&(previous.price==null||price>previous.price)){
+          unique[previous.index]=record;previous.price=price;
+        }
+      }
+    }
+    if((i+1)%500===0){
+      options.onProgress?.({processed:i+1,total,removedCount});
+      await new Promise(resolve=>setTimeout(resolve,0));checkCancelled();
+    }
+  }
+  options.onProgress?.({processed:total,total,removedCount});checkCancelled();
+  return {rows:unique,sourceCount:total,removedCount,duplicateIdCount:duplicateIds.size};
+}
+// import-deduplication:end
 async function runDeferredProcessing(token){
   const dataset=rows;
   try{
@@ -4062,11 +4095,15 @@ async function importFile(f){
   try{
     const parsed=/\.(csv|txt)$/i.test(f.name)||f.type==='text/csv'?await parseCsv(f,onProgress,3,{signal:controller.signal}):await parseXlsx(f,3,{signal:controller.signal,onProgress});
     if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;if(!parsed.rows.length)throw new Error('文件没有商品数据行，已保留原工作台数据');
-    headers=parsed.headers;rows=mergeBuyerEdits(parsed.rows,oldRows);sourceFileName=f.name;groupingEnabled=false;
+    const deduplicated=await deduplicateImportedRows(parsed.rows,{signal:controller.signal,onProgress:progress=>{if(hashToken===activeHashRun)$('state').textContent=f.name+' · 正在按 Model ID 去重 '+progress.processed.toLocaleString()+' / '+progress.total.toLocaleString()}});
+    if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;
+    headers=parsed.headers;rows=mergeBuyerEdits(deduplicated.rows,oldRows);sourceFileName=f.name;groupingEnabled=false;
     for(const r of rows){r.manualGroup='';r.group='UNGROUPED-'+r.uid}opened.clear();selected.clear();filters={};pageIndex=0;
     $('groupState').textContent='数据已载入 · 默认平铺；识图归类按需执行';save(true);render();setTimeout(()=>{if(hashToken===activeHashRun)launchAutomaticChinese(rows)},0);
-    if(typeof reportQa==='function')reportQa('import',{rows:rows.length,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
-    toast(rows.length?'已导入 '+rows.length.toLocaleString()+' 个 Model ID；正在后台整理字段':'未发现商品数据行，请检查文件');setTimeout(()=>runDeferredProcessing(hashToken),30);
+    const summary='源数据 '+deduplicated.sourceCount.toLocaleString()+' 条 · 已剔除 '+deduplicated.removedCount.toLocaleString()+' 条重复 Model ID · 保留 '+rows.length.toLocaleString()+' 条';
+    $('saveState').textContent=summary;
+    if(typeof reportQa==='function')reportQa('import',{rows:rows.length,sourceRows:deduplicated.sourceCount,duplicateRows:deduplicated.removedCount,duplicateIds:deduplicated.duplicateIdCount,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
+    toast(summary+'；正在后台整理字段');setTimeout(()=>runDeferredProcessing(hashToken),30);
   }catch(error){if(hashToken!==activeHashRun)return;rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;automaticChineseEnabled=true;render();launchAutomaticChinese(rows);if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast('导入失败：'+(error.message||'请检查文件格式'))}}
   finally{if(hashToken===activeHashRun){importFile.running=false;importFile.activeController=null;$('cancelImport').hidden=true}}
 }
