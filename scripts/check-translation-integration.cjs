@@ -1,7 +1,8 @@
 'use strict';
 
 // Exercises the actual marked workbench functions with a fake DOM and IndexedDB.
-// No application boot code or external transport is run.
+// No application boot code or external transport is run. Provider fixtures
+// validate routing and exact propagation; they do not prove live Google/Chrome quality.
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -14,7 +15,7 @@ const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const html = Array.from(documentHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)).at(-1)[1];
 const lines = html.split(/\r?\n/);
 const instances = new Set();
-const TRANSLATION_VERSION = 'google-v4-20261116';
+const TRANSLATION_VERSION = 'google-v5-20261117';
 
 function block(label) {
   const start = html.indexOf('// ' + label + ':start');
@@ -97,6 +98,8 @@ function harness(options = {}) {
   const transport = options.transport || mock.fn(async texts => texts.map(chineseFor));
   const context = vm.createContext({
     BuyerTranslation, BuyerGoogleTranslation, controls, document, console,
+    BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
+    Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
     referenceTranslationCache: new Map(options.bakedCache || []),
     setTimeout: setTimer, clearTimeout: clearTimer, queueMicrotask,
@@ -117,7 +120,7 @@ function harness(options = {}) {
     between('async function importFile(', 'async function importInvitations('),
     between('async function importTranslations(', 'function download('),
     block('translation-state-v3'), block('translation-integration-v3'),
-    between('async function ensureProductTranslations(', 'async function ensureCategoryTranslations('),
+    between('function shareChineseFieldReady(', 'async function ensureCategoryTranslations('),
     between('async function buildOnlineShareLink(', 'async function copyShareText(')
   ].join('\n');
   const api = vm.runInContext(`(function(){
@@ -155,7 +158,9 @@ function harness(options = {}) {
       H, queue:translationQueue, cache:translationCache, ready:translationCacheReady,
       deriveRecord, translateVisible, startBackgroundTranslation, queueVisibleTranslation,
       refreshTranslationEditors, updateTranslationStatus, bindTable, importFile, importTranslations,
-      ensureProductTranslations, buildOnlineShareLink,
+      ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,
+      retranslateAutomaticChinese, enableChromeTranslation,
+      get chromeMode(){return chromeTranslationMode},
       get readyCount(){return translationReadyCount}, get rows(){return rows},
       get dirty(){return dirtyRows},
       setRows(next,{history=false,sync=true,visible=next}={}){
@@ -228,7 +233,7 @@ test('cache loading filters bad baked/local entries and completes before request
   assert.equal(r.raw[h.api.H[10]], chineseFor(source));
   assert.equal(h.api.cache.has('Wireless speaker FICT702'), false);
   assert.equal(h.api.cache.has('Wireless speaker FICT703'), false);
-  assert.deepEqual(h.controls.cacheDatabases, ['buyer-title-translations-google-v4']);
+  assert.deepEqual(h.controls.cacheDatabases, ['buyer-title-translations-google-v5']);
 });
 
 test('provider migration ignores valid-looking baked, local and unversioned database translations', { timeout: 5000 }, async () => {
@@ -269,7 +274,7 @@ test('derive leaves missing translation empty and respects manual text and inten
   assert.equal(blank.autoItemChinese, false);
 });
 
-test('main-file rows without manual metadata repair old foreign text, ZXQ garbage and untranslated fragments', { timeout: 5000 }, async () => {
+test('main-file rows repair unusable foreign text and corrupt markers while retaining supplied mixed Chinese', { timeout: 5000 }, async () => {
   const h = harness();
   const records = [
     record(h, 'old-foreign', 'Wireless speaker FICT1401', 'Wireless speaker, FICT1401'),
@@ -277,13 +282,15 @@ test('main-file rows without manual metadata repair old foreign text, ZXQ garbag
     record(h, 'old-marker', 'Microphone FICT1403', '异常 ZXQ0001QXZ FICT1403')
   ];
   h.api.setRows(records);
-  for (const r of records) {
+  for (const r of [records[0],records[2]]) {
     h.api.deriveRecord(r);
     assert.equal(r.autoItemChinese, true);
     assert.equal(r.raw[h.api.H[10]], '');
   }
+  const mixed=records[1].raw[h.api.H[10]];h.api.deriveRecord(records[1]);assert.equal(records[1].autoItemChinese,false);assert.equal(records[1].raw[h.api.H[10]],mixed);
   await h.api.translateVisible(records);
-  for (const r of records) assert.equal(r.raw[h.api.H[10]], chineseFor(r.raw[h.api.H[9]]));
+  for (const r of [records[0],records[2]]) assert.equal(r.raw[h.api.H[10]], chineseFor(r.raw[h.api.H[9]]));
+  assert.equal(records[1].raw[h.api.H[10]],mixed);
 });
 
 test('obsolete automatic item and model translations are not ready and receive the current provider version', { timeout: 5000 }, async () => {
@@ -302,6 +309,8 @@ test('obsolete automatic item and model translations are not ready and receive t
   h.api.setRows([r]);
   assert.equal(h.api.readyCount, 0, 'obsolete provider output must not count as ready');
   h.api.deriveRecord(r);
+  assert.equal(r.raw[h.api.H[10]],'错误的旧服务中文振动棒，16件','migration keeps the saved display until replacement succeeds');
+  assert.equal(r.raw[h.api.H[12]],'旧服务接收器 FICT1601');
   assert.equal(r.localTranslatedItem, false);
   assert.equal(r.localTranslatedModel, false);
   await h.api.translateVisible([r]);
@@ -328,7 +337,7 @@ test('current-version automatic fields remain reusable and explicit buyer text s
   assert.equal(h.transport.mock.callCount(), 0);
 });
 
-test('cached and existing automatic terminology reaches the editor while manual terminology is preserved', { timeout: 5000 }, async () => {
+test('cached, existing automatic and manual wording reach editors without dictionary rewriting', { timeout: 5000 }, async () => {
   const source = 'Kit Controle Remoto Aurora ZX901 com Fonte 12V e 2 Cabos';
   const oldTerm = 'Aurora ZX901远程控制套件，带12V电源和2根电缆';
   const h = harness({ idbCache: [{ source, chinese: oldTerm, engineVersion: TRANSLATION_VERSION }] });
@@ -343,9 +352,9 @@ test('cached and existing automatic terminology reaches the editor while manual 
   h.api.setRows([fromCache, existing, manual]);
   const cachedEditor = editor(h, fromCache), existingEditor = editor(h, existing);
   await h.api.translateVisible([fromCache, existing, manual]);
-  for (const r of [fromCache, existing]) assert.match(r.raw[h.api.H[10]], /遥控器套装/);
-  assert.match(cachedEditor.value, /遥控器套装/);
-  assert.match(existingEditor.value, /遥控器套装/);
+  for (const r of [fromCache, existing]) assert.equal(r.raw[h.api.H[10]],oldTerm);
+  assert.equal(cachedEditor.value,oldTerm);
+  assert.equal(existingEditor.value,oldTerm);
   assert.equal(manual.raw[h.api.H[10]], oldTerm);
   assert.equal(h.transport.mock.callCount(), 0);
 });
@@ -450,6 +459,7 @@ test('sharing waits for the selected titles before reading categories and freezi
   const transport = mock.fn(async texts => { await gate.promise; return texts.map(chineseFor); });
   const h = harness({ transport });
   const selected = record(h, 'share-selected', 'Wireless speaker FICT1610');
+  selected.raw[h.api.H[11]]='Black FICT1613';
   const unselected = record(h, 'share-unselected', 'Microphone FICT1611');
   h.api.setRows([selected, unselected]);
   const pending = h.api.buildOnlineShareLink([selected]);
@@ -462,7 +472,9 @@ test('sharing waits for the selected titles before reading categories and freezi
   assert.equal(h.controls.categoryCalls, 1);
   assert.equal(h.controls.shareSnapshots.length, 1);
   assert.equal(h.controls.shareSnapshots[0].itemChinese, chineseFor(selected.raw[h.api.H[9]]));
-  assert.ok(transport.mock.calls.every(call => call.arguments[0].every(text => text === selected.raw[h.api.H[9]])), 'unselected records do not delay sharing');
+  assert.equal(h.controls.shareSnapshots[0].modelChinese,chineseFor(selected.raw[h.api.H[11]]));
+  const expectedSources=new Set([selected.raw[h.api.H[9]],selected.raw[h.api.H[11]]]);
+  assert.ok(transport.mock.calls.every(call => call.arguments[0].every(text => expectedSources.has(text))), 'unselected records do not delay sharing');
 });
 
 test('sharing rejects unresolved titles and paused translation without freezing incomplete product data', { timeout: 5000 }, async () => {
@@ -642,4 +654,90 @@ test('replacing a dataset cancels its old readiness scan without leaking counts 
   h.api.setRows(Array.from({length:600},(_,i)=>record(h,'new-readiness-'+i,'')));
   await waitFor(()=>h.api.readyCount===600,'new dataset readiness');await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(h.api.readyCount,600);assert.equal(h.api.rows.length,600);
+});
+
+test('intact item and model queries preserve provider wording while model differences become review warnings',async()=>{
+  const item='FICTBRAND Kit Controle Remoto FICT1701 com 16 Cabos',model='FICTBRAND Black FICT1702 16pcs';
+  const outputs=new Map([[item,'远程控制套件，附十六根电缆'],[model,'黑色款，Google 整句返回']]);
+  const fetch=mock.fn(async input=>{const url=new URL(input);assert.equal(url.hostname,'translate.googleapis.com');assert.equal(url.searchParams.get('sl'),'auto');const source=url.searchParams.get('q');assert.ok(outputs.has(source),'the query remains one complete item or model sentence');return {status:200,json:async()=>[[[outputs.get(source)]]]}});
+  const h=harness({actualTransport:true,fetch}),r=record(h,'full-sentence-both',item);r.raw[h.api.H[11]]=model;r.raw.mall_brand_name='FICTBRAND';h.api.setRows([r]);
+  await h.api.translateVisible([r]);
+  assert.equal(r.raw[h.api.H[10]],outputs.get(item));assert.equal(r.raw[h.api.H[12]],outputs.get(model));assert.equal(fetch.mock.callCount(),2);
+  assert.match(r.translationItemWarning,/型号/);assert.match(r.translationModelWarning,/型号/);assert.match(r.translationModelWarning,/数字/);assert.equal(h.api.readyCount,1);
+});
+
+test('a failed refresh preserves an obsolete automatic translation and its editor',async()=>{
+  const transport=mock.fn(async()=>{throw Object.assign(new Error('Fabricated provider unavailable'),{permanent:true})});
+  const h=harness({transport}),source='Wireless speaker FICT1710',oldChinese='已保存的旧版无线音箱 FICT1710',r=record(h,'retain-on-failure',source,oldChinese);
+  Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:'google-v4-20261116'});h.api.setRows([r]);const input=editor(h,r);
+  await h.api.translateVisible([r]);
+  assert.equal(r.raw[h.api.H[10]],oldChinese);assert.equal(input.value,oldChinese);assert.equal(r.raw[h.api.H[9]],source);
+  assert.equal(r.localTranslatedItem,false);assert.equal(r.translationItemVersion,'google-v4-20261116');assert.equal(h.api.readyCount,0);assert.equal(transport.mock.callCount(),1);
+});
+
+test('retranslating all automatic fields invalidates their caches without clearing displays or changing buyer fields',async()=>{
+  const gate=deferred(),transport=mock.fn(async texts=>{await gate.promise;return texts.map(text=>'整句重译结果 '+text.match(/FICT\d+/)[0])}),h=harness({transport});await h.api.ready;
+  const auto=[1720,1721].map(n=>{const source='Wireless speaker FICT'+n,r=record(h,'force-'+n,source,'旧自动译文 FICT'+n);Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:TRANSLATION_VERSION});h.api.cache.set(source,r.raw[h.api.H[10]]);return r});
+  const manual=record(h,'force-manual','Wireless speaker FICT1722','买手指定的中文 FICT1722');Object.assign(manual,{autoItemChinese:true,userEditedFields:[h.api.H[10]],translationItemVersion:'google-v4-20261116'});
+  const provided=record(h,'force-provided','Wireless speaker FICT1723','导入保留的中文 FICT1723');provided.autoItemChinese=false;
+  h.api.setRows([...auto,manual,provided]);await h.api.retranslateAutomaticChinese();await waitFor(()=>transport.mock.callCount()===2,'automatic retranslation dispatch');
+  for(const [i,r]of auto.entries())assert.equal(r.raw[h.api.H[10]],'旧自动译文 FICT'+(1720+i));
+  gate.resolve();await waitFor(()=>auto.every(r=>r.raw[h.api.H[10]].startsWith('整句重译结果')),'all automatic replacements');
+  assert.equal(manual.raw[h.api.H[10]],'买手指定的中文 FICT1722');assert.equal(provided.raw[h.api.H[10]],'导入保留的中文 FICT1723');
+  const requested=transport.mock.calls.flatMap(call=>call.arguments[0]);assert.deepEqual(new Set(requested),new Set(auto.map(r=>r.raw[h.api.H[9]])));
+  assert.ok(auto.every(r=>r.translationItemVersion===TRANSLATION_VERSION));
+});
+
+for(const missing of [10,12])test('sharing requires field '+missing+' even when both its source and Chinese are blank',async()=>{
+  const h=harness(),r=record(h,'required-'+missing,'');const supplied=missing===10?12:10;r.raw[h.api.H[supplied]]=supplied===10?'人工中文标题':'人工中文型号';r.userEditedFields=[h.api.H[supplied]];h.api.setRows([r]);
+  assert.equal(h.api.rowChineseReady(r),true,'general workbench readiness does not replace the stricter share preflight');
+  assert.equal(h.api.shareChineseFieldReady(r,missing===10?9:11,missing),false);
+  await assert.rejects(h.api.buildOnlineShareLink([r]),/缺少完整中文标题或型号/);
+  assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);assert.equal(h.controls.shareSnapshots.length,0);
+});
+
+test('buyer-completed Chinese title and model can be shared when original fields are absent',async()=>{
+  const h=harness(),r=record(h,'completed-without-source','');r.raw[h.api.H[10]]='人工补全中文标题';r.raw[h.api.H[12]]='人工补全中文型号';r.userEditedFields=[h.api.H[10],h.api.H[12]];h.api.setRows([r]);
+  const url=await h.api.buildOnlineShareLink([r]);assert.equal(new URL(url).pathname,'/share.html');assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.shareSnapshots[0].modelChinese,'人工补全中文型号');
+});
+
+test('Chrome mode routes only prepared languages locally and keeps other full sentences on Google',async()=>{
+  const english='Wireless speaker FICT1730',portuguese='Controle Remoto FICT1731 com Fonte',chrome={
+    prepareLanguages:mock.fn(async languages=>Array.from(languages,sourceLanguage=>({sourceLanguage,status:sourceLanguage==='en'?'available':'unavailable'}))),
+    translate:mock.fn(async(text,language)=>{assert.equal(text,english);assert.equal(language,'en');return 'Chrome 虚构整句音箱译文'}),destroy(){}
+  };
+  const fetch=mock.fn(async input=>{const url=new URL(input);assert.equal(url.hostname,'translate.googleapis.com');assert.equal(url.searchParams.get('q'),portuguese);return {status:200,json:async()=>[[['Google 虚构整句遥控套件译文']]]}});
+  const h=harness({actualTransport:true,fetch,chromeProvider:chrome}),local=record(h,'chrome-en',english),online=record(h,'google-pt',portuguese);h.api.setRows([local,online],{visible:[]});
+  await h.api.enableChromeTranslation();await waitFor(()=>local.localTranslatedItem&&online.localTranslatedItem,'mixed provider completion');
+  assert.equal(h.api.chromeMode,true);assert.equal(local.translationItemProvider,'chrome-local');assert.equal(online.translationItemProvider,'google-online');
+  assert.equal(local.raw[h.api.H[10]],'Chrome 虚构整句音箱译文');assert.equal(online.raw[h.api.H[10]],'Google 虚构整句遥控套件译文');assert.equal(chrome.translate.mock.callCount(),1);assert.equal(fetch.mock.callCount(),1);
+  assert.deepEqual(new Set(chrome.prepareLanguages.mock.calls[0].arguments[0]),new Set(['en','pt']));
+});
+
+test('unavailable Chrome models do not enable local mode or pretend to translate',async()=>{
+  const chrome={prepareLanguages:mock.fn(async languages=>Array.from(languages,sourceLanguage=>({sourceLanguage,status:'unavailable'}))),translate:mock.fn(),destroy(){}};
+  const fetch=mock.fn(async()=>{assert.fail('an unsuccessful local-model activation must not launch translation')});
+  const h=harness({actualTransport:true,fetch,chromeProvider:chrome});h.api.setRows([record(h,'unsupported-chrome','Wireless speaker FICT1732')],{visible:[]});
+  await h.api.enableChromeTranslation();assert.equal(h.api.chromeMode,false);assert.equal(chrome.translate.mock.callCount(),0);assert.equal(fetch.mock.callCount(),0);
+  assert.equal(h.document.getElementById('enableChromeTranslation').disabled,false);assert.match(h.document.getElementById('chromeTranslationState').textContent,/未能准备/);
+});
+
+test('Chrome bridges complete Vietnamese and Portuguese sentences through prepared English models',async()=>{
+  const vietnamese='Tai nghe không dây FICT1740',portuguese='Controle Remoto FICT1741 com Fonte';
+  const pivot=new Map([[vietnamese,'Fictional wireless earphones FICT1740'],[portuguese,'Fictional remote control with power supply FICT1741']]);
+  const chinese=new Map([[pivot.get(vietnamese),'经英语转换的虚构无线耳机'],[pivot.get(portuguese),'经英语转换的虚构遥控器和电源']]);
+  const chrome={
+    prepareLanguages:mock.fn(async(languages,settings={})=>Array.from(languages,sourceLanguage=>({sourceLanguage,targetLanguage:settings.targetLanguage||'zh',status:settings.targetLanguage==='en'||sourceLanguage==='en'?'available':'unavailable'}))),
+    translate:mock.fn(async(text,sourceLanguage,settings={})=>{
+      if(settings.targetLanguage==='en'){assert.ok(['vi','pt'].includes(sourceLanguage));assert.ok(pivot.has(text),'the pivot receives the complete original sentence');return pivot.get(text)}
+      assert.equal(sourceLanguage,'en');assert.ok(chinese.has(text),'the Chinese model receives the complete pivot result');return chinese.get(text);
+    }),destroy(){}
+  };
+  const fetch=mock.fn(async()=>{assert.fail('prepared Chrome bridges must not call the online provider')});
+  const h=harness({actualTransport:true,fetch,chromeProvider:chrome}),vn=record(h,'bridge-vi',vietnamese),pt=record(h,'bridge-pt',portuguese);h.api.setRows([vn,pt],{visible:[]});
+  const activation=h.api.enableChromeTranslation();assert.equal(chrome.prepareLanguages.mock.callCount(),3,'direct, pivot and English model preparation starts in one click stack');await activation;
+  await waitFor(()=>vn.localTranslatedItem&&pt.localTranslatedItem,'Chrome pivot translations');
+  assert.equal(vn.raw[h.api.H[10]],chinese.get(pivot.get(vietnamese)));assert.equal(pt.raw[h.api.H[10]],chinese.get(pivot.get(portuguese)));
+  assert.equal(vn.translationItemProvider,'chrome-local-via-en');assert.equal(pt.translationItemProvider,'chrome-local-via-en');assert.equal(chrome.translate.mock.callCount(),4);assert.equal(fetch.mock.callCount(),0);
+  assert.match(h.document.getElementById('chromeTranslationState').textContent,/经英语转换/);
 });

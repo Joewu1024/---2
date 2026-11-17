@@ -1,0 +1,82 @@
+{
+  "testedAt": "2026-11-17T03:57:21.615Z",
+  "synthetic": true,
+  "automatedTestsPassed": 192,
+  "inlineScriptBlocksParsed": 10,
+  "scope": "Local Windows in-app browser; no user business CSV was uploaded during these tests",
+  "onlineGoogleProbe": {
+    "status": 429,
+    "hosts": [
+      "translate.googleapis.com",
+      "translate.google.com"
+    ],
+    "result": "No usable anonymous API response; do not claim online cloud translation is fully available"
+  },
+  "chromeNativeLive": {
+    "languages": [
+      "en",
+      "vi",
+      "pt"
+    ],
+    "fields": 6,
+    "allTranslated": true,
+    "observed": [
+      [
+        "Portable wireless Bluetooth speaker with microphone 5 W",
+        "带麦克风的便携式无线蓝牙音箱 5 W"
+      ],
+      [
+        "Black 1 piece",
+        "黑色 1 件"
+      ],
+      [
+        "Bộ gọi phục vụ không dây cho nhà hàng 16 nút",
+        "16 按钮餐厅无线服务呼叫者"
+      ],
+      [
+        "TOMIGO Mẫu Mới",
+        "Tomigo 新型号"
+      ],
+      [
+        "Kit de controle remoto para televisão com pilhas",
+        "带电池的电视遥控器套件"
+      ],
+      [
+        "Preto 2 unidades",
+        "黑色 2 个单位"
+      ]
+    ],
+    "limits": "Chrome local output is not guaranteed identical to Google Translate website; model/locale availability varies; UI shows prepared languages and bridge routes"
+  },
+  "googleDocumentsLive": {
+    "uploaded": "6 synthetic fields only",
+    "translatedDownloadButtonObserved": true,
+    "downloadCapture": "IAB download event timed out, no translated workbook retrieved; no actual Google-document end-to-end readback claim"
+  },
+  "documentWorkbenchRoundtrip": {
+    "synthetic": true,
+    "downloadedTwoColumnTaskWorkbook": true,
+    "columns": [
+      "任务键",
+      "待翻译原文"
+    ],
+    "noModelIdsPricesNotesInFile": true,
+    "reorderedFabricatedResultRowsImported": true,
+    "updatedFields": 2,
+    "missing": 0,
+    "preservedOtherRecords": true
+  },
+  "sharePreview": {
+    "nonemptyChineseItemAndModel": true,
+    "nonemptyChineseCategory": true,
+    "retryAndManualCompletionControlsRemain": true
+  },
+  "qualityPolicy": {
+    "wholeSentence": true,
+    "dictionaryRewriting": false,
+    "numericAndSkuDifferences": "review warnings, not empty rejection",
+    "oldAutomaticTranslations": "retained until successful refresh",
+    "manualFields": "protected"
+  },
+  "legacyPerformanceReport": "browser-qa-v5.json documents 20k CSV/XLSX imports, IDB reload and full exported XLSX readback; those are separate from translation network/model timing"
+}

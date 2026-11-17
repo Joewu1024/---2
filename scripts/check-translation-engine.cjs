@@ -4,7 +4,7 @@
 // Every response is fabricated. An accidental fetch fails immediately.
 const assert = require('node:assert/strict');
 const { test, after, afterEach, mock } = require('node:test');
-const { Queue, normalize, sourceIssue, passthrough, usable } = require('../translation-engine.js');
+const { Queue, normalize, identity, sourceIssue, reviewWarnings, passthrough, usable, simple } = require('../translation-engine.js');
 
 const engines = new Set();
 test('source damage checks distinguish missing characters from valid Vietnamese and Portuguese accents',()=>{
@@ -13,7 +13,8 @@ test('source damage checks distinguish missing characters from valid Vietnamese 
   assert.equal(sourceIssue('Bộ gọi không dây 16 thẻ'),'');
   assert.equal(sourceIssue('MAÇÃ VERDE E TELEVISÃO'),'');
   assert.equal(sourceIssue('Fone com distorÃ§Ã£o'),'原文疑似编码损坏，请核对');
-  assert.equal(usable('T?i ng?e kh?ng d?y','错误？ng？译文？'),false);
+  assert.equal(usable('T?i ng?e kh?ng d?y','无线耳机，ng？'),true);
+  assert.ok(reviewWarnings('T?i ng?e kh?ng d?y','无线耳机，ng？').includes('原文字符缺失，请核对'));
   assert.equal(passthrough('SELF SERVICE CALL SYSTEM'),false);
 });
 mock.method(globalThis, 'fetch', () => {
@@ -183,11 +184,11 @@ test('429 cooldown preserves queued jobs and retries after the minimum delay', {
   assert.equal(transport.mock.callCount(), 4);
 });
 
-test('rejects corrupt cache values, ZXQ markers and substantial untranslated fragments', { timeout: 5000 }, async () => {
+test('rejects empty or non-Chinese cache values and corrupt ZXQ/replacement markers', { timeout: 5000 }, async () => {
   const sourceA = 'Wireless speaker FICT301';
   const sourceB = 'Microphone FICT302';
   const sourceC = 'Wireless rechargeable portable speaker FICT303';
-  const badValues = [sourceA, '错误译文 ZXQ0001QXZ FICT302', '部分中文 ' + sourceC];
+  const badValues = [sourceA, '错误译文 ZXQ0001QXZ FICT302', 'Untranslated ' + sourceC];
   const sources = [sourceA, sourceB, sourceC];
   const cache = new Map(sources.map((text, i) => [text, badValues[i]]));
   for (let i = 0; i < sources.length; i++) assert.equal(usable(sources[i], badValues[i]), false);
@@ -204,14 +205,13 @@ test('rejects corrupt cache values, ZXQ markers and substantial untranslated fra
   });
 });
 
-test('contextual product terminology is refined in both service results and existing cache', { timeout: 5000 }, async () => {
+test('provider terminology reaches service and cache results without local dictionary rewrites', { timeout: 5000 }, async () => {
   const remote = 'Kit Controle Remoto Aurora ZX901 com Fonte 12V e 2 Cabos';
   const remoteResult = 'Aurora ZX901远程控制套件，带12V电源和2根电缆';
   const cases = [
     ['กล่องชาร์จ FICT1501', 'FICT1501 充电器外壳'],
     ['Wireless charging case FICT1502', 'FICT1502 充电器外壳'],
-    ['Charger case FICT1503', 'FICT1503 充电器外壳'],
-    ['充电盒 FICT1504', 'FICT1504 充电器外壳']
+    ['Charger case FICT1503', 'FICT1503 充电器外壳']
   ];
   const outputs = new Map([[remote, remoteResult], ...cases]);
   const transport = mock.fn(async texts => texts.map(text => outputs.get(text)));
@@ -220,23 +220,17 @@ test('contextual product terminology is refined in both service results and exis
   const pending = [...outputs.keys()].map(text => queue.request(text));
   queue.setPaused(false);
   const result = await Promise.all(pending);
-  assert.match(result[0], /遥控器/);
-  assert.match(result[0], /套装/);
-  assert.doesNotMatch(result[0], /远程控制|套件/);
-  result.slice(1).forEach(value => {
-    assert.match(value, /充电盒/);
-    assert.doesNotMatch(value, /充电器外壳/);
-  });
+  assert.deepEqual(result, [...outputs.values()]);
   const cachedTransport = mock.fn(async () => assert.fail('valid cached terminology needs no transport'));
   const cached = engine({ cache: new Map([[remote, remoteResult], ...cases]), requestBatch: cachedTransport });
-  assert.match(await cached.request(remote), /遥控器.*套装/);
-  for (const [source] of cases) assert.match(await cached.request(source), /充电盒/);
+  assert.equal(await cached.request(remote), remoteResult);
+  for (const [source, result] of cases) assert.equal(await cached.request(source), result);
   assert.equal(cachedTransport.mock.callCount(), 0);
   const unrelated = engine({ cache: new Map([['Speaker stand FICT1505', 'FICT1505 充电器外壳']]), requestBatch: cachedTransport });
   assert.equal(await unrelated.request('Speaker stand FICT1505'), 'FICT1505 充电器外壳', 'contextual replacement must not affect an unrelated source');
 });
 
-test('preserves legitimate SKU/numeric passthrough and requires models and numbers in translations', { timeout: 5000 }, async () => {
+test('preserves legitimate SKU/numeric passthrough and reports model/number differences without rejecting Chinese', { timeout: 5000 }, async () => {
   const transport = mock.fn(async () => assert.fail('SKU passthrough must not call a transport'));
   const queue = engine({ requestBatch: transport });
   for (const sku of ['FICT-1200', '36', '1.5M', 'USB-C', 'FICT1200 (2 MIC)']) {
@@ -244,19 +238,24 @@ test('preserves legitimate SKU/numeric passthrough and requires models and numbe
     assert.equal(await queue.request(sku), sku);
   }
   assert.equal(transport.mock.callCount(), 0);
-  assert.equal(usable('FICT1200', '蓝色'), false, 'a cached Chinese label must not erase a SKU');
+  assert.equal(usable('FICT1200', '蓝色'), true, 'Chinese content remains usable; automatic pure identities are protected before cache lookup');
   const source = 'Wireless speaker FICTION-203 12V 2 pieces';
   assert.equal(usable(source, '无线音箱 FICTION-203 12V，2件'), true);
-  assert.equal(usable(source, '无线音箱 203 12V，2件'), false, 'model letters must remain');
-  assert.equal(usable(source, '无线音箱 FICTION-203 12V'), false, 'quantity must remain');
-  assert.equal(usable(source, '无线音箱 FICTION-203 2件'), false, 'voltage must remain');
-  assert.equal(usable('Wireless speaker FICT203 1.5m 4 pieces', '无线音箱 FICT203 15m 4件'), false, 'a decimal value must not change magnitude');
+  assert.equal(usable(source, '无线音箱 203 12V，2件'), true);
+  assert.ok(reviewWarnings(source, '无线音箱 203 12V，2件').some(warning=>warning.includes('型号：FICTION-203')));
+  assert.equal(usable(source, '无线音箱 FICTION-203 12V'), true);
+  assert.ok(reviewWarnings(source, '无线音箱 FICTION-203 12V').some(warning=>warning.includes('数字：2')));
+  assert.equal(usable(source, '无线音箱 FICTION-203 2件'), true);
+  assert.ok(reviewWarnings(source, '无线音箱 FICTION-203 2件').some(warning=>warning.includes('数字：12')));
+  assert.equal(usable('Wireless speaker FICT203 1.5m 4 pieces', '无线音箱 FICT203 15m 4件'), true);
+  assert.ok(reviewWarnings('Wireless speaker FICT203 1.5m 4 pieces', '无线音箱 FICT203 15m 4件').some(warning=>warning.includes('1.5')));
   assert.equal(usable('Wireless speaker FICT203 12V 2 pieces', 'FICT203无线音箱，含12V充电器和2件配件'), true, 'Chinese text may directly adjoin preserved numbers');
   assert.equal(usable('Wireless speaker FICT203 1.5m 4 pieces', '无线音箱 FICT203 1,5米 4件'), true, 'a decimal comma preserves the original decimal value');
   const portuguese = 'Kit Controle Remoto Aurora ZX901 com Fonte 12V e 2 Cabos';
   assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和双电缆'), true, 'dual cables preserve a quantity of two');
   assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和两根电缆'), true, 'a Chinese quantity preserves a quantity of two');
-  assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和电缆'), false, 'the cable quantity must not disappear');
+  assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和电缆'), true);
+  assert.ok(reviewWarnings(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和电缆').some(warning=>warning.includes('数字：2')));
 });
 
 test('pure brand and model identities override translated cache values without using a provider', { timeout: 5000 }, async () => {
@@ -264,7 +263,7 @@ test('pure brand and model identities override translated cache values without u
   const cache = new Map([['FICTBRAND', '错误品牌译名'], ['AB-1200', '错误型号中文 1200']]);
   const queue = engine({ cache, requestBatch: transport });
   assert.equal(passthrough('FICTBRAND'), true);
-  assert.equal(usable('FICTBRAND', '错误品牌译名'), false, 'automatic Chinese transliteration must not replace a pure brand');
+  assert.equal(usable('FICTBRAND', '买手指定的中文品牌'), true, 'usability does not reject manual Chinese wording');
   for (const source of ['FICTBRAND', 'AB-1200']) {
     assert.equal(await queue.request(source), source);
   }
@@ -273,18 +272,62 @@ test('pure brand and model identities override translated cache values without u
   assert.equal(passthrough('BLACK'), false, 'color variants still need translation');
 });
 
-test('color plus SKU translates locally without truncating a SKU that begins with a color word', { timeout: 5000 }, async () => {
-  const transport = mock.fn(async () => assert.fail('color/SKU variants should translate locally'));
-  const queue = engine({ requestBatch: transport });
-  for (const [source, expected] of [
+test('colors and specifications use intact provider text instead of local dictionaries', { timeout: 5000 }, async () => {
+  const cases = [
     ['Preto ZX901', '黑色 ZX901'],
     ['ZX902 black', 'ZX902 黑色'],
     ['white - AB-1200', '白色 AB-1200'],
     ['สีดำ ZX903', '黑色 ZX903'],
-    ['Màu trắng ZX904', '白色 ZX904']
-  ]) assert.equal(await queue.request(source), expected);
+    ['Màu trắng ZX904', '白色 ZX904'],
+    ['PURPLE', '紫色'],
+    ['SILVER', '银色']
+  ];
+  const outputs = new Map(cases);
+  const transport = mock.fn(async texts => texts.map(text=>outputs.get(text)));
+  const queue = engine({ requestBatch: transport, simple:()=>assert.fail('legacy local dictionaries must not run') });
+  for (const [source, expected] of cases) {
+    assert.equal(simple(source),'');
+    assert.equal(await queue.request(source),expected);
+  }
   for (const sku of ['REDFOX12', 'BLACKBIRD12', 'GOLDSTAG01']) assert.equal(await queue.request(sku), sku);
-  assert.equal(transport.mock.callCount(), 0);
+  assert.equal(transport.mock.callCount(), cases.length);
+});
+
+test('long identity codes accept Unicode separators while uppercase product phrases still translate', () => {
+  const longCode='KDK–'+Array.from({length:14},(_,i)=>'X'+(i+20)+'PN').join('／');
+  assert.ok(longCode.length>80);
+  for(const code of [longCode,'KDK – F60MZ / 220V','FICT1200 (2 MIC)']) {
+    assert.equal(identity(code),true,code);
+    assert.equal(passthrough(code),true,code);
+    assert.equal(usable(code,code),true,code);
+  }
+  for(const text of ['WIRELESS SPEAKER','SELF SERVICE CALL SYSTEM','QUAT TRAN KDK','QUAT TRAN KDK 16']) {
+    assert.equal(identity(text),false,text);
+    assert.equal(passthrough(text),false,text);
+  }
+});
+
+test('Google Chinese remains usable for LCD, Unicode model separators, Chinese quantities and source damage', () => {
+  for(const [source,result] of [
+    ['Ceiling fan KDK-F60MZ','吊扇 KDK–F60MZ'],
+    ['Ceiling fan KDK-F60MZ','吊扇 KDK－F60MZ'],
+    ['Wireless speaker with LCD','带液晶显示屏的无线音箱'],
+    ['Bộ gọi không dây 16 thẻ','无线呼叫器，十六张卡'],
+    ['B? g?i không dây 16 th?','无线呼叫器 16 张卡，th?']
+  ])assert.equal(usable(source,result),true,source);
+  assert.deepEqual(reviewWarnings('Ceiling fan KDK-F60MZ','吊扇 KDK–F60MZ'),[]);
+  assert.deepEqual(reviewWarnings('Bộ gọi không dây 16 thẻ','无线呼叫器，十六张卡'),[]);
+});
+
+test('requested damaged Vietnamese ATS example is accepted with the missing-number warning', async () => {
+  const source='B? chuy?n ngu?n 2 c?ng t? t? ??ng - Ats - c?u dao ?i?n t? ??ng 125A _ B?o hành 12 tháng';
+  const result='自动转换开关（ATS）–125A 电力自动转换装置–12个月保修';
+  assert.equal(usable(source,result),true);
+  assert.ok(reviewWarnings(source,result).some(warning=>warning.includes('数字：2')));
+  const transport=mock.fn(async()=>[result]);
+  const queue=engine({requestBatch:transport});
+  assert.equal(await queue.request(source,{language:'vi'}),result);
+  assert.equal(transport.mock.callCount(),1);
 });
 
 test('already Chinese specifications with uppercase models remain local passthrough', { timeout: 5000 }, async () => {

@@ -87,7 +87,7 @@ function harness() {
   const extracted = [
     line('const H='), line('const S='), line('const FIELD='), line('let rows='), line('let buyerCustomOptions='),
     line('const rawLookupCache='), line('const keyMap='),
-    ...['key','safeHttpUrl','safeImageUrl','headerScore','isMetaRow','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor'].map(n=>line('function '+n+'(')),
+    ...['key','safeHttpUrl','safeImageUrl','headerScore','isMetaRow','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor','translationWarningField'].map(n=>line('function '+n+'(')),
     between('function drawOptions(i)', 'function statusValue('),
     ...['statusValue','statusLines','groupIsOpen','visibleFields','displayColumns','colSize','updateStats','matchesState','updateSelectionUI','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups','renderPager','render'].map(n=>line('function '+n+'(')),
     between('function rowHtml(', 'function closeProductCard('),
@@ -106,7 +106,7 @@ function harness() {
     line('$("import").onclick=')
   ].join('\n');
   const context = vm.createContext({
-    document, console, controls, db, BuyerTranslation, WorkbenchImport, Blob, TextEncoder, TextDecoder, Uint8Array, Uint32Array, DataView, URL, AbortController,
+    document, console, controls, db, BuyerTranslation, WorkbenchImport, Blob, TextEncoder, TextDecoder, Uint8Array, Uint32Array, DataView, URL, URLSearchParams, AbortController,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
     innerWidth: 1400, location: { href: 'https://offline.example.test/index.html' },
     localStorage: { getItem() { return null; }, setItem() {} },

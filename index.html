@@ -6,6 +6,7 @@
 .fold-toggle{width:22px;height:22px;line-height:18px;padding:0;margin-right:5px;border:1px solid #b8cbbb;border-radius:5px;background:#fff;color:#24553f;font-weight:800;font-size:16px;vertical-align:middle}
 .fold-minus{margin:0 4px 2px 0;width:18px;height:18px;line-height:14px;font-size:14px}
 .fold-cell{background:#f8faf8;color:#829087;text-align:center;font-size:10px;vertical-align:middle}.gridbox{scroll-padding-top:calc(var(--table-head-height,0px) + var(--group-parent-height,0px) + 10px)}
+.translation-cell-tools{display:flex;gap:4px;flex-wrap:wrap;align-items:center;font-size:9px;margin-top:4px}.translation-cell-tools a{color:#36785b}.translation-warning{overflow-wrap:anywhere}
 </style><style>
 table{table-layout:fixed;width:max-content;min-width:2200px;font-size:11px}
 th,td{box-sizing:border-box;min-width:0;max-width:none;padding:6px;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
@@ -78,9 +79,9 @@ body{min-width:0}
 #table td .cell{min-width:0!important;width:100%;max-width:100%;padding:3px 4px;font-size:clamp(8px,.52vw,10px)}
 #table td .img{width:100%;max-width:54px;height:50px;object-fit:contain}
 @media(max-width:900px){.page{padding:8px 6px!important}.top{padding:7px 8px}.gridbox{overflow-x:hidden!important}#table th,#table td{padding:3px 2px;font-size:8px}#table th:first-child,#table td:first-child{width:92px!important}#table th:nth-child(2),#table td:nth-child(2){width:26px!important;left:92px!important}}
-</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(145px,26vh,220px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">Google 整句翻译 · 品牌型号保留 · 旧自动译文将重新生成</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
+</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(120px,22vh,200px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">Google 整句翻译 · 保留已有译文 · 参数差异提示核对</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
 <main class="page"><section class="title"><div><span class="muted">源表字段结构 · 买手筛选与核价</span><h1>寻品工作看板</h1><p>严格按源表标题、顺序和第二行字段说明展示；无筛选时显示全部导入记录。</p></div><span class="tag" id="state">等待导入商品数据</span></section>
-<div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="translateAll" title="补齐全部商品中文，重复标题仅翻译一次">补齐全部中文</button><button class="btn" id="pauseTranslation">暂停翻译</button><button class="btn" id="importTranslations">导入中文翻译</button><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
+<div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="translateAll" title="补齐全部商品中文，重复标题仅翻译一次">补齐全部中文</button><button class="btn" id="googleDocumentTools">Google 官方整表翻译</button><input type="file" id="googleDocumentFile" hidden accept=".xlsx,.xlsm,.xls,.csv"><button class="btn" id="retranslateAutomatic">重译全部自动中文</button><button class="btn" id="enableChromeTranslation" disabled>启用 Chrome 本地翻译</button><span id="chromeTranslationState" class="muted"></span><button class="btn" id="pauseTranslation">暂停翻译</button><button class="btn" id="importTranslations">导入中文翻译</button><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
 <div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并选中组</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <button class="btn" id="unselect">清除勾选</button></div>
 <div class="gridbox"><table id="table"></table></div><div id="pager" class="pager"></div><div class="stats"><div class="stat"><span>筛选后商品组</span><b id="groupsN">0</b></div><div class="stat"><span>筛选后 Model ID</span><b id="modelsN">0</b></div><div class="stat"><span>待买手判断</span><b id="pendingN">0</b></div><div class="stat"><span>无 1688 前置核价</span><b id="priceN">0</b></div></div><p id="workspaceInfo" class="help"></p><p class="help">每页默认显示 50 个商品组；筛选和导出仍按全部数据计算。买手编辑会自动保存到本机数据库；请使用同一浏览器和本站网址继续工作。</p></main><div id="closeDialog" class="close-dialog" hidden><section class="close-dialog-card"><h3>关闭工作台前保存</h3><p>工作台会自动保存到本机。确认保存后，可关闭当前浏览器标签页；下次使用同一浏览器和本地启动器会恢复数据。</p><div><button class="btn" id="cancelClose">继续工作</button><button class="btn primary" id="confirmSaveClose">确认保存</button></div></section></div><div id="overlay"></div><div id="versionManager"></div><div id="shareLinkDialog" class="modalbg" hidden></div><div id="toast"></div>
 <script data-buyer-translation-engine="v3">
@@ -90,10 +91,14 @@ body{min-width:0}
   const chinese = value => /[\u3400-\u9fff]/.test(value);
   const codes = new Set(['USB', 'USB-C', 'AUX', 'RCA', 'HDMI', 'XLR', 'FM', 'AM', 'AC', 'DC', 'WIFI', 'WI-FI', 'BLUETOOTH']);
   function identity(value) {
-    const text=normalize(value);
-    if(!/^[A-Z0-9][A-Z0-9+().,*/#_\s-]{0,79}$/.test(text))return false;
+    const text=normalize(value).normalize('NFKC');
+    if(!text||!/^[A-Z0-9\s\p{P}\p{S}]+$/u.test(text)||!/[A-Z0-9]/.test(text))return false;
     const words=text.match(/[A-Z]+/g)||[];
-    return !words.some(word=>genericWords.has(word.toLowerCase())||['SALE','HOT','BEST','MODEL','COLOR','SIZE','SET','PIECES','ORIGINAL'].includes(word));
+    if(words.some(word=>genericWords.has(word.toLowerCase())||['SALE','HOT','BEST','MODEL','COLOR','SIZE','SET','PIECES','ORIGINAL'].includes(word)))return false;
+    const tokens=(text.match(/[A-Z0-9]+/g)||[]);
+    if(!/\d/.test(text))return tokens.length===1;
+    // A brand plus digit-bearing codes is an identity; several ordinary uppercase words are a description.
+    return tokens.filter(token=>/^[A-Z]+$/.test(token)).length<=1;
   }
   function sourceIssue(value) {
     const text=normalize(value);
@@ -102,10 +107,7 @@ body{min-width:0}
     return '';
   }
   function refine(source, result) {
-    let chinese=normalize(result);
-    if(/\bcontrole\s+remoto\b/i.test(source))chinese=chinese.replace(/远程控制(?:器)?/g,'遥控器').replace(/遥控器套件/g,'遥控器套装');
-    if(/กล่องชาร์จ|charging case|charger case|kotak pengecas|hộp sạc|充电盒/i.test(source))chinese=chinese.replace(/充电器外壳/g,'充电盒');
-    return chinese;
+    return normalize(result);
   }
   function passthrough(value) {
     const text = normalize(value);
@@ -116,48 +118,36 @@ body{min-width:0}
         .replace(/\b\d+(?:[.,]\d+)?\s*(?:mm|cm|ml|kg|mah|gb|tb|khz|mhz|ghz|hz|m|l|g|w|v|a)\b/gi,'');
       if(/^[\u3400-\u9fff\d\s\p{P}\p{S}]+$/u.test(remainder))return true;
     }
-    return !text || /^[\u3400-\u9fff\d\s.,，。!！?？:：;；()（）【】\-]+$/.test(text) ||
-      (/^(?=.*\d)[A-Z0-9+().,*/#\s-]{1,40}$/.test(text)&&!(text.match(/[A-Z]+/g)||[]).some(word=>genericWords.has(word.toLowerCase()))) || codes.has(text.toUpperCase());
+    return !text || /^[\u3400-\u9fff\d\s.,，。!！?？:：;；()（）【】\-]+$/.test(text) || codes.has(text.toUpperCase());
   }
-  function simple(value) {
-    const text=normalize(value),lower=text.toLowerCase();
-    const colors=[['màu trắng','白色'],['màu đen','黑色'],['สีดำ','黑色'],['สีขาว','白色'],['trắng','白色'],['đen','黑色'],['hitam','黑色'],['putih','白色'],['preto','黑色'],['branco','白色'],['black','黑色'],['white','白色'],['blue','蓝色'],['red','红色'],['green','绿色'],['silver','银色'],['gold','金色']];
-    for(const [source,chinese] of colors) {
-      if(lower===source)return chinese;
-      const needsBoundary=/[a-zÀ-ỹ]/i.test(source);
-      if(lower.startsWith(source)&&(!needsBoundary||/[\s:：-]/.test(text[source.length]||''))) {
-        const rest=text.slice(source.length).replace(/^[\s:：-]+/,'');
-        if(rest&&passthrough(rest))return chinese+' '+rest;
-      }
-      if(lower.endsWith(source)&&(!needsBoundary||/[\s:：-]/.test(text[text.length-source.length-1]||''))) {
-        const rest=text.slice(0,-source.length).replace(/[\s:：-]+$/,'');
-        if(rest&&passthrough(rest))return rest+' '+chinese;
-      }
-    }
+  function simple() {
+    // Automatic Chinese wording comes from the selected provider, including colors and specifications.
     return '';
   }
   const genericWords = new Set(('kit controle remoto com para fonte cabos cabo sem fio branco branca preto preta original modelo completo completa ' +
     'wireless earphones headphones speaker microphone charger charging case black white blue red cable remote control with without pack pieces ' +
     'bluetooth headset portable battery rechargeable television tv smart universal replacement new ' +
     'untuk dengan tanpa wayar hitam putih biru merah pembesar suara pengecas fon telinga ' +
-    'for and the of self service system call pager buzzer keyboard mouse camera television headset tablet phone electric digital sensor receiver transmitter').split(' '));
+    'for and the of self service system call pager buzzer keyboard mouse camera television headset tablet phone electric digital sensor receiver transmitter ' +
+    'silver gold purple pink yellow brown orange grey gray beige transparent clear size type version large small medium mini max pro plus lite ' +
+    'product cover adapter hub telephone display screen fan ceiling switch automatic power warranty microphone speaker original ' +
+    'roxo rosa amarelo marrom cinza dourado prateado azul verde cor tamanho novo nova ' +
+    'mau trang den xanh nau vang hong tim quat tran goi khong day the').split(' '));
   function usable(source, result) {
     source = normalize(source); result = normalize(result);
     if (!result || /\uFFFD|ZXQ\s*\d{3,}\s*QXZ/i.test(result)) return false;
-    if(identity(source))return source===result;
-    if(sourceIssue(source)&&/[A-Za-zÀ-ỹ][?？]|[?？][A-Za-zÀ-ỹ]/.test(result))return false;
-    const direct=passthrough(source);
-    if(direct&&source===result)return true;
-    if (!chinese(result) || (!direct&&source.toLowerCase() === result.toLowerCase())) return false;
-    if (/[\u0e00-\u0e7f\u0400-\u04ff\u3040-\u30ff\uac00-\ud7af]/.test(result)) return false;
-    const sourceWords = new Set(source.toLowerCase().match(/[a-zÀ-ỹ]+/g) || []);
-    const leftovers = (result.toLowerCase().match(/[a-zÀ-ỹ]+/g) || []).filter(w => genericWords.has(w) && sourceWords.has(w));
-    if (leftovers.length >= 3) return false;
-    const packed = result.toUpperCase().replace(/[\s_.\-]/g, '');
-    const names=source.match(/\b[A-Z][A-Z0-9&_.+-]{1,29}\b/g)||[];
-    if(names.some(name=>identity(name)&&/[A-Z]{2}/.test(name)&&!packed.includes(name.toUpperCase().replace(/[\s_.-]/g,''))))return false;
+    return (source===result&&passthrough(source))||chinese(result);
+  }
+  function reviewWarnings(source, result) {
+    source = normalize(source); result = normalize(result);
+    const warnings = [], issue = sourceIssue(source);
+    if(issue)warnings.push(issue);
+    if(!result)return warnings;
+    const packed = value => value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const resultCode = packed(result);
     const models = source.match(/\b[A-Z]{1,8}[-]?\d+[A-Z0-9-]*\b/g) || [];
-    if (models.some(model => !/^(?:USB|BT|WIFI|HDMI)\d/.test(model) && !packed.includes(model.replace(/-/g, '')))) return false;
+    const missingModels = [...new Set(models.filter(model => !/^(?:USB|BT|WIFI|HDMI)\d/.test(model) && !resultCode.includes(packed(model))))];
+    if(missingModels.length)warnings.push('译文可能缺少型号：'+missingModels.join('、'));
     const numericValue = token => {
       if(token.includes(',')&&token.includes('.'))token=token.lastIndexOf(',')>token.lastIndexOf('.')?token.replace(/\./g,'').replace(',','.'):token.replace(/,/g,'');
       else if(/^\d{1,3}(,\d{3})+$/.test(token))token=token.replace(/,/g,'');
@@ -174,13 +164,14 @@ body{min-width:0}
       for(const char of token){if(char in chineseDigits){number=chineseDigits[char];continue}const unit=units[char];if(unit<10000){section+=(number||1)*unit;number=0}else{total+=(section+number)*unit;section=0;number=0}}
       return total+section+number;
     };
-    for(const match of result.matchAll(/([零〇一二两三四五六七八九十百千万亿]+)(?:点([零〇一二两三四五六七八九]+))?(?=\s*(?:个|件|只|支|套|根|条|对|双|台|片|节|路|口|声道|毫米|厘米|米|伏|瓦|安|毫安|毫升|升|寸|英寸|赫兹|千克|克|小时|分钟|秒))/g)) {
+    for(const match of result.matchAll(/([零〇一二两三四五六七八九十百千万亿]+)(?:点([零〇一二两三四五六七八九]+))?(?=\s*(?:个|件|只|支|套|根|条|对|双|台|片|节|张|枚|卡|组|盒|包|页|款|路|口|声道|毫米|厘米|米|伏|瓦|安|毫安|毫升|升|寸|英寸|赫兹|千克|克|个月|月|小时|分钟|秒))/g)) {
       const decimal=match[2]?[...match[2]].map(char=>chineseDigits[char]).join(''):'';
       resultNumbers.add(String(Number(String(chineseNumber(match[1]))+(decimal?'.'+decimal:''))));
     }
     if(/双(?=声道|麦|喇叭|扬声器|耳|线|电缆|电池|接口|电压|屏|端|频|路)|一[对双]/.test(result))resultNumbers.add('2');
-    if ([...digits(source)].some(n => !resultNumbers.has(n))) return false;
-    return source.length < 60 || result.length >= source.length * 0.07;
+    const missingNumbers = [...digits(source)].filter(n => !resultNumbers.has(n));
+    if(missingNumbers.length)warnings.push('译文可能缺少数字：'+missingNumbers.join('、'));
+    return warnings;
   }
   function language(value, hint = '') {
     const text = normalize(value);
@@ -223,7 +214,7 @@ body{min-width:0}
       if(identity(text)){if(this.cache.has(text)&&this.cache.get(text)!==text)this.remember(text,text);return Promise.resolve(text)}
       const cached = this.cached(text);
       if (cached) { this.stats.cacheHits++; return Promise.resolve(cached); }
-      const direct = [this.options.simple?.(text), simple(text), passthrough(text) ? text : ''].find(value=>value&&usable(text,value));
+      const direct = passthrough(text) ? text : '';
       if (direct) { this.remember(text, direct); return Promise.resolve(direct); }
       const lang = options.language || language(text), key = lang + '\u0000' + text;
       if ((this.failedUntil.get(key) || 0) > Date.now() && !options.retry) return Promise.resolve('');
@@ -305,7 +296,7 @@ body{min-width:0}
       }
     }
   }
-  const api = {normalize, identity, sourceIssue, passthrough, simple, usable, language, refine, Queue};
+  const api = {normalize, identity, sourceIssue, reviewWarnings, passthrough, simple, usable, language, refine, Queue};
   root.BuyerTranslation = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
@@ -317,14 +308,6 @@ body{min-width:0}
 
   const endpoint = 'https://translate.googleapis.com/translate_a/single';
   const hasChinese = value => /[\u3400-\u9fff]/.test(value);
-  const genericWords = new Set(('NEW KIT BLACK WHITE BLUE RED GREEN SILVER GOLD YELLOW PINK PURPLE ORANGE BROWN GRAY GREY BEIGE ' +
-    'TRANSPARENT CLEAR ORIGINAL MODEL MODELO COLOR COLOUR SIZE TYPE VERSION LARGE SMALL MEDIUM MINI MAX PRO PLUS LITE ' +
-    'PRODUCT HOT SALE BEST COVER ADAPTER RECEIVER TRANSMITTER HUB TELEPHONE PHONE TELEVISION TABLET COMPUTER CAMERA ' +
-    'WIRELESS BLUETOOTH USB USB-C HDMI AUX RCA XLR WIFI WI-FI FM AM AC DC TV LED LCD SMART UNIVERSAL ' +
-    'REMOTE CONTROL CONTROLE REMOTO SPEAKER HEADPHONES EARPHONES MICROPHONE CHARGER CHARGING CASE CABLE ' +
-    'PORTABLE BATTERY RECHARGEABLE REPLACEMENT COMPLETE PACK SET PIECES WITH WITHOUT FOR AND THE ' +
-    'PRETO PRETA BRANCO BRANCA AZUL VERMELHO VERDE COMPLETO COMPLETA COM PARA SEM FONTE CABO CABOS ' +
-    'HITAM PUTIH BIRU MERAH UNTUK DENGAN TANPA').split(' '));
 
   function qualityError(message) {
     return Object.assign(new Error(message || 'Google 未返回可核对的完整中文译文'), { qualityFailed: true, permanent: true });
@@ -335,28 +318,6 @@ body{min-width:0}
       throw new Error('翻译校验器尚未加载');
     }
     return root.BuyerTranslation.usable(source, result);
-  }
-
-  function brandOccurrences(source, brand) {
-    if (!brand) return [];
-    const positions = [], lower = source.toLowerCase(), needle = brand.toLowerCase();
-    let from = 0, position;
-    while ((position = lower.indexOf(needle, from)) !== -1) {
-      const end = position + brand.length;
-      const leftOK = !/^[a-z0-9]/i.test(brand) || !/[a-z0-9]/i.test(source[position - 1] || '');
-      const rightOK = !/[a-z0-9]$/i.test(brand) || !/[a-z0-9]/i.test(source[end] || '');
-      if (leftOK && rightOK) positions.push({ start: position, end, text: source.slice(position, end) });
-      from = end;
-    }
-    return positions;
-  }
-
-  function modelBrand(source, explicitBrand) {
-    const explicit = brandOccurrences(source, explicitBrand).find(match => match.start === 0);
-    if (explicit) return explicit;
-    const match = source.match(/^([A-Z]{2,}(?:[&.'-][A-Z]+)*)(?=$|[\s:：,，;；/\\–—-])/);
-    if (!match || genericWords.has(match[1])) return null;
-    return { start: 0, end: match[1].length, text: match[1] };
   }
 
   function retryDelay(response) {
@@ -422,64 +383,15 @@ body{min-width:0}
       return /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/i.test(value) && value.toLowerCase() !== 'auto' ? value : '';
     }
 
-    async function validated(source, hint, assemble = value => value, original = source) {
-      let result = assemble(await request(source, 'auto'));
-      if (acceptable(original, result)) return result;
-      const language = hintLanguage(hint);
-      if (language) {
-        result = assemble(await request(source, language));
-        if (acceptable(original, result)) return result;
-      }
-      throw qualityError('Google 未返回可核对的完整中文译文，请核对原文');
-    }
-
-    async function restoreBrand(source, occurrences, hint) {
-      let cursor = 0, result = '';
-      async function fragment(value) {
-        const parts = value.match(/^(\s*)([\s\S]*?)(\s*)$/);
-        const text = parts[2];
-        if (!text || /^[\s\p{P}\p{S}\d]+$/u.test(text)) return value;
-        const engine = root.BuyerTranslation;
-        if (engine && typeof engine.passthrough === 'function' && engine.passthrough(text)) return value;
-        return parts[1] + await validated(text, hint) + parts[3];
-      }
-      for (const brand of occurrences) {
-        result += await fragment(source.slice(cursor, brand.start));
-        result += brand.text;
-        cursor = brand.end;
-      }
-      result += await fragment(source.slice(cursor));
-      if (!acceptable(source, result)) throw qualityError('品牌保留后仍未获得完整中文译文，请核对原文');
-      return result;
-    }
-
     async function translate(text, languageHint = 'auto', context = {}) {
       const source = String(text == null ? '' : text).trim();
       if (!source) return '';
-      context = context || {};
-      const brand = String(context.brand == null ? '' : context.brand).trim();
-      if (context.kind === 'model') {
-        const prefix = modelBrand(source, brand);
-        if (prefix) {
-          const rest = source.slice(prefix.end).match(/^([\s:：,，;；/\\–—-]*)([\s\S]*)$/);
-          if (!rest[2]) {
-            if (validate(source, source)) return source;
-            throw qualityError('型号缺少可翻译的描述，请核对原文');
-          }
-          return validated(rest[2], languageHint, value => prefix.text + rest[1] + value, source);
-        }
-      }
-      const occurrences = brandOccurrences(source, brand);
+      // Keep the same intact query for items and models. Context never rewrites Google's wording.
       const first = await request(source, 'auto');
-      const brandMissing = occurrences.length && occurrences.some(match => !first.includes(match.text));
-      if (brandMissing && hasChinese(first)) return restoreBrand(source, occurrences, languageHint);
       if (acceptable(source, first)) return first;
       const language = hintLanguage(languageHint);
       if (language) {
         const result = await request(source, language);
-        if (occurrences.length && occurrences.some(match => !result.includes(match.text)) && hasChinese(result)) {
-          return restoreBrand(source, occurrences, languageHint);
-        }
         if (acceptable(source, result)) return result;
       }
       throw qualityError('Google 未返回可核对的完整中文译文，请核对原文');
@@ -1299,6 +1211,460 @@ body{min-width:0}
 });
 
 </script>
+<script data-buyer-chrome-translation="v1">
+(function (root) {
+  'use strict';
+
+  // Native API contract: https://developer.chrome.com/docs/ai/translator-api
+  // AbortSignal/destroy contract: https://webmachinelearning.github.io/translation-api/
+  // No network fallback is performed here. Model creation must be requested from a user click.
+  const states = new Set(['available', 'downloadable', 'downloading', 'unavailable']);
+
+  function failure(message, flags = {}, name = 'Error') {
+    return Object.assign(new Error(message), flags, { name });
+  }
+
+  function cancelled() {
+    return failure('Chrome 本地翻译已取消', { cancelled: true }, 'AbortError');
+  }
+
+  function language(value) {
+    const tag = String(value || '').trim();
+    if (!tag || tag.toLowerCase() === 'auto') {
+      throw failure('Chrome 本地翻译需要明确的原文语言，请先选择语言', { languageHintRequired: true, permanent: true });
+    }
+    let canonical;
+    try { canonical = Intl.getCanonicalLocales(tag)[0]; }
+    catch (error) { throw failure('无法识别的语言代码：' + tag, { unsupported: true, permanent: true }); }
+    const parts = canonical.split('-');
+    if (parts[0] === 'zh') {
+      return parts.includes('Hant') || (!parts.includes('Hans') && parts.some(part => ['TW', 'HK', 'MO'].includes(part))) ? 'zh-Hant' : 'zh';
+    }
+    return parts[0];
+  }
+
+  function duration(value, fallback) {
+    value = value === undefined ? fallback : value;
+    if (!Number.isFinite(value) || value <= 0 || value > 2147483647) throw new TypeError('timeoutMs 必须是有效的正毫秒数');
+    return value;
+  }
+
+  function create(options = {}) {
+    const TranslatorImpl = options.TranslatorImpl === undefined ? root.Translator : options.TranslatorImpl;
+    const timeoutMs = duration(options.timeoutMs, 30000);
+    const prepareTimeoutMs = duration(options.prepareTimeoutMs, 180000);
+    const pairs = new Map();
+    const availability = new Map();
+    const lifetime = new AbortController();
+    let destroyed = false;
+    const supportedAPI = () => !!TranslatorImpl && typeof TranslatorImpl.create === 'function' && typeof TranslatorImpl.availability === 'function';
+
+    function pair(sourceLanguage, targetLanguage = 'zh') {
+      const source = language(sourceLanguage), target = language(targetLanguage);
+      return { sourceLanguage: source, targetLanguage: target, key: source + '>' + target };
+    }
+
+    function disposedError() {
+      return failure('Chrome 本地翻译已关闭，请重新启用', { destroyed: true, cancelled: true }, 'AbortError');
+    }
+
+    function safeDestroy(instance) {
+      try { if (instance && typeof instance.destroy === 'function') instance.destroy(); } catch (error) { /* Already released by native AbortSignal. */ }
+    }
+
+    function cleanMonitor(entry) {
+      for (const remove of entry.monitorCleanup.splice(0)) {
+        try { remove(); } catch (error) { /* A detached native monitor needs no further cleanup. */ }
+      }
+    }
+
+    function retire(entry, reason = cancelled()) {
+      if (entry.state === 'dead') return;
+      entry.state = 'dead';
+      if (pairs.get(entry.key) === entry) pairs.delete(entry.key);
+      entry.controller.abort(reason);
+      safeDestroy(entry.instance);
+      entry.instance = null;
+      cleanMonitor(entry);
+    }
+
+    // Race explicitly: a browser implementation may leave a native promise pending after abort.
+    function controlled(run, settings = {}) {
+      const controller = settings.controller || new AbortController();
+      const signals = (settings.signals || []).filter(Boolean);
+      return new Promise((resolve, reject) => {
+        let settled = false, timer;
+        const listeners = [];
+        function cleanup() {
+          clearTimeout(timer);
+          for (const [signal, handler] of listeners) signal.removeEventListener('abort', handler);
+        }
+        function stop(error) {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          controller.abort(error);
+          if (settings.onStop) settings.onStop(error);
+          reject(error);
+        }
+        for (const signal of signals) {
+          const reason = () => signal.reason instanceof Error ? signal.reason : cancelled();
+          if (signal.aborted) { stop(reason()); return; }
+          const handler = () => stop(reason());
+          signal.addEventListener('abort', handler, { once: true });
+          listeners.push([signal, handler]);
+        }
+        timer = setTimeout(() => stop(failure(settings.timeoutMessage || 'Chrome 本地翻译超时，请重新启用', { timeout: true }, 'TimeoutError')), settings.timeoutMs);
+        let work;
+        try { work = run(controller.signal); }
+        catch (error) { work = Promise.reject(error); }
+        Promise.resolve(work).then(value => {
+          if (settled) {
+            if (settings.onLateValue) settings.onLateValue(value);
+            return;
+          }
+          settled = true;
+          cleanup();
+          resolve(value);
+        }, error => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(error);
+        });
+      });
+    }
+
+    async function available(sourceLanguage, targetLanguage = 'zh') {
+      let definition;
+      try { definition = pair(sourceLanguage, targetLanguage); } catch (error) { return 'unavailable'; }
+      if (destroyed || !supportedAPI()) return 'unavailable';
+      const entry = pairs.get(definition.key);
+      if (entry && entry.state === 'ready') return 'available';
+      try {
+        const value = await controlled(() => TranslatorImpl.availability({ sourceLanguage: definition.sourceLanguage, targetLanguage: definition.targetLanguage }), { timeoutMs, signals: [lifetime.signal] });
+        if (destroyed) return 'unavailable';
+        const state = states.has(value) ? value : 'unavailable';
+        availability.set(definition.key, state);
+        return state;
+      } catch (error) { return 'unavailable'; }
+    }
+
+    function emit(entry, status, loaded) {
+      const event = { sourceLanguage: entry.sourceLanguage, targetLanguage: entry.targetLanguage, status, loaded, total: 1 };
+      for (const callback of entry.listeners) {
+        try { callback(event); } catch (error) { /* A display callback cannot break a model operation. */ }
+      }
+    }
+
+    function start(definition) {
+      const entry = { ...definition, state: 'preparing', controller: new AbortController(), instance: null, tail: Promise.resolve(), listeners: new Set(), monitorCleanup: [] };
+      pairs.set(entry.key, entry);
+      return entry;
+    }
+
+    function prepareOne(definition, settings) {
+      if (destroyed) return Promise.reject(disposedError());
+      if (settings.signal && settings.signal.aborted) return Promise.reject(settings.signal.reason instanceof Error ? settings.signal.reason : cancelled());
+      if (!supportedAPI() || availability.get(definition.key) === 'unavailable') {
+        return Promise.reject(failure('当前浏览器不支持此本地翻译语言对', { unsupported: true, permanent: true }));
+      }
+      let entry = pairs.get(definition.key);
+      if (!entry) {
+        entry = start(definition);
+        if (typeof settings.onProgress === 'function') entry.listeners.add(settings.onProgress);
+        emit(entry, 'downloading', 0);
+        // Keep this synchronous in the prepareLanguages click call stack. Awaiting availability
+        // or processing one language at a time here could lose transient user activation.
+        entry.preparing = controlled(signal => TranslatorImpl.create({
+          sourceLanguage: entry.sourceLanguage,
+          targetLanguage: entry.targetLanguage,
+          signal,
+          monitor(monitor) {
+            if (entry.state === 'dead') return;
+            const progress = event => {
+              if (entry.state === 'dead') return;
+              const total = Number(event.total), raw = Number(event.loaded);
+              const loaded = Number.isFinite(raw) ? Math.max(0, Math.min(1, total > 1 ? raw / total : raw)) : 0;
+              emit(entry, 'downloading', loaded);
+            };
+            monitor.addEventListener('downloadprogress', progress);
+            entry.monitorCleanup.push(() => monitor.removeEventListener('downloadprogress', progress));
+          }
+        }), {
+          controller: entry.controller,
+          signals: [settings.signal, entry.controller.signal],
+          timeoutMs: settings.timeoutMs,
+          timeoutMessage: 'Chrome 本地语言模型准备超时，请重新点击启用',
+          onStop: error => retire(entry, error),
+          onLateValue: safeDestroy
+        }).then(instance => {
+          if (!instance || typeof instance.translate !== 'function') {
+            safeDestroy(instance);
+            throw new Error('浏览器未返回可用的本地翻译模型');
+          }
+          if (destroyed || entry.state === 'dead') { safeDestroy(instance); throw disposedError(); }
+          entry.instance = instance;
+          entry.state = 'ready';
+          emit(entry, 'available', 1);
+          return entry;
+        }).catch(error => {
+          retire(entry, error);
+          throw error;
+        }).finally(() => cleanMonitor(entry));
+      } else if (typeof settings.onProgress === 'function') {
+        entry.listeners.add(settings.onProgress);
+      }
+      const callback = settings.onProgress;
+      const result = entry.state === 'ready' ? Promise.resolve(entry) : controlled(() => entry.preparing, {
+        signals: [settings.signal, entry.controller.signal],
+        timeoutMs: settings.timeoutMs,
+        onStop: error => retire(entry, error)
+      });
+      if (entry.state === 'ready' && typeof callback === 'function') {
+        try { callback({ sourceLanguage: entry.sourceLanguage, targetLanguage: entry.targetLanguage, status: 'available', loaded: 1, total: 1 }); } catch (error) { /* Display only. */ }
+      }
+      return result.finally(() => { if (callback) entry.listeners.delete(callback); });
+    }
+
+    function prepareLanguages(languages, settings = {}) {
+      if (!Array.isArray(languages)) return Promise.reject(new TypeError('languages 必须是语言代码数组'));
+      let deadline;
+      try { deadline = duration(settings.timeoutMs, prepareTimeoutMs); }
+      catch (error) { return Promise.reject(error); }
+      const seen = new Set();
+      const preparations = languages.map(source => {
+        let definition;
+        try { definition = pair(source, settings.targetLanguage || 'zh'); }
+        catch (error) { return Promise.resolve({ sourceLanguage: String(source), targetLanguage: settings.targetLanguage || 'zh', status: 'unavailable', error }); }
+        if (seen.has(definition.key)) return null;
+        seen.add(definition.key);
+        return prepareOne(definition, { ...settings, timeoutMs: deadline }).then(() => ({
+          sourceLanguage: definition.sourceLanguage, targetLanguage: definition.targetLanguage, status: 'available'
+        }), error => ({
+          sourceLanguage: definition.sourceLanguage, targetLanguage: definition.targetLanguage,
+          status: error.unsupported || error.name === 'NotSupportedError' ? 'unavailable' : 'error', error
+        }));
+      }).filter(Boolean);
+      return Promise.all(preparations);
+    }
+
+    function translate(text, sourceLanguage, settings = {}) {
+      let definition, deadline;
+      try {
+        definition = pair(sourceLanguage, settings.targetLanguage || 'zh');
+        deadline = duration(settings.timeoutMs, timeoutMs);
+      } catch (error) { return Promise.reject(error); }
+      if (destroyed) return Promise.reject(disposedError());
+      const entry = pairs.get(definition.key);
+      if (!entry || entry.state !== 'ready') return Promise.reject(failure('请先点击启用并准备此语言的 Chrome 本地模型', { notPrepared: true, permanent: true }));
+      const source = String(text == null ? '' : text);
+      if (!source.trim()) return settings.signal && settings.signal.aborted ? Promise.reject(cancelled()) : Promise.resolve('');
+      const previous = entry.tail;
+      let started = false;
+      const result = controlled(async signal => {
+        await previous;
+        if (signal.aborted) throw cancelled();
+        if (entry.state !== 'ready') throw failure('此本地翻译模型已释放，请重新点击启用', { notPrepared: true, permanent: true });
+        started = true;
+        const translated = await entry.instance.translate(source, { signal });
+        if (typeof translated !== 'string' || !translated.trim()) throw failure('Chrome 本地模型未返回译文', { qualityFailed: true, permanent: true });
+        return translated;
+      }, {
+        signals: [settings.signal, entry.controller.signal],
+        timeoutMs: deadline,
+        onStop: error => { if (started) retire(entry, error); }
+      });
+      // A queued caller can cancel before its predecessor finishes. Keep that predecessor
+      // in the tail, so cancelling the middle job cannot let a later job overtake it.
+      entry.tail = Promise.allSettled([previous, result]).then(() => {});
+      return result;
+    }
+
+    function destroy() {
+      if (destroyed) return;
+      destroyed = true;
+      lifetime.abort(disposedError());
+      for (const entry of [...pairs.values()]) retire(entry, disposedError());
+      availability.clear();
+    }
+
+    return { available, prepareLanguages, translate, destroy };
+  }
+
+  const api = { create };
+  root.BuyerChromeTranslation = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
+<script data-workbench-translation-tasks="v1">
+(function (root, factory) {
+  'use strict';
+  const api = factory(root);
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.WorkbenchTranslationTasks = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  'use strict';
+
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const KEY_PREFIX = 'GTASK-';
+  const normalizeText = value => String(value == null ? '' : value).normalize('NFC').replace(/\s+/g, ' ').trim();
+  const normalizeKey = value => String(value == null ? '' : value).replace(/\s+/g, '').toUpperCase();
+  const now = () => typeof performance === 'object' ? performance.now() : Date.now();
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+
+  function validateId(id) {
+    if (typeof id !== 'string' || id.length !== 36 || !UUID.test(id)) throw new Error('翻译任务编号无效');
+    return id.toLowerCase();
+  }
+  function randomId(cryptoImpl) {
+    if (cryptoImpl && typeof cryptoImpl.randomUUID === 'function') return validateId(cryptoImpl.randomUUID());
+    if (cryptoImpl && typeof cryptoImpl.getRandomValues === 'function') {
+      const bytes = cryptoImpl.getRandomValues(new Uint8Array(16));
+      bytes[6] = bytes[6] & 15 | 64; bytes[8] = bytes[8] & 63 | 128;
+      const hex = Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      return hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20);
+    }
+    throw new Error('浏览器无法安全创建翻译任务编号');
+  }
+  function keyFor(id, index) { return KEY_PREFIX + id.toUpperCase() + '-' + String(index + 1).padStart(8, '0'); }
+  function checkAbort(signal) {
+    if (signal && signal.aborted) { const error = new Error('翻译任务处理已取消'); error.name = 'AbortError'; throw error; }
+  }
+  function scheduler(options) {
+    let deadline = now() + 8, count = 0;
+    return {
+      due() { checkAbort(options.signal); return ++count % 50 === 0 && now() >= deadline; },
+      async yield() {
+        await pause(); checkAbort(options.signal); deadline = now() + 8;
+      }
+    };
+  }
+  function readSource(value) {
+    if (typeof value !== 'string') throw new Error('翻译任务原文必须是文本');
+    const source = normalizeText(value);
+    if (!source || source.length > 32767) throw new Error('翻译任务原文不能为空或超过 Excel 单元格上限');
+    return source;
+  }
+  function copyReference(reference, source) {
+    if (!reference || typeof reference.modelId !== 'string' || !reference.modelId ||
+        !(typeof reference.field === 'string' && reference.field || Number.isInteger(reference.field) && reference.field >= 0) ||
+        reference.source != null && typeof reference.source !== 'string') throw new Error('翻译任务本地映射无效');
+    // Explicit projection keeps unrelated row fields out of the local mapping too.
+    return { modelId: reference.modelId, field: reference.field, source: reference.source == null ? source : reference.source };
+  }
+
+  async function createTask(entries, options) {
+    options = options || {};
+    checkAbort(options.signal);
+    if (!Array.isArray(entries)) throw new Error('翻译任务需要原文列表');
+    const id = options.id == null ? randomId(Object.prototype.hasOwnProperty.call(options, 'crypto') ? options.crypto : root.crypto) : validateId(options.id);
+    const task = { version: 1, id, createdAt: new Date().toISOString(), entries: [] };
+    const table = { headers: ['任务键', '待翻译原文'], data: [] }, bySource = new Map(), tick = scheduler(options);
+    await tick.yield();
+    for (const input of entries) {
+      const source = readSource(input && input.source);
+      if (input.references != null && !Array.isArray(input.references)) throw new Error('翻译任务本地映射必须是列表');
+      const language = typeof input.language === 'string' && input.language.trim() ? input.language.trim() : 'auto';
+      let stored = bySource.get(source);
+      if (!stored) {
+        const entry = { key: keyFor(id, task.entries.length), source, language, references: [] };
+        task.entries.push(entry); table.data.push([entry.key, source]);
+        stored = { entry, referenceKeys: new Set() }; bySource.set(source, stored);
+      } else if (stored.entry.language !== language) stored.entry.language = 'auto';
+      for (const item of input.references || []) {
+        const reference = copyReference(item, input.source), signature = JSON.stringify([reference.modelId, reference.field, reference.source]);
+        if (readSource(reference.source) !== source) throw new Error('本地映射原文与待翻译原文不一致');
+        if (!stored.referenceKeys.has(signature)) { stored.referenceKeys.add(signature); stored.entry.references.push(reference); }
+        if (tick.due()) await tick.yield();
+      }
+      if (tick.due()) await tick.yield();
+    }
+    return { task, table };
+  }
+
+  function basicUnchangedAllowed(source, engine) {
+    if (engine && typeof engine.passthrough === 'function') return engine.passthrough(source);
+    if (/[\u3400-\u9fff]/.test(source) && !/[a-z]/.test(source)) return true;
+    // A digit-bearing model/code or a known connector can legitimately stay
+    // unchanged. Without the quality engine, ambiguous uppercase titles fail.
+    return /^[A-Z0-9+().,*/#_\s:-]+$/.test(source) && /\d/.test(source) || /^(USB(?:-C)?|AUX|RCA|HDMI|XLR|FM|AM|AC|DC|WIFI|WI-FI|BLUETOOTH)$/.test(source);
+  }
+  function problem(source, translation, validate, engine) {
+    const result = normalizeText(translation);
+    if (!result) return 'empty';
+    if (/ZXQ|QXZ/i.test(result)) return 'markers';
+    const unchanged = result === normalizeText(source);
+    if (unchanged && !basicUnchangedAllowed(source, engine)) return 'untranslated';
+    if (validate) return validate(source, result) === true ? '' : 'invalid';
+    return /[\u3400-\u9fff]/.test(result) || unchanged && basicUnchangedAllowed(source, engine) ? '' : 'invalid';
+  }
+
+  async function decodeResult(task, matrix, options) {
+    options = options || {};
+    checkAbort(options.signal);
+    if (!task || task.version !== 1 || !Array.isArray(task.entries)) throw new Error('本地翻译任务缺失或格式无效');
+    const id = validateId(task.id);
+    if (!Array.isArray(matrix)) throw new Error('翻译结果必须是二维单元格列表');
+    const tick = scheduler(options), expected = new Map(), seen = new Map(), unknownKeys = new Set();
+    const engine = root.BuyerTranslation;
+    const validate = typeof options.validate === 'function' ? options.validate : engine && typeof engine.usable === 'function' ? engine.usable : null;
+    const counts = { expected: task.entries.length, translated: 0, missing: 0, conflicts: 0, unknown: 0, empty: 0, untranslated: 0, markers: 0, invalid: 0, duplicates: 0, ignoredRows: 0 };
+    await tick.yield();
+    for (let index = 0; index < task.entries.length; index++) {
+      const entry = task.entries[index];
+      if (!entry || entry.key !== keyFor(id, index) || readSource(entry.source) !== entry.source || !Array.isArray(entry.references)) throw new Error('本地翻译任务映射已损坏，请重新导出任务');
+      expected.set(normalizeKey(entry.key), entry);
+      if (tick.due()) await tick.yield();
+    }
+    for (const row of matrix) {
+      if (!Array.isArray(row)) throw new Error('翻译结果包含无效数据行');
+      const key = normalizeKey(row[0]);
+      if (!expected.has(key)) {
+        // Headers may be translated and can occur anywhere. They never select
+        // a field. Old-task or damaged task keys are reported separately.
+        if (key.startsWith(KEY_PREFIX)) unknownKeys.add(key);
+        else counts.ignoredRows++;
+        if (tick.due()) await tick.yield(); continue;
+      }
+      const translation = row[1] == null ? '' : typeof row[1] === 'string' || typeof row[1] === 'number' ? String(row[1]).normalize('NFC').trim() : '';
+      const comparable = normalizeText(translation), previous = seen.get(key);
+      if (previous) {
+        counts.duplicates++;
+        if (previous.comparable !== comparable) previous.conflict = true;
+      } else seen.set(key, { translation, comparable, conflict: false });
+      if (tick.due()) await tick.yield();
+    }
+    const entries = [], missingKeys = [], conflictKeys = [], rejectedEntries = [];
+    for (const [key, original] of expected) {
+      const candidate = seen.get(key);
+      const reason = !candidate ? 'missing' : candidate.conflict ? 'conflicts' : problem(original.source, candidate.translation, validate, engine);
+      if (reason) {
+        missingKeys.push(original.key); rejectedEntries.push({ key: original.key, reason });
+        if (reason === 'conflicts') { conflictKeys.push(original.key); counts.conflicts++; }
+        else if (reason !== 'missing') counts[reason]++;
+      } else {
+        const references = [];
+        for (const item of original.references) {
+          const reference = copyReference(item, original.source);
+          if (readSource(reference.source) !== original.source) throw new Error('本地翻译任务映射原文已损坏');
+          references.push(reference); if (tick.due()) await tick.yield();
+        }
+        entries.push({ key: original.key, source: original.source, language: original.language, translation: candidate.translation,
+          references });
+      }
+      if (tick.due()) await tick.yield();
+    }
+    counts.translated = entries.length; counts.missing = missingKeys.length; counts.unknown = unknownKeys.size;
+    return { taskId: id, entries, missing: counts.missing, conflicts: counts.conflicts, unknown: counts.unknown,
+      missingKeys, conflictKeys, unknownKeys: Array.from(unknownKeys), rejectedEntries, counts };
+  }
+
+  return { createTask, decodeResult, normalizeKey };
+});
+
+</script>
 <script>
 (function(){
 const qaEnabled=new URLSearchParams(location.search).get("qa")==="1";function reportQa(event,detail){if(qaEnabled)console.info("[BuyerQA] "+JSON.stringify({event,...detail}))}
@@ -1307,7 +1673,7 @@ try{workspace=BuyerWorkspace.resolve()}catch(error){const notice=document.getEle
 let workspaceWriter=null,workspaceWritable=false;
 function canEditWorkspace(){return workspaceWritable&&workspaceWriter?.owner===true}
 const H=["是否可开发（添加筛选器）","不可开发原因（添加筛选器）","level1_global_be_category（添加筛选器）","level2_global_be_category（添加筛选器）","level3_global_be_category（添加筛选器）","model状态（添加筛选器）","主图图片","model 图片","Shopee link","item name\n原文（添加筛选器）","item name\n中文（添加筛选器）","Model name\n原文（添加筛选器）","Model name\n中文（添加筛选器）","Non Brand 倒算价","1688链接","1688价格","目标价","C8倒算价\n（默认折叠，点击+号可展开查看）","走C8目标价\n（默认折叠，点击+号可展开查看）","价格check","品牌（默认折叠，点击+号可展开查看）","款式（默认折叠，点击+号可展开查看）","件数（默认折叠，点击+号可展开查看）","是否放前置核价","model备注","邀请ID"];
-const S=["是\n否\n待定-倒算价可做，待1688前置核价\n待定-倒算价可做，1688价格申诉中\n待定-其他\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","26/已开发\n27/已重复\n28/禁售类目\n29/禁运类目\n30/超重限制\n31/IP侵权\n32/敏感词(宗教/政治敏感产品/虚拟/盲盒/定制产品等)\n33/赠品/补差\n34/季节性品-节庆品过季\n35/品牌品-大品牌暂不可开发(无quota)\n36/品牌品-Local品牌且无法在中国source到相似品牌(无quota)\n37/原品链接失效\n38/原品model信息不全无法开发\n39/全网找不到相似款，source难度大\n40/类目错配(备注EL和非EL)\n41/其他原因(需备注)\n41/其他原因-虚标\n41/其他原因-CB品牌暂未入驻/无法提品((且无quota))\n41/其他原因-倒算价小于0.5\n41/其他原园-倒算价>=0.5仍不可开发\n41/其他原因-其他价格原因\n41/其他原因-需要强售前售后支持\n41/其他原因-长尾类目但整个item只有单model\n41/其他原因-高rr，不适用全托管\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","系统抓取level1_global_be_category","系统抓取level2_global_be_category","系统抓取level3_global_be_category","系统抓取下面这几个字段的结果展示\npool_type\nis_top_1k\ncspu_group_type_for_testing\ngrass_region\nasp_tag_by_l1\nsource_type_new\nsourcing_status_daily_refresh\n\n(这个部分集中展示，能买手清晰知道这个品的状态，6个结果)","系统抓取item_image表头字段","系统抓取model_image表头字段，如果值为空默认系统抓取item_image表头字段","系统抓取product_link字段","系统抓取item_name","Google 整句翻译；品牌型号保留，损坏原文需核对；手工译文优先","系统抓取model_name","Google 整句翻译；品牌型号保留，损坏原文需核对；手工译文优先","系统抓取backcal_cogs_non_brand","系统抓取final_1688_link","系统抓取final_1688_price_moq_3","系统自己算，取倒算价和1688价格最低值，min（Non Brand 倒算价&1688价格）","系统抓取backcal_cogs_white_label","系统自己算，取倒算价和1688价格最低值，min（C8倒算价&1688价格）","系统抓取backcal_cogs_non_brand是否≥final_1688_price_moq_3","优先抓取 mall_brand_name；为空时从 item name 原文和 Model name 原文提取\n买手可以手动修改结果","系统抓取item_name和model name归纳\n如白色\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","系统抓取item_name和model name归纳\n3pcs\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","当final_1688_price_moq_3为空值的时候，显示“未前置核价”\n买手可以选择是否放核价：Y/N\n前置核价日期：可双击选择当前年月日\n备注：买手可以自行备注","买手自行备注","买手上传 Model ID 与邀请ID后自动匹配；可编辑" ];
+const S=["是\n否\n待定-倒算价可做，待1688前置核价\n待定-倒算价可做，1688价格申诉中\n待定-其他\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","26/已开发\n27/已重复\n28/禁售类目\n29/禁运类目\n30/超重限制\n31/IP侵权\n32/敏感词(宗教/政治敏感产品/虚拟/盲盒/定制产品等)\n33/赠品/补差\n34/季节性品-节庆品过季\n35/品牌品-大品牌暂不可开发(无quota)\n36/品牌品-Local品牌且无法在中国source到相似品牌(无quota)\n37/原品链接失效\n38/原品model信息不全无法开发\n39/全网找不到相似款，source难度大\n40/类目错配(备注EL和非EL)\n41/其他原因(需备注)\n41/其他原因-虚标\n41/其他原因-CB品牌暂未入驻/无法提品((且无quota))\n41/其他原因-倒算价小于0.5\n41/其他原园-倒算价>=0.5仍不可开发\n41/其他原因-其他价格原因\n41/其他原因-需要强售前售后支持\n41/其他原因-长尾类目但整个item只有单model\n41/其他原因-高rr，不适用全托管\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","系统抓取level1_global_be_category","系统抓取level2_global_be_category","系统抓取level3_global_be_category","系统抓取下面这几个字段的结果展示\npool_type\nis_top_1k\ncspu_group_type_for_testing\ngrass_region\nasp_tag_by_l1\nsource_type_new\nsourcing_status_daily_refresh\n\n(这个部分集中展示，能买手清晰知道这个品的状态，6个结果)","系统抓取item_image表头字段","系统抓取model_image表头字段，如果值为空默认系统抓取item_image表头字段","系统抓取product_link字段","系统抓取item_name","Google整句翻译；原文问号允许试译；参数差异仅提示；人工译文优先","系统抓取model_name","Google整句翻译；原文问号允许试译；参数差异仅提示；人工译文优先","系统抓取backcal_cogs_non_brand","系统抓取final_1688_link","系统抓取final_1688_price_moq_3","系统自己算，取倒算价和1688价格最低值，min（Non Brand 倒算价&1688价格）","系统抓取backcal_cogs_white_label","系统自己算，取倒算价和1688价格最低值，min（C8倒算价&1688价格）","系统抓取backcal_cogs_non_brand是否≥final_1688_price_moq_3","优先抓取 mall_brand_name；为空时从 item name 原文和 Model name 原文提取\n买手可以手动修改结果","系统抓取item_name和model name归纳\n如白色\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","系统抓取item_name和model name归纳\n3pcs\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","当final_1688_price_moq_3为空值的时候，显示“未前置核价”\n买手可以选择是否放核价：Y/N\n前置核价日期：可双击选择当前年月日\n备注：买手可以自行备注","买手自行备注","买手上传 Model ID 与邀请ID后自动匹配；可编辑" ];
 const FIELD=H.map((h,i)=>({h:h,s:S[i],i:i,display:h.replace(/[（(][^）)]*[）)]/g,"").trim(),filter:true,foldGroup:i>=17&&i<=18?"c8":i>=20&&i<=22?"attrs":""}));
 
 let rows=[],headers=H.slice(),sourceFileName="",selected=new Set(),filters={},opened=new Set(),groupView=true,showFold=false,showC8=false,showAttrs=false,threshold=90,groupingEnabled=false,historyMode=false,liveSnapshot=null,historyRows=[],hasUnsavedChanges=false,saveWaiters=[];let pageIndex=0,pageSize=50,visibleRows=[],activeHashRun=0,dbPromise=null,saveTimer=null,searchTimer=0,saveAllPending=false,dirtyRows=new Set(),saveInProgress=false,saveFailureNotified=false,activeProductCard="",activeZoomSource="",imageZoomTimer=0;const statusFilterKeys=["pool_type","is_top_1k","cspu_group_type_for_testing","grass_region","asp_tag_by_l1","source_type_new","sourcing_status_daily_refresh"];
@@ -1399,9 +1765,9 @@ function rowHtml(r, cols, count, gid, isChild) {
     }
     if (k === "note") return "<td><textarea class=\"cell note-editor\" data-edit=\"raw\" data-field=\"" + esc(f.h) + "\" data-id=\"" + esc(r.uid) + "\" placeholder=\"填写 Model 备注\"" + disabled + ">" + esc(v) + "</textarea></td>";
     if (k === "itemchinese" || k === "modelchinese") {
-      const sourceIndex=k==="itemchinese"?9:11,issue=BuyerTranslation.sourceIssue(translationSource(r,sourceIndex));
+      const sourceIndex=k==="itemchinese"?9:11,targetIndex=sourceIndex===9?10:12,issue=r[translationWarningField(targetIndex)]||BuyerTranslation.sourceIssue(translationSource(r,sourceIndex));const googleUrl=new URL("https://translate.google.com/");googleUrl.search=new URLSearchParams({sl:"auto",tl:"zh-CN",text:translationSource(r,sourceIndex),op:"translate"}).toString();const tools=historyMode?"":'<div class="translation-cell-tools"><button type="button" class="translation-source-button" data-retranslate-field="'+sourceIndex+'" data-id="'+esc(r.uid)+'">整句重译</button><a href="'+esc(googleUrl.href)+'" target="_blank" rel="noopener noreferrer">Google核对 ↗</a></div>';
       const note=issue?'<div class="translation-warning">'+esc(issue)+(historyMode?'':' <button type="button" class="translation-source-button" data-translation-source="'+sourceIndex+'" data-id="'+esc(r.uid)+'">修正原文</button>')+'</div>':'';
-      return '<td><textarea rows="4" class="cell translation-editor" data-edit="raw" data-field="'+esc(f.h)+'" data-id="'+esc(r.uid)+'" placeholder="'+(issue?'原文有缺失字符，请核对后翻译':'Google中文译文，可人工编辑')+'" title="Google整句翻译，买手手工修改会保留"'+disabled+'>'+esc(v)+'</textarea>'+note+'</td>';
+      return '<td><textarea rows="4" class="cell translation-editor" data-edit="raw" data-field="'+esc(f.h)+'" data-id="'+esc(r.uid)+'" placeholder="'+(issue?'中文待生成，可重试翻译或人工补全':'Google中文译文，可人工编辑')+'" title="Google整句翻译，买手手工修改会保留"'+disabled+'>'+esc(v)+'</textarea>'+note+tools+'</td>';
     }
     if (["ali", "price", "brand", "style", "qty", "invite"].includes(k)) {
       const type = k === "price" || k === "qty" ? "type=\"number\" step=\"any\"" : "";
@@ -1527,45 +1893,107 @@ async function showShareLinkDialog(records) {
     dialog.querySelector("[data-share-status]").textContent = "链接生成失败：" + (e && e.message ? e.message : "请稍后重试");
   }
 }
+function sharePreviewChineseValue(record,targetIndex) {
+  const text=String(value(record,H[targetIndex])||'').trim();
+  if(!text||/^(?:[—–-]+|待翻译|翻译中|未提供|待补全)$/.test(text))return '';
+  const source=translationSource(record,targetIndex===10?9:11);
+  return BuyerTranslation.usable(source,text)?text:'';
+}
+function editSharePreviewChinese(record,dataset) {
+  if(historyMode||!canEditWorkspace()||rows!==dataset||!rows.includes(record))return;
+  closeProductCard();
+  const overlay=$('overlay');
+  overlay.innerHTML='<div class="modalbg"><section class="modal" id="shareChineseEditor"><h3>补全分享中文</h3><p class="muted">请填写核对后的中文标题和中文型号，实际品牌、型号编码与规格可保留。保存后将保留人工内容。</p><label class="pre-field">中文标题<textarea class="cell" id="shareChineseItem" rows="4"></textarea></label><label class="pre-field" style="margin-top:10px">中文型号<textarea class="cell" id="shareChineseModel" rows="3"></textarea></label><p class="muted" id="shareChineseEditorStatus" role="status"></p><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn" id="cancelShareChinese">取消</button><button class="btn primary" id="saveShareChinese">保存中文并返回卡片</button></div></section></div>';
+  const editor=$('shareChineseEditor');
+  $('shareChineseItem').value=sharePreviewChineseValue(record,10);
+  $('shareChineseModel').value=sharePreviewChineseValue(record,12);
+  $('cancelShareChinese').onclick=()=>{if($('shareChineseEditor')===editor)overlay.innerHTML=''};
+  $('saveShareChinese').onclick=()=>{
+    if($('shareChineseEditor')!==editor)return;
+    const status=$('shareChineseEditorStatus');
+    if(historyMode||!canEditWorkspace()||rows!==dataset||!rows.includes(record)){status.textContent='工作台数据已切换，请关闭后重新打开商品卡片';return}
+    const entries=[[10,$('shareChineseItem').value.trim()],[12,$('shareChineseModel').value.trim()]];
+    for(const [targetIndex,text] of entries){
+      const source=translationSource(record,targetIndex===10?9:11);
+      if(!text||/^(?:[—–-]+|待翻译|翻译中|未提供|待补全)$/.test(text)||!BuyerTranslation.usable(source,text)){
+        status.textContent='请填写完整的'+(targetIndex===10?'中文标题':'中文型号')+'，并核对实际品牌、型号编码与规格';return;
+      }
+    }
+    for(const [targetIndex,text] of entries){record.raw[H[targetIndex]]=text;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])]}
+    record.autoItemChinese=false;record.localTranslatedItem=false;record.autoModelChinese=false;record.localTranslatedModel=false;
+    invalidateRaw(record);markDirty(record);save();overlay.innerHTML='';render();
+    const anchor=Array.from(document.querySelectorAll('[data-share]')).find(button=>button.dataset.share===record.uid);
+    if(anchor)toggleProductCard(record.uid,anchor);else toast('分享中文已保存，请重新打开商品卡片');
+  };
+}
 function toggleProductCard(uid, anchor) {
   if (activeProductCard === uid) { closeProductCard(); return; }
   closeProductCard();
-  const r = rows.find(x => x.uid === uid);
+  const dataset=rows,r=dataset.find(x=>x.uid===uid);
   if (!r) return;
   const d = productDetail(r), card = document.createElement("aside");
   card.id = "productCard"; card.className = "product-card";
-  const rect = anchor.getBoundingClientRect(), width = Math.min(480, innerWidth - 16), height = Math.min(560, innerHeight - 16);
+  const rect = anchor.getBoundingClientRect(), width = Math.min(480, innerWidth - 16), height = Math.min(760, innerHeight - 24);
   const left = rect.right + width + 12 < innerWidth ? rect.right + 8 : Math.max(8, rect.left - width - 8);
   const top = Math.max(8, Math.min(rect.top, innerHeight - height - 8));
   card.style.cssText = "position:fixed;z-index:120;width:" + width + "px;max-height:" + height + "px;left:" + left + "px;top:" + top + "px";
   const image = (src,label,badges) => "<figure class=\"product-card-model-figure\">" + (src ? "<img loading=\"lazy\" src=\"" + esc(src) + "\" alt=\"" + esc(label) + "\">" : "<div class=\"product-card-empty\">暂无图片</div>") + "<div class=\"product-card-media-footer\"><figcaption>" + esc(label) + "</figcaption>" + inlineBadgesMarkup(badges) + "</div></figure>";
-  const field = (label,val,attr) => "<div class=\"product-card-block\"><span class=\"product-card-label\">" + esc(label) + "</span><div class=\"product-card-value\"" + (attr || "") + ">" + esc(val || "—") + "</div></div>";
-  const link = d.shopee ? d.shopeeUrl ? "<a href=\"" + esc(d.shopeeUrl) + "\" target=\"_blank\" rel=\"noopener\">" + esc(d.shopee) + "</a>" : esc(d.shopee) : "—";
-  card.innerHTML = "<button class=\"product-card-close\" type=\"button\" aria-label=\"关闭\">×</button><div class=\"product-card-images\">" + image(d.model,"model 图片（SKU图）",d.badges) + "</div>" + field("item name 中文",d.itemChinese) + field("Model name 中文",d.modelChinese) + field("上新类目",d.category," data-share-category=\"1\"") + (d.invitation ? field("邀请ID",d.invitation) : "") + "<dl><dt>目标价</dt><dd>" + esc(d.target) + "</dd><dt>Model ID</dt><dd>" + esc(d.id) + "</dd><dt>Shopee link</dt><dd>" + link + "</dd></dl><div class=\"product-card-actions\"><button type=\"button\" data-generate-single>生成在线链接</button></div>";
-  document.body.append(card);
-  card.querySelector(".product-card-close").onclick = closeProductCard;
-  card.querySelector("[data-generate-single]").onclick = async e => {
-    const actions = e.currentTarget.parentElement;
-    actions.innerHTML = "<span class=\"muted\">正在生成在线链接…</span>";
-    try {
-      const url = await buildOnlineShareLink([r]);
-      actions.innerHTML = "<input class=\"share-inline-link\" readonly aria-label=\"在线分享链接\"><button type=\"button\" data-copy-single>复制链接</button>";
-      actions.querySelector("input").value = url;
-      actions.querySelector("[data-copy-single]").onclick = async b => { b.currentTarget.textContent = await copyShareText(url) ? "已复制" : "复制失败"; };
-    } catch (err) { actions.innerHTML = "<span class=\"muted\">" + esc(err && err.message ? err.message : "链接生成失败") + "</span>"; }
+  const field = (label,val,attr) => "<div class=\"product-card-block\"><span class=\"product-card-label\">" + esc(label) + "</span><div class=\"product-card-value\"" + (attr || "") + ">" + esc(val || "未提供") + "</div></div>";
+  const link = d.shopee ? d.shopeeUrl ? "<a href=\"" + esc(d.shopeeUrl) + "\" target=\"_blank\" rel=\"noopener\">" + esc(d.shopee) + "</a>" : esc(d.shopee) : "未提供";
+  card.innerHTML = "<button class=\"product-card-close\" type=\"button\" aria-label=\"关闭\">×</button><div class=\"product-card-images\">" + image(d.model,"model 图片（SKU图）",d.badges) + "</div>" + field("中文标题",sharePreviewChineseValue(r,10)||"中文标题待翻译"," data-preview-chinese=\"10\"") + field("中文型号",sharePreviewChineseValue(r,12)||"中文型号待翻译"," data-preview-chinese=\"12\"") + field("上新类目",d.category," data-share-category=\"1\"") + (d.invitation ? field("邀请ID",d.invitation) : "") + "<dl><dt>目标价</dt><dd>" + esc(d.target) + "</dd><dt>Model ID</dt><dd>" + esc(d.id) + "</dd><dt>Shopee link</dt><dd>" + link + "</dd></dl><p class=\"muted\" data-preview-status role=\"status\"></p><div class=\"product-card-actions\" style=\"flex-wrap:wrap;gap:6px\"><button type=\"button\" data-retry-preview>重试翻译</button><button type=\"button\" data-edit-preview>补全中文</button><button type=\"button\" data-generate-single>生成在线链接</button></div><div data-preview-link hidden><input class=\"share-inline-link\" readonly aria-label=\"在线分享链接\"><button type=\"button\" class=\"btn\" data-copy-single>复制链接</button></div>";
+  document.body.append(card);activeProductCard=uid;
+  const current=()=>rows===dataset&&rows.includes(r)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
+  const status=card.querySelector('[data-preview-status]'),retry=card.querySelector('[data-retry-preview]'),generate=card.querySelector('[data-generate-single]'),edit=card.querySelector('[data-edit-preview]'),result=card.querySelector('[data-preview-link]');
+  let translationRun=0;
+  const updateFields=(pending=false)=>{
+    let missing=0;
+    for(const targetIndex of [10,12]){
+      const text=sharePreviewChineseValue(r,targetIndex),label=targetIndex===10?'中文标题':'中文型号';
+      const source=translationSource(r,targetIndex===10?9:11),manual=manualChinese(r,targetIndex);
+      card.querySelector('[data-preview-chinese="'+targetIndex+'"]').textContent=text||(pending&&source&&!manual?'正在翻译'+label+'…':label+'待补全');
+      if(!text)missing++;
+    }
+    card.querySelector('[data-share-category]').textContent=categoryPath(r);return missing;
   };
-  activeProductCard = uid;
-  ensureCategoryTranslations([r]).then(() => {
-    const target = card.querySelector("[data-share-category]");
-    if (target && document.body.contains(card)) target.textContent = categoryPath(r);
-  }).catch(() => {});
+  card.refreshChinese=record=>{if(record!==r||!current())return;const missing=updateFields(false);if(!missing)status.textContent='中文已就绪，可以生成在线链接'};
+  const refresh=async(force=false)=>{
+    if(!current())return;
+    const run=++translationRun;
+    if(force&&!historyMode&&canEditWorkspace()){
+      translationLastError='';translationUserPaused=false;translationQueue.failedUntil.clear();translationQueue.setPaused(false);scheduleTranslationStatus();
+    }
+    retry.disabled=true;updateFields(true);status.textContent='正在补齐分享中文与类目…';result.hidden=true;
+    const ensure=typeof ensureChineseForShare==='function'?ensureChineseForShare:ensureProductTranslations;
+    const outcomes=await Promise.allSettled([Promise.resolve().then(()=>ensure([r])),Promise.resolve().then(()=>ensureCategoryTranslations([r]))]);
+    if(!current()||run!==translationRun)return;
+    retry.disabled=false;
+    const missing=updateFields(),failed=outcomes.find(outcome=>outcome.status==='rejected');
+    if(outcomes[1].status==='rejected'&&categoryPath(r)==='类目翻译中')card.querySelector('[data-share-category]').textContent='类目翻译未完成，请重试';
+    status.textContent=failed?'中文尚未补齐：'+(failed.reason?.message||'翻译连接失败')+'。可重试翻译或补全中文。':missing?'缺少中文标题或中文型号，请补全中文后分享。':'中文标题、型号与类目已就绪。';
+  };
+  card.querySelector('.product-card-close').onclick=closeProductCard;
+  edit.disabled=historyMode||!canEditWorkspace();edit.onclick=()=>{if(current())editSharePreviewChinese(r,dataset)};
+  retry.onclick=()=>refresh(true);
+  generate.onclick=async()=>{
+    if(!current())return;
+    generate.disabled=true;result.hidden=true;status.textContent='正在核对中文并生成在线链接…';
+    try{
+      const url=await buildOnlineShareLink([r]);
+      if(!current())return;
+      if(updateFields())throw new Error('请补全中文标题和中文型号后分享');
+      result.querySelector('input').value=url;result.hidden=false;status.textContent='在线链接已生成，可复制分享。';
+      result.querySelector('[data-copy-single]').onclick=async event=>{event.currentTarget.textContent=await copyShareText(url)?'已复制':'复制失败'};
+    }catch(error){if(current()){updateFields();status.textContent='链接生成失败：'+(error?.message||'请重试')+'。可重试翻译或补全中文。'}}
+    finally{if(current())generate.disabled=false}
+  };
+  refresh();
 }
 async function uploadRowImage(input){
   if(!canEditWorkspace()||historyMode)return;const file=input.files?.[0],record=rows.find(r=>r.uid===input.dataset.image);if(!file||!record)return;
   if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>8*1024*1024){toast("请选择不超过 8MB 的 PNG/JPEG/WebP/GIF 图片");return}
   try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file)});if(!canEditWorkspace()||historyMode||!rows.includes(record))return;const kind=input.dataset.kind==="modelImage"?"modelImage":"main",field=kind==="main"?H[6]:H[7];record[kind]=data;record.raw[field]=data;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),field])];record.hash="";invalidateRaw(record);markDirty(record);save();render();toast("图片已更新并加入自动保存")}catch(error){toast("图片读取失败："+(error.message||"请重试"))}
 }
-function bindTable(){document.querySelectorAll("[data-image]").forEach(input=>input.onchange=()=>uploadRowImage(input));document.querySelectorAll("[data-edit=preDate]").forEach(input=>input.ondblclick=()=>{if(historyMode||!canEditWorkspace())return;const now=new Date();input.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");input.dispatchEvent(new Event("change",{bubbles:true}))});document.querySelectorAll("[data-child-page]").forEach(button=>button.onclick=()=>{render.childOffsets.set(button.dataset.childPage,Number(button.dataset.offset));render()});document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onclick=e=>{e.stopPropagation();showImageZoom(x)};x.onpointerleave=scheduleImageZoomClose});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;if(k==="raw"){r.raw[field]=x.value;invalidateRaw(r);if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
+function bindTable(){document.querySelectorAll("[data-retranslate-field]").forEach(button=>button.onclick=()=>retranslateOneField(button.dataset.id,Number(button.dataset.retranslateField)));document.querySelectorAll("[data-image]").forEach(input=>input.onchange=()=>uploadRowImage(input));document.querySelectorAll("[data-edit=preDate]").forEach(input=>input.ondblclick=()=>{if(historyMode||!canEditWorkspace())return;const now=new Date();input.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");input.dispatchEvent(new Event("change",{bubbles:true}))});document.querySelectorAll("[data-child-page]").forEach(button=>button.onclick=()=>{render.childOffsets.set(button.dataset.childPage,Number(button.dataset.offset));render()});document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onclick=e=>{e.stopPropagation();showImageZoom(x)};x.onpointerleave=scheduleImageZoomClose});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;if(k==="raw"){r.raw[field]=x.value;invalidateRaw(r);if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
 function filterPopup(h,anchor){
   if(key(h)==="status"){statusFilterPopup(anchor);return}
   document.querySelector(".filterpop")?.remove();
@@ -1665,7 +2093,7 @@ function similarProduct(a,b){let t=Math.max(1,Math.min(100,Number(threshold)||90
 function escapeRe(s){return s.replace(/[.*+?^$()|[\]\\]/g,"\\$&")}
 const referenceTranslationCache=new Map();
 // translation-state-v3:start
-const TRANSLATION_VERSION='google-v4-20261116';
+const TRANSLATION_VERSION='google-v5-20261117';
 const translationCache = new Map();
 let translationStatusTimer=0, visibleTranslationTimer=0, translationLastError='', translationBackgroundRun=0;
 let translationDataset=null, translationRecordSet=new Set(), translationBackgroundDataset=null;
@@ -1677,7 +2105,7 @@ let translationPersistTimer=0;
 const translationCacheReady=(async()=>{
   try {
     translationCacheDb=await new Promise((resolve,reject)=>{
-      const request=indexedDB.open('buyer-title-translations-google-v4',1);
+      const request=indexedDB.open('buyer-title-translations-google-v5',1);
       request.onupgradeneeded=()=>request.result.createObjectStore('translations',{keyPath:'source'});
       request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
     });
@@ -1686,8 +2114,8 @@ const translationCacheReady=(async()=>{
       request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
     });
     for(let i=0;i<saved.length;i++) {
-      const {source,chinese,engineVersion}=saved[i];
-      if(engineVersion===TRANSLATION_VERSION&&BuyerTranslation.usable(source,chinese)) translationCache.set(source,chinese);
+      const {source,chinese,engineVersion,provider}=saved[i];
+      if(engineVersion===TRANSLATION_VERSION&&BuyerTranslation.usable(source,chinese)){translationCache.set(source,chinese);translationSourceProviders.set(source,provider||"google-online")}
       if(i&&i%500===0)await new Promise(resolve=>setTimeout(resolve,0));
     }
   } catch(error) {console.warn('翻译缓存暂不可用，商品译文仍随工作台保存',error)}
@@ -1705,7 +2133,7 @@ async function flushTranslationCache() {
     await new Promise((resolve,reject)=>{
       const transaction=translationCacheDb.transaction('translations','readwrite');
       const store=transaction.objectStore('translations');
-      for(const [source,chinese] of pending)store.put({source,chinese,engineVersion:TRANSLATION_VERSION,provider:'google',updatedAt:Date.now()});
+      for(const [source,chinese] of pending)store.put({source,chinese,engineVersion:TRANSLATION_VERSION,provider:translationSourceProviders.get(source)||'identity',updatedAt:Date.now()});
       transaction.oncomplete=resolve;transaction.onerror=()=>reject(transaction.error);transaction.onabort=()=>reject(transaction.error);
     });
   } catch(error) {for(const [source,chinese] of pending)if(!translationCacheDirty.has(source))translationCacheDirty.set(source,chinese)}
@@ -1725,7 +2153,7 @@ function extractStyle(text){let a=[];for(let [re,label] of [[/\bblack\b|preto|ne
 function extractQty(text){let m=text.match(/\b(\d+)\s*(?:pcs?|pieces?|packs?|sets?|count|ct|unidades?|unids?|piezas?|pçs?|cai|chiec|ชิ้น|ชุด)\b/i)||text.match(/\b(?:pack|set)\s*(?:of\s*)?(\d+)\b/i)||text.match(/(?:^|\s)(\d+)\s*(?:个|件|只|支|套)(?:\s|$)/);return m?m[1]:""}
 function categoryKey(value) { return String(value == null ? "" : value).trim().replace(/\s+/g," ").replace(/\s*&\s*/g,"&").toLowerCase(); }
 const CATEGORY_ZH_NAMES={"Audio":"影音娱乐","Amplifiers & Mixers":"扩音器 & 混音器","Audio & Video Cables & Converters":"视听器材&转换器","Home Audio & Speakers":"家用音响","Media Players":"多媒体播放器","Microphones":"麦克风","Others":"其他","AV Receivers":"AV接收机","CD, DVD, & Blu-ray Players":"CD、DVD & 蓝光播放机","CD, DVD & Blu-ray Players":"CD、DVD & 蓝光播放机","Home Theater Systems":"家庭影院系统","MP3 & MP4 Players":"MP3 & MP4 播放机","Radio & Cassette Players":"收音机 & 卡带收音机","Speakers":"家用音响","Voice Recorders":"录音机"};
-const categoryTranslationCache=new Map(Object.entries(CATEGORY_ZH_NAMES).map(([a,b])=>[categoryKey(a),b]));try{const savedCategoryTranslations=JSON.parse(localStorage.getItem("pool-category-translation-google-v4")||"{}");for(const [k,v] of Object.entries(savedCategoryTranslations))if(v)categoryTranslationCache.set(k,v)}catch(e){}
+const categoryTranslationCache=new Map(Object.entries(CATEGORY_ZH_NAMES).map(([a,b])=>[categoryKey(a),b]));try{const savedCategoryTranslations=JSON.parse(localStorage.getItem("pool-category-translation-google-v5")||"{}");for(const [k,v] of Object.entries(savedCategoryTranslations))if(v)categoryTranslationCache.set(k,v)}catch(e){}
 function categoryValues(r) {
   return ["level1_global_be_category","level2_global_be_category","level3_global_be_category"].map(alias => String(getRaw(r,[alias]) || "").trim()).filter(Boolean);
 }
@@ -1766,12 +2194,17 @@ function deriveChineseField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFl
   const automatic=r[autoFlag]===true||!current||BuyerTranslation.normalize(current)===source||!BuyerTranslation.usable(source,current);
   if(!automatic){const changed=r[autoFlag]!==false;r[autoFlag]=false;refreshTranslationReadiness(r);if(changed)persistTranslationRow(r);return}
   r[autoFlag]=true;
-  const sourceMatches=r[sourceFlag]===source,currentVersion=r[versionField]===TRANSLATION_VERSION;
-  const valid=currentVersion&&sourceMatches&&BuyerTranslation.usable(source,current)?BuyerTranslation.refine(source,current):translateTitle(source);
-  const warning=BuyerTranslation.sourceIssue(source);
-  const changed=r.raw[H[targetIndex]]!==(valid||'')||r[doneFlag]!==!!valid||r[sourceFlag]!== (valid?source:'')||r[versionField]!== (valid?TRANSLATION_VERSION:'')||r[warningField]!==warning;
-  r.raw[H[targetIndex]]=valid||'';r[doneFlag]=!!valid;r[sourceFlag]=valid?source:'';r[versionField]=valid?TRANSLATION_VERSION:'';r[warningField]=warning;invalidateRaw(r);
-  if(changed)persistTranslationRow(r);
+  const sourceMatches=!r[sourceFlag]||r[sourceFlag]===source,currentVersion=r[versionField]===TRANSLATION_VERSION;
+  const cached=translateTitle(source),currentUsable=sourceMatches&&BuyerTranslation.usable(source,current);
+  const fresh=(currentVersion&&currentUsable?current:'')||cached;
+  // Keep an already saved translation visible until a new complete sentence succeeds.
+  const display=fresh||(currentUsable?current:'');
+  const warnings=BuyerTranslation.reviewWarnings?BuyerTranslation.reviewWarnings(source,display):[BuyerTranslation.sourceIssue(source)].filter(Boolean);
+  const warning=warnings.join('；'),done=!!fresh;
+  const changed=r.raw[H[targetIndex]]!==display||r[doneFlag]!==done||r[warningField]!==warning||(fresh&&r[versionField]!==TRANSLATION_VERSION);
+  r.raw[H[targetIndex]]=display;r[doneFlag]=done;r[warningField]=warning;
+  if(fresh){r[sourceFlag]=source;r[versionField]=TRANSLATION_VERSION}
+  invalidateRaw(r);if(changed)persistTranslationRow(r);
 }
 
 function rowChineseReady(r){
@@ -1808,23 +2241,28 @@ function updateTranslationStatus(){
   const el=$('translationState');if(!el)return;
   syncTranslationDataset();
   const queued=translationQueue.jobs.size;
-  el.textContent='Google 中文已生成 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+
+  el.textContent=(chromeTranslationMode?'Chrome 本地中文已生成 ':'中文已生成 ')+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+
     (syncTranslationDataset.pending?' · 后台统计中':'')+
     (historyMode?' · 历史版本只读':translationUserPaused?' · 已暂停':translationQueue.cooldown>Date.now()?' · Google 服务限流，等待重试':queued?' · 正在翻译，待处理 '+queued+' 条文本':translationLastError&&translationReadyCount<rows.length?' · '+translationLastError:'');
   const review=rows.filter(r=>r.translationItemWarning||r.translationModelWarning).length;
   if(review)el.textContent+=' · 原文需核对 '+review.toLocaleString()+' 款';
   const pause=$('pauseTranslation');if(pause)pause.textContent=translationUserPaused?'继续翻译':'暂停翻译';
 }
+let chromeTranslationMode=false;let chromeTranslationLanguages=new Set(),chromeTranslationBridges=new Set();
+const chromeTranslationProvider=typeof BuyerChromeTranslation!=='undefined'?BuyerChromeTranslation.create():null;
+const translationSourceProviders=new Map();
 const googleTranslationProvider=BuyerGoogleTranslation.create({fetchImpl:fetch,validate:BuyerTranslation.usable});
 async function requestGoogleChinese(text,language='auto',context={}){return googleTranslationProvider.translate(text,language,context)}
 async function translateQueuedBatch(texts,language,contexts=[]){
   if(texts.length!==1)throw Object.assign(new Error('每个商品须独立整句翻译'),{split:true});
-  return [await requestGoogleChinese(texts[0],language,contexts[0]||{})];
+  const local=chromeTranslationMode&&chromeTranslationLanguages.has(language),bridge=local&&chromeTranslationBridges.has(language);
+  let result;if(bridge){const english=await chromeTranslationProvider.translate(texts[0],language,{targetLanguage:'en'});result=await chromeTranslationProvider.translate(english,'en')}else result=local?await chromeTranslationProvider.translate(texts[0],language):await requestGoogleChinese(texts[0],language,contexts[0]||{});
+  translationSourceProviders.set(texts[0],bridge?'chrome-local-via-en':local?'chrome-local':'google-online');return [result];
 }
 
 const translationQueue=new BuyerTranslation.Queue({
   cache:translationCache,concurrency:3,batchSize:1,maxChars:2400,
-  simple:text=>SIMPLE_CHINESE[text.toLowerCase()]||'',requestBatch:translateQueuedBatch,
+  simple:()=>'',requestBatch:translateQueuedBatch,
   onCache:(source,chinese)=>{translationCacheDirty.set(source,chinese);saveTranslationCache()},
   onActivity:scheduleTranslationStatus,onError:error=>{translationLastError=error?.rateLimited?'Google 服务限流，译文待补齐；稍后点击补齐全部中文重试':error?.timeout?'Google 翻译连接超时，稍后重试':error?.permanent?'部分原文或译文需核对，可修正原文后重试':'Google 翻译暂不可用，原文和已保存译文保留；稍后重试';if(typeof reportQa==='function')reportQa('translation-error',{rateLimited:!!error?.rateLimited,timeout:!!error?.timeout,quality:!!error?.permanent});scheduleTranslationStatus()}
 });
@@ -1837,6 +2275,7 @@ function refreshTranslationEditors(){
 function patchTranslationEditor(r,targetIndex,chinese){
   const editor=translationEditors.get(r.uid+'\u0000'+H[targetIndex]);
   if(editor?.isConnected&&document.activeElement!==editor)editor.value=chinese||'';
+  document.getElementById('productCard')?.refreshChinese?.(r);
 }
 async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag,priority){
   if(historyMode||translationDataset!==rows||!translationRecordSet.has(r))return;
@@ -1852,7 +2291,7 @@ async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,
   const chinese=await translateCn(source,{language:translationLanguage(source,translationRegionHint(r)),priority,context:{kind:targetIndex===10?'item':'model',brand:String(getRaw(r,['mall_brand_name'])||extractBrand(translationSource(r,9)+' '+translationSource(r,11))||'')}});
   if(!chinese||historyMode||rows!==dataset||!translationRecordSet.has(r)||!r[autoFlag]||manualChinese(r,targetIndex)||translationSource(r,sourceIndex)!==source)return;
   if(r.raw[H[targetIndex]]!==chinese||!r[doneFlag]||r[sourceFlag]!==source){
-    r.raw[H[targetIndex]]=chinese;r[doneFlag]=true;r[sourceFlag]=source;r[translationVersionField(targetIndex)]=TRANSLATION_VERSION;invalidateRaw(r);markDirty(r);save();
+    r.raw[H[targetIndex]]=chinese;r[doneFlag]=true;r[sourceFlag]=source;r[translationVersionField(targetIndex)]=TRANSLATION_VERSION;r[targetIndex===10?'translationItemProvider':'translationModelProvider']=translationSourceProviders.get(source)||'identity';r[translationWarningField(targetIndex)]=(BuyerTranslation.reviewWarnings?.(source,chinese)||[]).join('；');invalidateRaw(r);markDirty(r);save();
   }
   patchTranslationEditor(r,targetIndex,chinese);
   refreshTranslationReadiness(r);scheduleTranslationStatus();
@@ -1899,6 +2338,53 @@ function translateAllChinese(){
   translationLastError='';translationUserPaused=false;translationQueue.failedUntil.clear();translationQueue.setPaused(false);
   translationBackgroundDataset=null;retryVisibleTranslation();
 }
+async function retranslateOneField(uid,sourceIndex){
+  if(historyMode||!canEditWorkspace())return;const r=rows.find(r=>r.uid===uid);if(!r)return;
+  const targetIndex=sourceIndex===9?10:12,source=translationSource(r,sourceIndex);if(!source){toast('原文为空，请填写中文或修正原文');return}
+  translationCache.delete(source);translationQueue.failedUntil.clear();r.userEditedFields=(r.userEditedFields||[]).filter(field=>key(field)!==key(H[targetIndex]));
+  r[sourceIndex===9?'autoItemChinese':'autoModelChinese']=true;r[sourceIndex===9?'localTranslatedItem':'localTranslatedModel']=false;r[translationVersionField(targetIndex)]='';markDirty(r);save();
+  translationUserPaused=false;translationQueue.setPaused(false);const dataset=rows;render();await translateVisible([r],-1);
+  if(rows!==dataset||!dataset.includes(r))return;render();if(!rowChineseReady(r))toast(translationLastError||'中文未生成，已有内容保留，可打开 Google 核对或补全中文');
+}
+async function retranslateAutomaticChinese(){
+  if(historyMode||!canEditWorkspace()||retranslateAutomaticChinese.running)return;
+  retranslateAutomaticChinese.running=true;const dataset=rows;let count=0;translationQueue.cancelQueued();translationBackgroundRun++;
+  try{
+    for(let i=0;i<dataset.length;i++){
+      if(rows!==dataset||historyMode||!canEditWorkspace())return;const r=dataset[i];
+      for(const [sourceIndex,targetIndex,autoFlag,doneFlag]of [[9,10,'autoItemChinese','localTranslatedItem'],[11,12,'autoModelChinese','localTranslatedModel']]){
+        if(manualChinese(r,targetIndex)||r[autoFlag]===false)continue;
+        translationCache.delete(translationSource(r,sourceIndex));r[translationVersionField(targetIndex)]='';r[doneFlag]=false;r[autoFlag]=true;markDirty(r);count++;
+      }
+      if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0));
+    }
+    save(true);translationBackgroundDataset=null;retryVisibleTranslation();toast('已重新排队 '+count+' 个自动中文字段；人工译文保留，成功前继续展示已有译文');
+  }finally{retranslateAutomaticChinese.running=false}
+}
+async function enableChromeTranslation(){
+  const button=$('enableChromeTranslation'),status=$('chromeTranslationState');if($('import').disabled){status.textContent='请等待本机数据恢复完成';return}
+  if(chromeTranslationMode){chromeTranslationMode=false;button.textContent='启用 Chrome 本地翻译';status.textContent='使用 Google 在线整句翻译';translationBackgroundDataset=null;retryVisibleTranslation();return}
+  if(!chromeTranslationProvider||typeof globalThis.Translator==='undefined'){status.textContent='当前浏览器不支持本地模型；可用支持 Translator API 的桌面 Chrome';return}
+  const languages=new Set();for(const r of rows)for(const index of [9,11]){const source=translationSource(r,index);if(source&&!BuyerTranslation.passthrough(source))languages.add(translationLanguage(source,translationRegionHint(r)))}
+  if(!languages.size)languages.add('en');button.disabled=true;
+  try{
+    // prepareLanguages calls every create() synchronously while this click has user activation.
+    const progress=p=>{status.textContent='本地模型 '+p.sourceLanguage+' → '+p.targetLanguage+' · '+Math.round((p.loaded||0)*100)+'%'};
+    const requested=[...languages],via=requested.filter(lang=>lang!=='en'&&lang!=='zh');
+    // Start all model creations in the same click stack; some Chrome versions only support pairs with English.
+    const directPromise=chromeTranslationProvider.prepareLanguages(requested,{onProgress:progress});
+    const pivotPromise=via.length?chromeTranslationProvider.prepareLanguages(via,{targetLanguage:'en',onProgress:progress}):Promise.resolve([]);
+    const englishPromise=via.length?chromeTranslationProvider.prepareLanguages(['en'],{onProgress:progress}):Promise.resolve([]);
+    const [results,pivots,english]=await Promise.all([directPromise,pivotPromise,englishPromise]);
+    const ready=results.filter(r=>r.status==='available').map(r=>r.sourceLanguage),bridges=[];
+    if(english.some(r=>r.status==='available'))for(const r of pivots)if(r.status==='available'&&!ready.includes(r.sourceLanguage)){ready.push(r.sourceLanguage);bridges.push(r.sourceLanguage)}
+    const failed=requested.filter(lang=>!ready.includes(lang));
+    if(!ready.length)throw new Error('当前设备未能准备这些语言的本地模型');
+    chromeTranslationLanguages=new Set(ready);chromeTranslationBridges=new Set(bridges);chromeTranslationMode=true;button.textContent='切回 Google 在线';status.textContent='本地就绪：'+ready.join('、')+(bridges.length?'；'+bridges.join('、')+'经英语转换':'')+(failed.length?'；不支持：'+failed.join('、'):'')+'（与Google网页结果可能不同）';
+    translationBackgroundDataset=null;retryVisibleTranslation();
+  }catch(error){status.textContent=error.message||'本地模型准备失败'}finally{button.disabled=false}
+}
+window.addEventListener('pagehide',()=>chromeTranslationProvider?.destroy());
 function toggleTranslationPause(){
   translationUserPaused=!translationUserPaused;translationQueue.setPaused(translationUserPaused);
   if(translationUserPaused){translationBackgroundRun++;translationBackgroundDataset=null;translationQueue.cancelQueued()}
@@ -1927,16 +2413,82 @@ function editTranslationSource(uid,sourceIndex){
 }
 
 // translation-integration-v3:end
+// google-document-v1:start
+async function savedGoogleDocumentTasks(){const db=await openWorkbenchDB(),tx=db.transaction(['meta'],'readonly');return (await dbRequest(tx.objectStore('meta').getAll())).filter(entry=>entry.key.startsWith('google-doc:')).sort((a,b)=>b.createdAt-a.createdAt)}
+async function saveGoogleDocumentTask(entry){const db=await openWorkbenchDB();await new Promise((resolve,reject)=>{const tx=db.transaction(['meta'],'readwrite');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);tx.objectStore('meta').put(entry)})}
+async function getGoogleDocumentTask(id){const db=await openWorkbenchDB(),tx=db.transaction(['meta'],'readonly');const entry=await dbRequest(tx.objectStore('meta').get('google-doc:'+id));if(!entry)throw new Error('本工作区没有该翻译任务，请先生成待译文件');return entry}
+function googleDocumentUrl(language){const url=new URL('https://translate.google.com/');url.search=new URLSearchParams({sl:language||'auto',tl:'zh-CN',op:'docs'}).toString();return url.href}
+function googleDocumentStatus(text){const el=$('googleDocumentStatus');if(el)el.textContent=text}
+async function openGoogleDocumentTools(){
+  if(!canEditWorkspace()||historyMode)return;closeProductCard();
+  $('overlay').innerHTML='<div class="modalbg"><section class="modal" style="width:min(760px,96vw);max-height:90vh;overflow:auto"><h3>Google 官方整表翻译</h3><p>1. 生成并下载待译文件。2. 打开对应语种的 Google 文档页，上传该文件，翻译后下载译文。3. 回到此处，导入该任务的译文，自动匹配商品。</p><p class="muted">文件只含随机任务键和标题、型号、类目原文；不含 Model ID、价格和买手备注。原文按语种分文件；单文件须小于 10MB。人工中文优先保留，任务映射只保存在当前工作区。此流程需要上传/下载，并非后台自动调用。</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="createGoogleDocumentTasks">为当前整表生成待译文件</button><button class="btn" id="refreshGoogleDocumentTasks">刷新任务</button><button class="btn" id="closeGoogleDocumentTools">关闭</button></div><p role="status" id="googleDocumentStatus"></p><div id="googleDocumentTaskList"></div></section></div>';
+  $('createGoogleDocumentTasks').onclick=()=>createGoogleDocumentTasks().catch(error=>googleDocumentStatus(error.message));$('refreshGoogleDocumentTasks').onclick=renderGoogleDocumentTasks;$('closeGoogleDocumentTools').onclick=()=>$('overlay').innerHTML='';await renderGoogleDocumentTasks();
+}
+async function renderGoogleDocumentTasks(){
+  const entries=await savedGoogleDocumentTasks(),list=$('googleDocumentTaskList');if(!list)return;
+  list.innerHTML=entries.slice(0,30).map(entry=>'<div style="padding:12px 0;border-top:1px solid #dce6df"><b>'+esc(entry.language)+' → 中文 · '+entry.task.entries.length+' 条原文</b><small style="display:block">'+esc(entry.task.id)+' · '+esc(new Date(entry.createdAt).toLocaleString())+'</small><div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:6px"><button class="btn" data-google-doc-download="'+esc(entry.task.id)+'">下载待译 Excel</button><a class="btn" href="'+esc(googleDocumentUrl(entry.language))+'" target="_blank" rel="noopener noreferrer">打开 Google 文档翻译 ↗</a><button class="btn primary" data-google-doc-import="'+esc(entry.task.id)+'">导入这个任务的译文</button></div></div>').join('')||'<p>还没有待译任务。生成后可在同一工作区下次继续回填。</p>';
+  list.querySelectorAll('[data-google-doc-download]').forEach(button=>button.onclick=()=>downloadGoogleDocumentTask(button.dataset.googleDocDownload).catch(error=>googleDocumentStatus(error.message)));
+  list.querySelectorAll('[data-google-doc-import]').forEach(button=>button.onclick=()=>{const input=$('googleDocumentFile');input.dataset.taskId=button.dataset.googleDocImport;input.click()});
+}
+async function createGoogleDocumentTasks(){
+  if(!canEditWorkspace()||historyMode||createGoogleDocumentTasks.running)return;const dataset=rows;if(!dataset.length){googleDocumentStatus('请先导入商品数据');return}
+  createGoogleDocumentTasks.running=true;const button=$('createGoogleDocumentTasks');if(button)button.disabled=true;
+  try{
+    const groups=new Map();function add(source,language,reference){if(!source||BuyerTranslation.passthrough(source))return;let map=groups.get(language);if(!map)groups.set(language,map=new Map());let entry=map.get(source);if(!entry)map.set(source,entry={source,language,references:[]});if(reference.field==='category'){if(entry.hasCategory)return;entry.hasCategory=true}entry.references.push(reference)}
+    for(let i=0;i<dataset.length;i++){
+      if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，请重新生成任务');const record=dataset[i];
+      for(const [sourceIndex,targetIndex,autoFlag] of [[9,10,'autoItemChinese'],[11,12,'autoModelChinese']]){if(manualChinese(record,targetIndex)||record[autoFlag]===false)continue;const source=translationSource(record,sourceIndex);add(source,translationLanguage(source,translationRegionHint(record)),{modelId:idFor(record),field:H[targetIndex],source})}
+      for(const source of categoryValues(record))if(!hasChinese(source))add(source,translationLanguage(source,'en'),{modelId:'CATEGORY',field:'category',source});
+      if(i&&i%100===0){googleDocumentStatus('整理待译文字 '+i+' / '+dataset.length);await new Promise(resolve=>setTimeout(resolve,0))}
+    }
+    let made=0,total=0;
+    for(const [language,map]of groups){const entries=[...map.values()];for(let start=0;start<entries.length;start+=4000){const {task}=await WorkbenchTranslationTasks.createTask(entries.slice(start,start+4000));if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，请重新生成任务');await saveGoogleDocumentTask({key:'google-doc:'+task.id,task,language,createdAt:Date.now(),sourceFileName});made++;total+=task.entries.length;googleDocumentStatus('已创建 '+made+' 个待译文件 · '+total+' 条去重原文')}}
+    await renderGoogleDocumentTasks();googleDocumentStatus(made?'任务已生成。请逐个下载待译文件，使用旁边的 Google 文档入口翻译后导回。':'当前没有自动待译字段；人工译文与纯型号已保留。');
+  }finally{createGoogleDocumentTasks.running=false;if(button?.isConnected)button.disabled=false}
+}
+async function downloadGoogleDocumentTask(id){const entry=await getGoogleDocumentTask(id),table={headers:['任务键','待翻译原文'],data:entry.task.entries.map(item=>[item.key,item.source])};googleDocumentStatus('正在生成待译 Excel…');const {blob}=await WorkbenchExport.exportInWorker(table,{format:'xlsx'});if(blob.size>10*1024*1024)throw new Error('该待译文件超过 Google 的 10MB 限制，请减少当前数据量再生成');download(blob,'Google待译_'+entry.language+'_'+id+'.xlsx');googleDocumentStatus('待译文件已开始下载；只有两列：随机任务键、待译原文。')}
+async function importGoogleDocumentResult(file,id){
+  if(!canEditWorkspace()||historyMode)return;const dataset=rows;googleDocumentStatus('读取 Google 译文…');
+  try{
+    const entry=await getGoogleDocumentTask(id);let matrix;
+    if(/\.(csv|txt)$/i.test(file.name)){const parsed=await WorkbenchImport.parseInWorker(file,{skipEmptyRows:false});matrix=[parsed.headers,...parsed.matrix]}
+    else{const parsed=await WorkbenchXlsx.parseInWorker(file,{vendorUrl:new URL('vendor/xlsx.full.min.js',location.href).href});matrix=parsed.sheets.flatMap(sheet=>sheet.matrix)}
+    const result=await WorkbenchTranslationTasks.decodeResult(entry.task,matrix,{validate:BuyerTranslation.usable});
+    if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，没有回填译文');
+    if(result.conflicts||result.unknown)throw new Error('任务键不一致或有重复冲突，没有回填。请确认选择了对应任务的完整 Google 译文。');
+    if(!result.entries.length)throw new Error('没有匹配到已完成中文的任务键。请下载 Google 的译文文件，保留任务键列后导入。');
+    const byId=new Map();for(const record of dataset){const key=idFor(record);if(!byId.has(key))byId.set(key,[]);byId.get(key).push(record)}let updated=0,skipped=0,processed=0,categories=0;
+    for(const translated of result.entries)for(const reference of translated.references){
+      if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，回填已停止');
+      if(reference.field==='category'){categoryTranslationCache.set(categoryKey(reference.source),translated.translation);categories++}
+      else{const targetIndex=reference.field===H[10]?10:reference.field===H[12]?12:0,sourceIndex=targetIndex===10?9:11;for(const record of byId.get(reference.modelId)||[]){if(!targetIndex||translationSource(record,sourceIndex)!==reference.source||manualChinese(record,targetIndex)||record[targetIndex===10?'autoItemChinese':'autoModelChinese']===false){skipped++;continue}record.raw[H[targetIndex]]=translated.translation;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])];record[targetIndex===10?'autoItemChinese':'autoModelChinese']=false;record[targetIndex===10?'localTranslatedItem':'localTranslatedModel']=true;record[targetIndex===10?'translationItemSource':'translationModelSource']=reference.source;record[translationVersionField(targetIndex)]=TRANSLATION_VERSION;record[targetIndex===10?'translationItemProvider':'translationModelProvider']='google-document';record[translationWarningField(targetIndex)]=(BuyerTranslation.reviewWarnings?.(reference.source,translated.translation)||[]).join('；');invalidateRaw(record);markDirty(record);updated++}}
+      if(++processed%100===0){googleDocumentStatus('回填中文 '+processed+' 项');await new Promise(resolve=>setTimeout(resolve,0))}
+    }
+    if(rows!==dataset||historyMode||!canEditWorkspace())return;try{localStorage.setItem('pool-category-translation-google-v5',JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(error){}save(true);render();googleDocumentStatus('回填完成：'+updated+' 个中文字段、'+categories+' 个类目；保留人工/已变更原文 '+skipped+' 项，待补译 '+result.missing+' 条。');
+  }catch(error){console.warn(error);googleDocumentStatus(error.message||'回填失败，原有内容已保留')}
+}
+// google-document-v1:end
+
+function shareChineseFieldReady(r,sourceIndex,targetIndex){
+  const result=String(value(r,H[targetIndex])||'').trim(),source=translationSource(r,sourceIndex);
+  if(!result)return false;
+  if(manualChinese(r,targetIndex))return hasChinese(result)||BuyerTranslation.passthrough(result);
+  const savedSource=r[sourceIndex===9?'translationItemSource':'translationModelSource'];
+  if(savedSource&&savedSource!==source)return false;
+  return source?BuyerTranslation.usable(source,result):hasChinese(result)||BuyerTranslation.identity(result);
+}
 async function ensureProductTranslations(records){
   if(!records||!records.length)return;
-  syncTranslationDataset();
-  if(records.every(rowChineseReady))return;
-  if(translationUserPaused)throw new Error('翻译已暂停，请继续翻译后生成分享链接');
-  await translateVisible(records,-1);
-  const missing=records.filter(r=>!rowChineseReady(r));
-  if(missing.length)throw new Error('所选商品还有 '+missing.length+' 款中文未完成，请补齐译文或修正原文后分享');
+  const dataset=rows;syncTranslationDataset();
+  const ready=r=>shareChineseFieldReady(r,9,10)&&shareChineseFieldReady(r,11,12);
+  const pending=records.filter(r=>!ready(r));if(!pending.length)return;
+  if(translationUserPaused)throw new Error('翻译已暂停，请继续翻译或补全中文后分享');
+  await translateVisible(pending,-1);
+  if(rows!==dataset||records.some(r=>!dataset.includes(r)))throw new Error('工作台数据已切换，请重新选择产品分享');
+  const missing=records.filter(r=>!ready(r));
+  if(missing.length)throw new Error('还有 '+missing.length+' 款缺少完整中文标题或型号；'+(translationLastError||'请重试翻译或在卡片中补全中文后分享'));
 }
-async function ensureCategoryTranslations(records){const names=Array.from(new Set((records||[]).flatMap(categoryValues)));const missing=names.filter(name=>!categoryLabel(name));if(!missing.length)return;const translated=await Promise.all(missing.map(async name=>[name,await translateCn(name,{priority:-1})]));for(const [name,value] of translated)if(value&&hasChinese(value))categoryTranslationCache.set(categoryKey(name),value);try{localStorage.setItem("pool-category-translation-google-v4",JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(e){}const unresolved=missing.filter(name=>!categoryLabel(name));if(unresolved.length)throw new Error("部分上新类目没有获得中文翻译："+unresolved.slice(0,3).join("、"))}
+async function ensureCategoryTranslations(records){const names=Array.from(new Set((records||[]).flatMap(categoryValues)));const missing=names.filter(name=>!categoryLabel(name));if(!missing.length)return;const translated=await Promise.all(missing.map(async name=>[name,await translateCn(name,{priority:-1})]));for(const [name,value] of translated)if(value&&hasChinese(value))categoryTranslationCache.set(categoryKey(name),value);try{localStorage.setItem("pool-category-translation-google-v5",JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(e){}const unresolved=missing.filter(name=>!categoryLabel(name));if(unresolved.length)throw new Error("部分上新类目没有获得中文翻译："+unresolved.slice(0,3).join("、"))}
 
 async function regroup() {
   const MAX_CANDIDATES = 128;
@@ -2292,7 +2844,7 @@ function showBlankWorkbenchLink(){
 }
 $('shareBlank').onclick=showBlankWorkbenchLink;$('cancelImport').onclick=()=>importFile.activeController?.abort();
 $("import").onclick=()=>$("file").click();$("file").onchange=()=>{let f=$("file").files[0];if(f)importFile(f);$("file").value=""};$("importTranslations").onclick=()=>$("translationFile").click();$("translationFile").onchange=()=>{let f=$("translationFile").files[0];if(f)importTranslations(f);$("translationFile").value=""};$("importInvitations").onclick=()=>$("invitationFile").click();$("invitationFile").onchange=()=>{let f=$("invitationFile").files[0];if(f)importInvitations(f);$("invitationFile").value=""};$("export").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'xlsx');return}download(exportXlsx(a),"寻品工作看板_筛选结果.xlsx");toast("Excel 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("Excel 导出失败："+(e?.message||"请重试"))}};$("exportCsv").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'csv');return}download(exportCsv(a),"寻品工作看板_筛选结果.csv");toast("CSV 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("CSV 导出失败："+(e?.message||"请重试"))}};$("search").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,140)};$("sort").onchange=()=>{clearTimeout(searchTimer);render()};$("clear").onclick=()=>{clearTimeout(searchTimer);filters={};$("search").value="";render()};$("schemaBtn").onclick=()=>drawer("schema");$("allFilters").onclick=()=>drawer("filter");$("bulkEdit").onclick=batch;$("bulkPreApply").onclick=()=>{if(!canEditWorkspace()||historyMode)return;let state=$("bulkPreValue").value,date=$("bulkPreDate").value,targets=rows.filter(x=>selected.has(x.uid));if(!targets.length){toast("请先勾选 Model ID");return}if(!state&&!date){toast("请选择 Y/N 或核价日期");return}for(let r of targets){if(state)r.preValue=state;if(date)r.preDate=date;r.preTouched=true;markDirty(r)}save();render();toast("已批量更新 "+targets.length+" 个 Model ID 的前置核价信息")};$("merge").onclick=()=>merge(true);$("splitGroup").onclick=splitSelectedFromGroups;$("unmerge").onclick=()=>merge(false);$("shareSelected").onclick=()=>{let list=sorted(rows.filter(r=>selected.has(r.uid)));if(list.length)showShareLinkDialog(list);else toast("请先勾选要分享的 Model ID")};$("unselect").onclick=()=>{selected.clear();render()};
-$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=translateAllChinese;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
+$("googleDocumentTools").onclick=()=>openGoogleDocumentTools().catch(error=>toast(error.message));$("googleDocumentFile").onchange=()=>{const input=$("googleDocumentFile"),file=input.files[0],id=input.dataset.taskId;if(file&&id)importGoogleDocumentResult(file,id);input.value=""};$("retranslateAutomatic").onclick=retranslateAutomaticChinese;$("enableChromeTranslation").onclick=enableChromeTranslation;if(typeof globalThis.Translator==="undefined"){$("enableChromeTranslation").disabled=true;$("chromeTranslationState").textContent="本浏览器不支持本地模型"}$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=translateAllChinese;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
 let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layoutResizeTimer);layoutResizeTimer=setTimeout(()=>render(),180)});async function start(){
   $('import').disabled=true;
   $('workspaceInfo').textContent=workspace.workspaceLabel()+' · 数据保存在当前浏览器。请收藏当前网址，下次继续本工作区。';
@@ -2303,7 +2855,7 @@ let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layou
     $('retryWorkspace').onclick=()=>location.reload();document.querySelector('main').inert=true;
     $('export').disabled=true;$('exportCsv').disabled=true;return;
   }
-  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false}
+  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false;$("enableChromeTranslation").disabled=typeof globalThis.Translator==="undefined"}
 start().catch(e=>{console.error(e);$("import").disabled=false;$("saveState").textContent="本机数据读取失败";toast("恢复本机工作台失败："+(e?.message||"请刷新页面"))});})();</script></body></html>
 
 

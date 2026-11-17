@@ -1,11 +1,11 @@
 'use strict';
 
-// All titles and responses are fabricated; these checks never contact Google.
+// Transport is mocked throughout, including the supplied ATS regression example. No requests contact Google.
 const assert = require('node:assert/strict');
 const { test, after, mock } = require('node:test');
 const fs = require('node:fs');
 const vm = require('node:vm');
-require('../translation-engine.js');
+const { reviewWarnings } = require('../translation-engine.js');
 const provider = require('../translation-google-provider.js');
 
 mock.method(globalThis, 'fetch', () => { throw new Error('Network access is forbidden in Google provider checks'); });
@@ -84,21 +84,25 @@ test('a permissive validator still cannot accept a result without Chinese', asyn
   await assert.rejects(h.translate('Portable speaker FICT807'), qualityFailure);
 });
 
-test('a model uppercase brand prefix is never submitted for translation', async () => {
+test('model names with uppercase brands are submitted intact and keep the entire Google result', async () => {
+  const source='FABLEO pocket speaker FICT808';
   const h = setup(url => {
-    assert.equal(url.searchParams.get('q'), 'pocket speaker FICT808');
-    return response('口袋音箱 FICT808');
+    assert.equal(url.searchParams.get('q'), source);
+    return response('虚构牌口袋音箱 FICT808');
   });
-  assert.equal(await h.translate('FABLEO pocket speaker FICT808', 'en', { kind: 'model' }), 'FABLEO 口袋音箱 FICT808');
+  assert.equal(await h.translate(source, 'en', { kind: 'model' }), '虚构牌口袋音箱 FICT808');
   assert.equal(h.fetchImpl.mock.callCount(), 1);
 });
 
-test('an explicit model brand keeps its original spelling and separator', async () => {
+test('an explicit brand hint does not rewrite or rebuild a model translation', async () => {
+  const source='Fableo: pocket speaker FICT809';
+  const result='法布利奥：口袋音箱 FICT809';
   const h = setup(url => {
-    assert.equal(url.searchParams.get('q'), 'pocket speaker FICT809');
-    return response('口袋音箱 FICT809');
+    assert.equal(url.searchParams.get('q'), source);
+    return response(result);
   });
-  assert.equal(await h.translate('Fableo: pocket speaker FICT809', 'en', { kind: 'model', brand: 'FABLEO' }), 'Fableo: 口袋音箱 FICT809');
+  assert.equal(await h.translate(source, 'en', { kind: 'model', brand: 'FABLEO' }), result);
+  assert.equal(h.fetchImpl.mock.callCount(),1);
 });
 
 for (const prefix of ['NEW', 'KIT', 'BLACK']) {
@@ -122,19 +126,19 @@ test('an intact item result containing its brand is never split or requested aga
   assert.equal(h.fetchImpl.mock.callCount(), 1);
 });
 
-test('only a lost source brand triggers ordered fragment translation and exact restoration', async () => {
+test('a Chinese brand rendering in Google output is returned without fragment translation or replacement', async () => {
   const source = 'Wireless Fableo speaker FICT812';
-  const answers = new Map([[source, '无线虚构牌音箱 FICT812'], ['Wireless', '无线'], ['speaker FICT812', '音箱 FICT812']]);
+  const result = '无线虚构牌音箱 FICT812';
   const requested = [];
   const h = setup(url => {
     const text = url.searchParams.get('q');
     requested.push(text);
-    assert.ok(answers.has(text));
+    assert.equal(text,source);
     assert.doesNotMatch(text, /ZXQ/);
-    return response(answers.get(text));
+    return response(result);
   });
-  assert.equal(await h.translate(source, 'en', { kind: 'item', brand: 'FABLEO' }), '无线 Fableo 音箱 FICT812');
-  assert.deepEqual(requested, [source, 'Wireless', 'speaker FICT812']);
+  assert.equal(await h.translate(source, 'en', { kind: 'item', brand: 'FABLEO' }), result);
+  assert.deepEqual(requested, [source]);
 });
 
 test('an unrelated brand hint neither rewrites nor splits the item', async () => {
@@ -149,11 +153,46 @@ test('an unrelated brand hint neither rewrites nor splits the item', async () =>
 
 test('a damaged description remains a visible failure instead of fabricating its missing words', async () => {
   const h = setup(url => {
-    assert.equal(url.searchParams.get('q'), 'N?va C?r FICT814');
+    assert.equal(url.searchParams.get('q'), 'FABLEO N?va C?r FICT814');
     return response('N?va C?r FICT814');
   });
   await assert.rejects(h.translate('FABLEO N?va C?r FICT814', 'pt', { kind: 'model' }), qualityFailure);
   assert.equal(h.fetchImpl.mock.callCount(), 2);
+});
+
+test('a Chinese result containing residual question marks is accepted without a second request', async () => {
+  const source='B? g?i không dây 16 th?';
+  const result='无线呼叫器 16 张卡，th?';
+  const h=setup(url=>{
+    assert.equal(url.searchParams.get('q'),source);
+    return response(result);
+  });
+  assert.equal(await h.translate(source,'vi',{kind:'item'}),result);
+  assert.equal(h.fetchImpl.mock.callCount(),1);
+  assert.ok(reviewWarnings(source,result).length);
+});
+
+test('the requested ATS Google result is accepted unchanged and its missing quantity is a warning', async () => {
+  const source='B? chuy?n ngu?n 2 c?ng t? t? ??ng - Ats - c?u dao ?i?n t? ??ng 125A _ B?o hành 12 tháng';
+  const result='自动转换开关（ATS）–125A 电力自动转换装置–12个月保修';
+  const h=setup(url=>{
+    assert.equal(url.searchParams.get('q'),source);
+    assert.equal(url.searchParams.get('sl'),'auto');
+    return response(result);
+  });
+  assert.equal(await h.translate(source,'vi',{kind:'item'}),result);
+  assert.equal(h.fetchImpl.mock.callCount(),1);
+  assert.ok(reviewWarnings(source,result).some(warning=>warning.includes('数字：2')));
+});
+
+test('Google model punctuation and translated LCD abbreviations never blank a valid Chinese result', async () => {
+  const cases=new Map([
+    ['Ceiling fan KDK-F60MZ with LCD','带液晶显示屏的吊扇 KDK–F60MZ'],
+    ['Ceiling fan KDK-F60MZ','吊扇 KDK－F60MZ']
+  ]);
+  const h=setup(url=>response(cases.get(url.searchParams.get('q'))));
+  for(const [source,result]of cases)assert.equal(await h.translate(source,'en',{kind:'item',brand:'KDK'}),result);
+  assert.equal(h.fetchImpl.mock.callCount(),cases.size);
 });
 
 for (const seconds of ['7', '0', '1.5']) {

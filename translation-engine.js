@@ -4,10 +4,14 @@
   const chinese = value => /[\u3400-\u9fff]/.test(value);
   const codes = new Set(['USB', 'USB-C', 'AUX', 'RCA', 'HDMI', 'XLR', 'FM', 'AM', 'AC', 'DC', 'WIFI', 'WI-FI', 'BLUETOOTH']);
   function identity(value) {
-    const text=normalize(value);
-    if(!/^[A-Z0-9][A-Z0-9+().,*/#_\s-]{0,79}$/.test(text))return false;
+    const text=normalize(value).normalize('NFKC');
+    if(!text||!/^[A-Z0-9\s\p{P}\p{S}]+$/u.test(text)||!/[A-Z0-9]/.test(text))return false;
     const words=text.match(/[A-Z]+/g)||[];
-    return !words.some(word=>genericWords.has(word.toLowerCase())||['SALE','HOT','BEST','MODEL','COLOR','SIZE','SET','PIECES','ORIGINAL'].includes(word));
+    if(words.some(word=>genericWords.has(word.toLowerCase())||['SALE','HOT','BEST','MODEL','COLOR','SIZE','SET','PIECES','ORIGINAL'].includes(word)))return false;
+    const tokens=(text.match(/[A-Z0-9]+/g)||[]);
+    if(!/\d/.test(text))return tokens.length===1;
+    // A brand plus digit-bearing codes is an identity; several ordinary uppercase words are a description.
+    return tokens.filter(token=>/^[A-Z]+$/.test(token)).length<=1;
   }
   function sourceIssue(value) {
     const text=normalize(value);
@@ -16,10 +20,7 @@
     return '';
   }
   function refine(source, result) {
-    let chinese=normalize(result);
-    if(/\bcontrole\s+remoto\b/i.test(source))chinese=chinese.replace(/远程控制(?:器)?/g,'遥控器').replace(/遥控器套件/g,'遥控器套装');
-    if(/กล่องชาร์จ|charging case|charger case|kotak pengecas|hộp sạc|充电盒/i.test(source))chinese=chinese.replace(/充电器外壳/g,'充电盒');
-    return chinese;
+    return normalize(result);
   }
   function passthrough(value) {
     const text = normalize(value);
@@ -30,48 +31,36 @@
         .replace(/\b\d+(?:[.,]\d+)?\s*(?:mm|cm|ml|kg|mah|gb|tb|khz|mhz|ghz|hz|m|l|g|w|v|a)\b/gi,'');
       if(/^[\u3400-\u9fff\d\s\p{P}\p{S}]+$/u.test(remainder))return true;
     }
-    return !text || /^[\u3400-\u9fff\d\s.,，。!！?？:：;；()（）【】\-]+$/.test(text) ||
-      (/^(?=.*\d)[A-Z0-9+().,*/#\s-]{1,40}$/.test(text)&&!(text.match(/[A-Z]+/g)||[]).some(word=>genericWords.has(word.toLowerCase()))) || codes.has(text.toUpperCase());
+    return !text || /^[\u3400-\u9fff\d\s.,，。!！?？:：;；()（）【】\-]+$/.test(text) || codes.has(text.toUpperCase());
   }
-  function simple(value) {
-    const text=normalize(value),lower=text.toLowerCase();
-    const colors=[['màu trắng','白色'],['màu đen','黑色'],['สีดำ','黑色'],['สีขาว','白色'],['trắng','白色'],['đen','黑色'],['hitam','黑色'],['putih','白色'],['preto','黑色'],['branco','白色'],['black','黑色'],['white','白色'],['blue','蓝色'],['red','红色'],['green','绿色'],['silver','银色'],['gold','金色']];
-    for(const [source,chinese] of colors) {
-      if(lower===source)return chinese;
-      const needsBoundary=/[a-zÀ-ỹ]/i.test(source);
-      if(lower.startsWith(source)&&(!needsBoundary||/[\s:：-]/.test(text[source.length]||''))) {
-        const rest=text.slice(source.length).replace(/^[\s:：-]+/,'');
-        if(rest&&passthrough(rest))return chinese+' '+rest;
-      }
-      if(lower.endsWith(source)&&(!needsBoundary||/[\s:：-]/.test(text[text.length-source.length-1]||''))) {
-        const rest=text.slice(0,-source.length).replace(/[\s:：-]+$/,'');
-        if(rest&&passthrough(rest))return rest+' '+chinese;
-      }
-    }
+  function simple() {
+    // Automatic Chinese wording comes from the selected provider, including colors and specifications.
     return '';
   }
   const genericWords = new Set(('kit controle remoto com para fonte cabos cabo sem fio branco branca preto preta original modelo completo completa ' +
     'wireless earphones headphones speaker microphone charger charging case black white blue red cable remote control with without pack pieces ' +
     'bluetooth headset portable battery rechargeable television tv smart universal replacement new ' +
     'untuk dengan tanpa wayar hitam putih biru merah pembesar suara pengecas fon telinga ' +
-    'for and the of self service system call pager buzzer keyboard mouse camera television headset tablet phone electric digital sensor receiver transmitter').split(' '));
+    'for and the of self service system call pager buzzer keyboard mouse camera television headset tablet phone electric digital sensor receiver transmitter ' +
+    'silver gold purple pink yellow brown orange grey gray beige transparent clear size type version large small medium mini max pro plus lite ' +
+    'product cover adapter hub telephone display screen fan ceiling switch automatic power warranty microphone speaker original ' +
+    'roxo rosa amarelo marrom cinza dourado prateado azul verde cor tamanho novo nova ' +
+    'mau trang den xanh nau vang hong tim quat tran goi khong day the').split(' '));
   function usable(source, result) {
     source = normalize(source); result = normalize(result);
     if (!result || /\uFFFD|ZXQ\s*\d{3,}\s*QXZ/i.test(result)) return false;
-    if(identity(source))return source===result;
-    if(sourceIssue(source)&&/[A-Za-zÀ-ỹ][?？]|[?？][A-Za-zÀ-ỹ]/.test(result))return false;
-    const direct=passthrough(source);
-    if(direct&&source===result)return true;
-    if (!chinese(result) || (!direct&&source.toLowerCase() === result.toLowerCase())) return false;
-    if (/[\u0e00-\u0e7f\u0400-\u04ff\u3040-\u30ff\uac00-\ud7af]/.test(result)) return false;
-    const sourceWords = new Set(source.toLowerCase().match(/[a-zÀ-ỹ]+/g) || []);
-    const leftovers = (result.toLowerCase().match(/[a-zÀ-ỹ]+/g) || []).filter(w => genericWords.has(w) && sourceWords.has(w));
-    if (leftovers.length >= 3) return false;
-    const packed = result.toUpperCase().replace(/[\s_.\-]/g, '');
-    const names=source.match(/\b[A-Z][A-Z0-9&_.+-]{1,29}\b/g)||[];
-    if(names.some(name=>identity(name)&&/[A-Z]{2}/.test(name)&&!packed.includes(name.toUpperCase().replace(/[\s_.-]/g,''))))return false;
+    return (source===result&&passthrough(source))||chinese(result);
+  }
+  function reviewWarnings(source, result) {
+    source = normalize(source); result = normalize(result);
+    const warnings = [], issue = sourceIssue(source);
+    if(issue)warnings.push(issue);
+    if(!result)return warnings;
+    const packed = value => value.normalize('NFKC').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    const resultCode = packed(result);
     const models = source.match(/\b[A-Z]{1,8}[-]?\d+[A-Z0-9-]*\b/g) || [];
-    if (models.some(model => !/^(?:USB|BT|WIFI|HDMI)\d/.test(model) && !packed.includes(model.replace(/-/g, '')))) return false;
+    const missingModels = [...new Set(models.filter(model => !/^(?:USB|BT|WIFI|HDMI)\d/.test(model) && !resultCode.includes(packed(model))))];
+    if(missingModels.length)warnings.push('译文可能缺少型号：'+missingModels.join('、'));
     const numericValue = token => {
       if(token.includes(',')&&token.includes('.'))token=token.lastIndexOf(',')>token.lastIndexOf('.')?token.replace(/\./g,'').replace(',','.'):token.replace(/,/g,'');
       else if(/^\d{1,3}(,\d{3})+$/.test(token))token=token.replace(/,/g,'');
@@ -88,13 +77,14 @@
       for(const char of token){if(char in chineseDigits){number=chineseDigits[char];continue}const unit=units[char];if(unit<10000){section+=(number||1)*unit;number=0}else{total+=(section+number)*unit;section=0;number=0}}
       return total+section+number;
     };
-    for(const match of result.matchAll(/([零〇一二两三四五六七八九十百千万亿]+)(?:点([零〇一二两三四五六七八九]+))?(?=\s*(?:个|件|只|支|套|根|条|对|双|台|片|节|路|口|声道|毫米|厘米|米|伏|瓦|安|毫安|毫升|升|寸|英寸|赫兹|千克|克|小时|分钟|秒))/g)) {
+    for(const match of result.matchAll(/([零〇一二两三四五六七八九十百千万亿]+)(?:点([零〇一二两三四五六七八九]+))?(?=\s*(?:个|件|只|支|套|根|条|对|双|台|片|节|张|枚|卡|组|盒|包|页|款|路|口|声道|毫米|厘米|米|伏|瓦|安|毫安|毫升|升|寸|英寸|赫兹|千克|克|个月|月|小时|分钟|秒))/g)) {
       const decimal=match[2]?[...match[2]].map(char=>chineseDigits[char]).join(''):'';
       resultNumbers.add(String(Number(String(chineseNumber(match[1]))+(decimal?'.'+decimal:''))));
     }
     if(/双(?=声道|麦|喇叭|扬声器|耳|线|电缆|电池|接口|电压|屏|端|频|路)|一[对双]/.test(result))resultNumbers.add('2');
-    if ([...digits(source)].some(n => !resultNumbers.has(n))) return false;
-    return source.length < 60 || result.length >= source.length * 0.07;
+    const missingNumbers = [...digits(source)].filter(n => !resultNumbers.has(n));
+    if(missingNumbers.length)warnings.push('译文可能缺少数字：'+missingNumbers.join('、'));
+    return warnings;
   }
   function language(value, hint = '') {
     const text = normalize(value);
@@ -137,7 +127,7 @@
       if(identity(text)){if(this.cache.has(text)&&this.cache.get(text)!==text)this.remember(text,text);return Promise.resolve(text)}
       const cached = this.cached(text);
       if (cached) { this.stats.cacheHits++; return Promise.resolve(cached); }
-      const direct = [this.options.simple?.(text), simple(text), passthrough(text) ? text : ''].find(value=>value&&usable(text,value));
+      const direct = passthrough(text) ? text : '';
       if (direct) { this.remember(text, direct); return Promise.resolve(direct); }
       const lang = options.language || language(text), key = lang + '\u0000' + text;
       if ((this.failedUntil.get(key) || 0) > Date.now() && !options.retry) return Promise.resolve('');
@@ -219,7 +209,7 @@
       }
     }
   }
-  const api = {normalize, identity, sourceIssue, passthrough, simple, usable, language, refine, Queue};
+  const api = {normalize, identity, sourceIssue, reviewWarnings, passthrough, simple, usable, language, refine, Queue};
   root.BuyerTranslation = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
