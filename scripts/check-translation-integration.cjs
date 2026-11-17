@@ -62,7 +62,7 @@ async function waitFor(condition, message, timeout = 3000) {
 
 function harness(options = {}) {
   const timers = new Set(), elements = new Map();
-  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, shareSnapshots: [], parse: null, savedState: {rows:[],meta:null}, loadGate: null };
+  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, categoryGate: null, shareImageGate: null, shareSnapshots: [], shortenerCalls: [], parse: null, savedState: {rows:[],meta:null}, loadGate: null };
   const cacheGate = options.cacheGate || { promise: Promise.resolve() };
   const setTimer = (callback, delay, ...args) => {
     const timer = setTimeout(() => { timers.delete(timer); callback(...args); }, delay);
@@ -107,6 +107,10 @@ function harness(options = {}) {
     BuyerReferenceTranslation: options.referenceProvider || (options.primaryReference ? BuyerReferenceTranslation : {create:()=>({async translateBatch(){throw Object.assign(new Error('Fabricated primary fallback'),{fallback:true})}})}),
     BuyerWorkspace: { async acquireWriter(){return {owner:true,status:'owner'}} },
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
+    BuyerShareShortener: { create:()=>({ async shorten(longUrl,...args){
+      controls.shortenerCalls.push(longUrl);
+      return options.shorten?options.shorten(longUrl,...args):{url:longUrl,shortened:false,reason:'Fabricated offline full-link fallback'};
+    } }) },
     Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
@@ -115,8 +119,8 @@ function harness(options = {}) {
     indexedDB: { open(name) { controls.cacheDatabases.push(name); const request = {}; queueMicrotask(() => { request.result = db; request.onsuccess?.(); }); return request; } },
     window: { addEventListener() {} },
     fetch: options.fetch || (() => { throw new Error('Network access is forbidden in translation-integration checks'); }),
-    AbortController, URL, TextEncoder,TextDecoder,Blob,
-    location: { hostname: 'buyer.example.test', protocol: 'https:', href: 'https://buyer.example.test/index.html' },
+    AbortController, URL, TextEncoder,TextDecoder,Blob,btoa:text=>Buffer.from(text,'binary').toString('base64'),
+    location: options.location || { hostname: 'buyer.example.test', protocol: 'https:', href: 'https://buyer.example.test/index.html' },
     crypto: { randomUUID: () => 'fabricated-test-id' },
     transport
   });
@@ -134,7 +138,7 @@ function harness(options = {}) {
     block('translation-state-v3'), block('translation-integration-v3'),
     between('function shareChineseFieldReady(', 'async function ensureCategoryTranslations('),
     between('async function start(){','start().catch('),
-    between('async function buildOnlineShareLink(', 'async function copyShareText(')
+    between('function base64Url(', 'async function copyShareText(')
   ].join('\n');
   const api = vm.runInContext(`(function(){
     let rows=[], visibleRows=[], historyMode=false, dirtyRows=new Set();
@@ -150,13 +154,12 @@ function harness(options = {}) {
     function filtered(){}filtered.searchText=()=>'';
     async function loadWorkbenchState(){if(controls.loadGate)await controls.loadGate;return controls.savedState}
     async function regroup(){}
-    async function ensureCategoryTranslations(){controls.categoryCalls++}
+    async function ensureCategoryTranslations(){controls.categoryCalls++;if(controls.categoryGate)await controls.categoryGate}
     function productDetail(r){
-      const detail={model:'',itemChinese:r.raw[H[10]],modelChinese:r.raw[H[12]],category:'测试类目'};
+      const detail={id:r.uid,model:'',itemChinese:r.raw[H[10]],modelChinese:r.raw[H[12]],category:'测试类目'};
       controls.shareSnapshots.push(detail);return detail;
     }
-    async function compactShareImage(value){return value}
-    function base64Url(){return 'fabricated-share-token'}
+    async function compactShareImage(value){if(controls.shareImageGate)await controls.shareImageGate;return value}
     function render(){controls.renders++;queueVisibleTranslation()}
     async function flushSave(){
       if(historyMode)return true;
@@ -174,7 +177,7 @@ function harness(options = {}) {
       H,value,key,mergeBuyerEdits, queue:translationQueue, cache:translationCache, ready:translationCacheReady,
       deriveRecord, translateVisible, startBackgroundTranslation, queueVisibleTranslation,
       refreshTranslationEditors, updateTranslationStatus, bindTable, importFile, importTranslations,
-      ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,
+      ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,shareLinkMessage,
       retranslateAutomaticChinese, enableChromeTranslation,
       start,launchAutomaticChinese,oneClickChinese,categoryLabel,categoryPath,categoryTranslationCache,
       setAutomaticEnabled(value){automaticChineseEnabled=value},
@@ -214,6 +217,16 @@ function record(h, id, item, chinese) {
 
 function csvFile(text,name='fabricated-standard-chinese.csv'){
   const file=new Blob([text],{type:'text/csv'});file.name=name;return file;
+}
+
+function completedShareRecord(h,id){
+  const row=record(h,id,'');row.raw[h.api.H[10]]='买手人工商品中文';row.raw[h.api.H[12]]='买手人工型号中文';
+  row.userEditedFields=[h.api.H[10],h.api.H[12]];return row;
+}
+function decodeFabricatedShareUrl(url){
+  const share=new URL(url),token=new URLSearchParams(share.hash.slice(1)).get('d');
+  assert.ok(token);assert.equal(token[0],'j','this offline harness deliberately exercises uncompressed JSON');
+  return JSON.parse(Buffer.from(token.slice(1),'base64url').toString('utf8'));
 }
 
 function editor(h, r, field = h.api.H[10]) {
@@ -494,9 +507,10 @@ test('sharing waits for the selected titles before reading categories and freezi
   const url = await pending;
   assert.equal(new URL(url).pathname, '/share.html');
   assert.equal(h.controls.categoryCalls, 1);
-  assert.equal(h.controls.shareSnapshots.length, 1);
-  assert.equal(h.controls.shareSnapshots[0].itemChinese, chineseFor(selected.raw[h.api.H[9]]));
-  assert.equal(h.controls.shareSnapshots[0].modelChinese,chineseFor(selected.raw[h.api.H[11]]));
+  assert.ok(h.controls.shareSnapshots.length>0);
+  assert.ok(h.controls.shareSnapshots.every(detail=>detail.id===selected.uid&&detail.itemChinese===chineseFor(selected.raw[h.api.H[9]])&&detail.modelChinese===chineseFor(selected.raw[h.api.H[11]])));
+  const shared=decodeFabricatedShareUrl(url).products;assert.equal(shared.length,1);
+  assert.equal(shared[0].id,selected.uid);assert.equal(shared[0].itemChinese,chineseFor(selected.raw[h.api.H[9]]));assert.equal(shared[0].modelChinese,chineseFor(selected.raw[h.api.H[11]]));
   const expectedSources=new Set([selected.raw[h.api.H[9]],selected.raw[h.api.H[11]]]);
   assert.ok(transport.mock.calls.every(call => call.arguments[0].every(text => expectedSources.has(text))), 'unselected records do not delay sharing');
 });
@@ -513,6 +527,36 @@ test('sharing rejects unresolved titles and paused translation without freezing 
   await assert.rejects(h.api.buildOnlineShareLink([r]), /中文未完成|译文|中文/);
   assert.equal(h.controls.categoryCalls, 0);
   assert.equal(h.controls.shareSnapshots.length, 0);
+});
+
+test('the actual share builder submits only selected cards and reports a genuine short URL',async()=>{
+  const shortUrl='https://is.gd/FakeQa1',h=harness({shorten:async()=>({url:shortUrl,shortened:true,reason:''})});
+  const chosen=completedShareRecord(h,'selected-card'),other=completedShareRecord(h,'unselected-card');h.api.setRows([chosen,other]);
+  const result=await h.api.buildOnlineShareLink([chosen]);assert.equal(result,shortUrl);assert.equal(h.controls.shortenerCalls.length,1);
+  const longUrl=new URL(h.controls.shortenerCalls[0]);assert.equal(longUrl.origin,'https://buyer.example.test');assert.equal(longUrl.pathname,'/share.html');
+  assert.equal(longUrl.search,'');assert.deepEqual(decodeFabricatedShareUrl(longUrl).products.map(card=>card.id),[chosen.uid]);
+  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,true);
+  assert.match(h.api.shareLinkMessage(result,1),/短链/);
+});
+
+for(const reason of ['请求超时','请求过于频繁，请稍后重试'])test('shortener failure keeps the same-origin full URL and explicitly labels it as complete: '+reason,async()=>{
+  const location={hostname:'buyer.example.test',protocol:'https:',href:'https://buyer.example.test/---2/index.html?workspace=PRIVATE-WORKSPACE&new=1#local-state'};
+  const h=harness({location,shorten:async longUrl=>({url:longUrl,shortened:false,reason})}),chosen=completedShareRecord(h,'complete-fallback'),other=completedShareRecord(h,'never-shared');h.api.setRows([chosen,other]);
+  const result=await h.api.buildOnlineShareLink([chosen]);assert.equal(result,h.controls.shortenerCalls[0]);
+  const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/share.html');assert.equal(full.search,'');
+  assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
+  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,false);assert.equal(info.reason,reason);
+  assert.match(h.api.shareLinkMessage(result,1),/完整链接/);
+});
+
+for(const stage of ['category','image'])test('a dataset replacement during '+stage+' preparation prevents any shortener submission',async()=>{
+  const gate=deferred(),h=harness(),chosen=completedShareRecord(h,'old-share-'+stage);h.api.setRows([chosen]);
+  if(stage==='category')h.controls.categoryGate=gate.promise;else h.controls.shareImageGate=gate.promise;
+  const pending=h.api.buildOnlineShareLink([chosen]);
+  const rejected=assert.rejects(pending,/工作.*切换|数据.*切换|分享.*变更|重新选择/);
+  await waitFor(()=>stage==='category'?h.controls.categoryCalls===1:h.controls.shareSnapshots.length>0,stage+' preparation begins');
+  h.api.setRows([completedShareRecord(h,'new-share-'+stage)]);gate.resolve();await rejected;
+  assert.equal(h.controls.shortenerCalls.length,0,'old products never leave the workbench after the dataset changes');
 });
 
 test('a late response cannot overwrite a buyer edit', { timeout: 5000 }, async () => {

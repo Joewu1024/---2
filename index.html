@@ -2593,6 +2593,178 @@ body{min-width:0}
 });
 
 </script>
+<script data-buyer-share-shortener="v1">
+(function (root) {
+  'use strict';
+
+  const endpoint = 'https://is.gd/create.php';
+  const maximumLength = 5000;
+  const minimumCooldown = 60000;
+  const hour = 3600000;
+
+  function validShortUrl(value) {
+    return typeof value === 'string' && value === value.trim() && /^https:\/\/is\.gd\/[A-Za-z0-9_]{5,30}$/.test(value);
+  }
+
+  function create(options = {}) {
+    options = options || {};
+    const fetchImpl = options.fetchImpl === undefined ? root.fetch : options.fetchImpl;
+    const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 && options.timeoutMs <= 2147483647 ? options.timeoutMs : 10000;
+    const maxEntries = Number.isFinite(options.maxEntries) && options.maxEntries >= 0 ? Math.min(80, Math.floor(options.maxEntries)) : 80;
+    const storageKey = typeof options.storageKey === 'string' && options.storageKey ? options.storageKey : 'buyer-share-shortener-isgd-v1';
+    const clock = typeof options.now === 'function' ? options.now : Date.now;
+    const cache = new Map(), pending = new Map(), queue = [];
+    let active = 0, cooldownUntil = 0, attempts = [], storage = null, allowedOrigin = '';
+
+    function now() {
+      try { const value = clock(); if (Number.isFinite(value)) return value; } catch (error) {}
+      return Date.now();
+    }
+
+    try {
+      const input = options.allowedOrigin === undefined ? root.location && root.location.origin : options.allowedOrigin;
+      if (typeof input === 'string') {
+        const url = new URL(input);
+        if (url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash && url.pathname === '/') allowedOrigin = url.origin;
+      }
+    } catch (error) {}
+    try { storage = options.storage === undefined ? root.localStorage : options.storage; } catch (error) {}
+    if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') storage = null;
+
+    function inputReason(value) {
+      if (!allowedOrigin || typeof value !== 'string' || !value || value !== value.trim() || /[\u0000-\u001f\u007f]/.test(value)) return 'invalid_response';
+      try {
+        const url = new URL(value);
+        if (url.protocol !== 'https:' || url.origin !== allowedOrigin || url.username || url.password || !/\/share\.html$/.test(url.pathname) || !url.hash.startsWith('#d=') || url.hash.length <= 3) return 'invalid_response';
+        if (value.length > maximumLength || url.href.length > maximumLength) return 'too_long';
+      } catch (error) { return 'invalid_response'; }
+      return '';
+    }
+
+    function remember(longUrl, shortUrl) {
+      if (!maxEntries) return;
+      cache.delete(longUrl); cache.set(longUrl, shortUrl);
+      while (cache.size > maxEntries) cache.delete(cache.keys().next().value);
+    }
+
+    function persist() {
+      if (!storage) return;
+      try { storage.setItem(storageKey, JSON.stringify({ version: 1, entries: [...cache] })); }
+      catch (error) { storage = null; }
+    }
+
+    if (storage && maxEntries) {
+      try {
+        const saved = JSON.parse(storage.getItem(storageKey) || 'null');
+        if (saved && saved.version === 1 && Array.isArray(saved.entries)) {
+          for (const entry of saved.entries) {
+            if (!Array.isArray(entry) || entry.length !== 2 || inputReason(entry[0]) || !validShortUrl(entry[1])) continue;
+            remember(entry[0], entry[1]);
+          }
+        }
+      } catch (error) {}
+    }
+
+    const fallback = (url, reason) => ({ url, shortened: false, reason });
+
+    function blocked() {
+      const time = now();
+      attempts = attempts.filter(value => value > time - hour);
+      if (attempts.length >= 200) cooldownUntil = Math.max(cooldownUntil, attempts[0] + hour, time + minimumCooldown);
+      return time < cooldownUntil;
+    }
+
+    function rateLimit(response) {
+      let delay = minimumCooldown;
+      try {
+        const raw = response && response.headers && typeof response.headers.get === 'function' ? response.headers.get('Retry-After') : null;
+        if (raw != null && String(raw).trim()) {
+          const value = String(raw).trim();
+          const parsed = /^\d+(?:\.\d+)?$/.test(value) ? Number(value) * 1000 : Date.parse(value) - now();
+          if (Number.isFinite(parsed)) delay = Math.max(delay, parsed);
+        }
+      } catch (error) {}
+      cooldownUntil = Math.max(cooldownUntil, now() + delay);
+    }
+
+    async function request(longUrl) {
+      if (typeof fetchImpl !== 'function') return fallback(longUrl, 'service_unavailable');
+      const controller = new AbortController();
+      let timer, timedOut = false;
+      const deadline = new Promise(resolve => {
+        timer = setTimeout(() => {
+          timedOut = true;
+          resolve(fallback(longUrl, 'timeout'));
+          controller.abort();
+        }, timeoutMs);
+      });
+      const operation = async () => {
+        try {
+          const body = new URLSearchParams();
+          body.set('format', 'json'); body.set('url', longUrl);
+          const response = await fetchImpl(endpoint, { method: 'POST', body, credentials: 'omit', redirect: 'error', signal: controller.signal });
+          if (response && response.status === 429) {
+            rateLimit(response); return fallback(longUrl, 'rate_limited');
+          }
+          let data;
+          try { data = await response.json(); }
+          catch (error) { return fallback(longUrl, timedOut ? 'timeout' : response && response.status >= 500 ? 'service_unavailable' : 'invalid_response'); }
+          if (data && (data.errorcode === 3 || data.errorcode === '3')) {
+            rateLimit(response); return fallback(longUrl, 'rate_limited');
+          }
+          if (data && (data.errorcode === 4 || data.errorcode === '4')) return fallback(longUrl, 'service_unavailable');
+          if (data && data.errorcode !== undefined) return fallback(longUrl, 'invalid_response');
+          if (!response || (response.status !== 200 && !(response.status == null && response.ok === true))) return fallback(longUrl, 'service_unavailable');
+          if (!data || typeof data !== 'object' || Array.isArray(data) || data.errorcode !== undefined || !validShortUrl(data.shorturl)) return fallback(longUrl, 'invalid_response');
+          if (timedOut) return fallback(longUrl, 'timeout');
+          remember(longUrl, data.shorturl); persist();
+          return { url: data.shorturl, shortened: true };
+        } catch (error) { return fallback(longUrl, timedOut ? 'timeout' : 'network'); }
+      };
+      try { return await Promise.race([operation(), deadline]); }
+      finally { clearTimeout(timer); }
+    }
+
+    function finish(job, result) {
+      pending.delete(job.url); job.resolve(result);
+    }
+
+    function pump() {
+      while (active < 5 && queue.length) {
+        const job = queue.shift();
+        if (blocked()) { finish(job, fallback(job.url, 'rate_limited')); continue; }
+        active++; attempts.push(now());
+        request(job.url).then(result => finish(job, result), () => finish(job, fallback(job.url, 'network'))).finally(() => { active--; pump(); });
+      }
+    }
+
+    function shorten(longUrl) {
+      let value;
+      try { value = typeof longUrl === 'string' ? longUrl : String(longUrl == null ? '' : longUrl); }
+      catch (error) { return Promise.resolve(fallback('', 'invalid_response')); }
+      const reason = inputReason(value);
+      if (reason) return Promise.resolve(fallback(value, reason));
+      if (cache.has(value)) {
+        const result = cache.get(value); remember(value, result);
+        return Promise.resolve({ url: result, shortened: true });
+      }
+      if (pending.has(value)) return pending.get(value);
+      if (blocked()) return Promise.resolve(fallback(value, 'rate_limited'));
+      let resolve;
+      const promise = new Promise(done => { resolve = done; });
+      pending.set(value, promise); queue.push({ url: value, resolve }); pump();
+      return promise;
+    }
+
+    return { shorten };
+  }
+
+  const api = { create };
+  root.BuyerShareShortener = api;
+  if (typeof module !== 'undefined' && module.exports) module.exports = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+
+</script>
 <script>
 (function(){
 const qaEnabled=new URLSearchParams(location.search).get("qa")==="1";function reportQa(event,detail){if(qaEnabled)console.info("[BuyerQA] "+JSON.stringify({event,...detail}))}
@@ -2789,29 +2961,39 @@ function base64Url(bytes) {
   for (let i = 0; i < bytes.length; i += 30000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 30000));
   return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
 }
-async function buildOnlineShareLink(records) {
-  if (!records || !records.length) throw new Error("请至少选择一个 Model ID");
-  const host = location.hostname.toLowerCase();
-  const privateIpv4 = /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
-  if (location.protocol !== "https:" || host === "localhost" || host.endsWith(".localhost") || host === "127.0.0.1" || host === "::1" || privateIpv4) {
-    throw new Error("当前工作台不是公开 HTTPS 网站，无法生成跨设备可访问的在线链接。请先将工作台部署到公开 HTTPS 站点，再生成分享链接。");
+async function buildOnlineShareLink(records,options={}) {
+  if (!records || !records.length) throw new Error('请至少选择一个 Model ID');
+  const dataset=rows,list=Array.from(records),members=new Set(dataset);
+  const assertCurrent=()=>{if(rows!==dataset||list.some(record=>!members.has(record))||(options.isCurrent&&!options.isCurrent()))throw new Error('分享内容或工作区已变更，请重新生成')};
+  assertCurrent();
+  const host=location.hostname.toLowerCase(),privateIpv4=/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
+  if(location.protocol!=='https:'||host==='localhost'||host.endsWith('.localhost')||host==='127.0.0.1'||host==='::1'||privateIpv4)throw new Error('请在已发布的公开 HTTPS 工作台生成分享链接');
+  await ensureProductTranslations(list);assertCurrent();
+  await ensureCategoryTranslations(list);assertCurrent();
+  const signature=JSON.stringify(list.map(productDetail)),products=list.map(productDetail);
+  const assertSnapshot=()=>{assertCurrent();if(JSON.stringify(list.map(productDetail))!==signature)throw new Error('分享内容已变更，请重新生成')};
+  for(const product of products){product.model=await compactShareImage(product.model);assertSnapshot()}
+  const bytes=new TextEncoder().encode(JSON.stringify({v:1,products}));let token;
+  if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertSnapshot();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
+  if(token.length>1800000)throw new Error('图片数据过大，请减少分享产品数量后重试');
+  const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;assertSnapshot();
+  const result=await getShareShortener().shorten(full.href);assertSnapshot();
+  const info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());info.set(result.url,result);while(info.size>100)info.delete(info.keys().next().value);
+  return result.url;
+}
+function getShareShortener(){
+  if(!getShareShortener.client){
+    const origin=new URL(location.href).origin,key=typeof workspace!=='undefined'?workspace.storageKey('pool-share-short-v1'):'pool-share-short-v1';
+    getShareShortener.client=typeof BuyerShareShortener!=='undefined'?BuyerShareShortener.create({fetchImpl:fetch,storage:localStorage,storageKey:key,allowedOrigin:origin}):{shorten:async url=>({url,shortened:false,reason:'service_unavailable'})};
   }
-  await ensureProductTranslations(records);
-  await ensureCategoryTranslations(records);
-  const products = [];
-  for (const r of records) {
-    const d = productDetail(r);
-    d.model = await compactShareImage(d.model);
-    products.push(d);
-  }
-  const bytes = new TextEncoder().encode(JSON.stringify({v:1,products:products}));
-  let token;
-  if ("CompressionStream" in window) {
-    const zipped = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
-    token = "z" + base64Url(zipped);
-  } else token = "j" + base64Url(bytes);
-  if (token.length > 1800000) throw new Error("图片数据过大，在线链接超过浏览器可用长度；请减少分享产品数量或改用外链图片");
-  const shareUrl=new URL("share.html",location.href);shareUrl.search="";shareUrl.hash="d="+token;return shareUrl.href;
+  return getShareShortener.client;
+}
+function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
+function shareLinkMessage(url,count=1){
+  const info=buildOnlineShareLink.info?.get(url);
+  if(info?.shortened)return '已生成 '+count+' 个产品的短链接';
+  if(info&&!info.shortened){const reasons={too_long:'图片或产品信息较多',rate_limited:'短链接服务暂时繁忙',timeout:'短链接连接超时',network:'短链接暂时连接失败',invalid_response:'短链接服务暂不可用',service_unavailable:'短链接服务暂不可用'};return (reasons[info.reason]||'短链接暂未生成')+'，当前为完整链接，仍可复制或打开。'}
+  return '已生成 '+count+' 个产品的分享链接';
 }
 async function copyShareText(text) {
   try { await navigator.clipboard.writeText(text); return true; }
@@ -2823,26 +3005,19 @@ async function copyShareText(text) {
   }
 }
 async function showShareLinkDialog(records) {
-  const dialog = $("shareLinkDialog");
-  dialog.hidden = false;
-  dialog.innerHTML = "<section class=\"modal share-link-modal\"><div class=\"share-link-head\"><h3>在线产品分享链接</h3><button type=\"button\" class=\"btn\" data-share-close aria-label=\"关闭\">×</button></div><p class=\"muted\" data-share-status>正在整理产品信息和中文类目…</p><div class=\"share-link-controls\" hidden><input readonly aria-label=\"在线产品链接\"><button class=\"btn primary\" data-copy-share>复制链接</button><button class=\"btn\" data-open-share>打开链接</button></div><p class=\"muted\">一个链接即可分享全部所选产品，复制后可在其他设备和浏览器中直接查看，无需登录。</p></section>";
-  const close = () => { dialog.hidden = true; };
-  dialog.querySelector("[data-share-close]").onclick = close;
-  dialog.onclick = e => { if (e.target === dialog) close(); };
-  try {
-    const link = await buildOnlineShareLink(records);
-    const status = dialog.querySelector("[data-share-status]"), controls = dialog.querySelector(".share-link-controls"), input = controls.querySelector("input");
-    status.textContent = "已生成 " + records.length + " 个产品的分享链接";
-    input.value = link; controls.hidden = false;
-    controls.querySelector("[data-copy-share]").onclick = async e => {
-      const button = e.currentTarget;
-      button.textContent = await copyShareText(link) ? "已复制" : "复制失败";
-      setTimeout(() => { button.textContent = "复制链接"; }, 1500);
-    };
-    controls.querySelector("[data-open-share]").onclick = () => window.open(link, "_blank", "noopener");
-  } catch (e) {
-    dialog.querySelector("[data-share-status]").textContent = "链接生成失败：" + (e && e.message ? e.message : "请稍后重试");
-  }
+  const dialog=$('shareLinkDialog'),dataset=rows,list=Array.from(records),request=showShareLinkDialog.serial=(showShareLinkDialog.serial||0)+1;
+  dialog.shareRequest=request;dialog.hidden=false;
+  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成短链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p class="muted">一个链接分享全部所选产品，无需登录。短链接由 is.gd 提供，打开后自动跳转至产品卡片。</p></section>';
+  const current=()=>rows===dataset&&!dialog.hidden&&dialog.shareRequest===request;
+  const close=()=>{if(dialog.shareRequest===request){dialog.hidden=true;dialog.shareRequest=null}};
+  dialog.querySelector('[data-share-close]').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
+  try{
+    const link=await buildOnlineShareLink(list,{isCurrent:current});if(!current())return;
+    const status=dialog.querySelector('[data-share-status]'),controls=dialog.querySelector('.share-link-controls');
+    status.textContent=shareLinkMessage(link,list.length);controls.querySelector('input').value=link;controls.hidden=false;
+    controls.querySelector('[data-copy-share]').onclick=async event=>{if(!current())return;const button=event.currentTarget;button.textContent=await copyShareText(link)?'已复制':'复制失败';setTimeout(()=>{if(current())button.textContent='复制链接'},1500)};
+    controls.querySelector('[data-open-share]').onclick=()=>{if(current())window.open(link,'_blank','noopener,noreferrer')};
+  }catch(error){if(current())dialog.querySelector('[data-share-status]').textContent='链接生成失败：'+(error?.message||'请稍后重试')}
 }
 function sharePreviewChineseValue(record,targetIndex) {
   const text=String(value(record,H[targetIndex])||'').trim();
@@ -2873,12 +3048,12 @@ function toggleProductCard(uid, anchor) {
   document.body.append(card);activeProductCard=uid;
   const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
   const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
-  let checking=true,generating=false,linkError='',linkSignature='';
+  let checking=true,generating=false,linkError='',linkNotice='',linkSignature='';
   const snapshot=()=>[sharePreviewChineseValue(record,10),sharePreviewChineseValue(record,12),sharePreviewCategoryValue(record)];
-  const clearLink=()=>{result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;result.querySelector('[data-copy-single]').onclick=null;linkSignature=''};
+  const clearLink=()=>{result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;result.querySelector('[data-copy-single]').onclick=null;linkSignature='';linkNotice=''};
   const update=()=>{
     if(!current())return false;
-    const values=snapshot(),ready=values.every(Boolean),signature=JSON.stringify(values);
+    const values=snapshot(),ready=values.every(Boolean),signature=shareRecordSignature(record);
     for(const [index,key] of ['10','12','category'].entries()){
       const field=card.querySelector('[data-preview-field="'+key+'"]');
       field.hidden=!values[index];
@@ -2886,7 +3061,7 @@ function toggleProductCard(uid, anchor) {
     }
     if(linkSignature&&signature!==linkSignature)clearLink()
     generate.disabled=generating||!ready;
-    const message=!ready&&!checking?'中文尚未完成，请先点击上方“一键翻译”。':linkError;
+    const message=!ready&&!checking?'中文尚未完成，请先点击上方“一键翻译”。':linkError||linkNotice;
     status.textContent=message;status.hidden=!message;
     return ready;
   };
@@ -2896,14 +3071,14 @@ function toggleProductCard(uid, anchor) {
   generate.onclick=async()=>{
     if(!current()||generating)return;
     if(!update()){checking=false;update();return}
-    const generationSignature=JSON.stringify(snapshot());generating=true;linkError='';clearLink();update();
+    const generationSignature=shareRecordSignature(record);generating=true;linkError='';clearLink();update();
     try{
-      const url=await buildOnlineShareLink([record]);
+      const url=await buildOnlineShareLink([record],{isCurrent:current});
       if(!current())return;
-      if(!update()||JSON.stringify(snapshot())!==generationSignature)throw new Error('分享内容已变更，请重新生成');
-      const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkSignature=generationSignature;
+      if(!update()||shareRecordSignature(record)!==generationSignature)throw new Error('分享内容已变更，请重新生成');
+      const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkSignature=generationSignature;linkNotice=shareLinkMessage(url,1);
       result.querySelector('[data-copy-single]').onclick=async event=>{const button=event.currentTarget;button.textContent=await copyShareText(url)?'已复制':'复制失败'};
-    }catch(error){if(current()){linkError='链接生成失败，请先确认上方“一键翻译”已完成。';clearLink()}}
+    }catch(error){if(current()){clearLink();linkError=error?.message||'分享链接生成失败，请稍后重试。'}}
     finally{if(current()){generating=false;checking=false;update()}}
   };
   update();

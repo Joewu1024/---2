@@ -16,6 +16,14 @@ assert.ok(start >= 0 && end > start, 'Missing actual preview functions');
 const source = process.env.BUYER_SHARE_PREVIEW_SOURCE
   ? fs.readFileSync(path.resolve(root, process.env.BUYER_SHARE_PREVIEW_SOURCE), 'utf8')
   : html.slice(start, end);
+const detailStart = html.indexOf('function productDetail('), detailEnd = html.indexOf('function productCardHTML(', detailStart);
+assert.ok(detailStart >= 0 && detailEnd > detailStart, 'Missing actual productDetail');
+const detailSource = html.slice(detailStart, detailEnd);
+const signatureSource = html.split(/\r?\n/).find(line => line.startsWith('function shareRecordSignature('));
+assert.ok(signatureSource, 'Missing actual full-record signature helper');
+const messageStart = html.indexOf('function shareLinkMessage('), messageEnd = html.indexOf('async function copyShareText(', messageStart);
+assert.ok(messageStart >= 0 && messageEnd > messageStart, 'Missing actual share-link status helper');
+const messageSource = html.slice(messageStart, messageEnd);
 const decode = text => text.replace(/&quot;/g, '"').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
 
 function matches(element, selector) {
@@ -78,7 +86,7 @@ const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve();
 function harness(overrides = {}) {
   const H = Array.from({ length: 26 }, (_, index) => 'field-' + index);
   const record = { uid: 'fake-row-1', raw: { [H[9]]: 'Wireless speaker', [H[11]]: 'Black' }, userEditedFields: [] };
-  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], timers: new Map(), nextTimer: 1, generatedUrls: [], copiedUrls: [], ...overrides };
+  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], target: '2.00', timers: new Map(), nextTimer: 1, generatedUrls: [], copiedUrls: [], linkMessages: [], linkInfo: new Map(), ...overrides };
   const body = new Element('body'), overlay = new Element(); overlay.id = 'overlay'; body.append(overlay);
   const anchor = new Element('button'); anchor.attributes['data-share'] = record.uid; anchor.dataset.share = record.uid; body.append(anchor);
   const document = { body, getElementById: id => body.querySelector('#' + id), createElement: tag => new Element(tag), querySelectorAll: selector => body.querySelectorAll(selector) };
@@ -93,7 +101,12 @@ function harness(overrides = {}) {
     categoryValues: () => controls.categoryNames,
     categoryLabel: () => controls.category,
     hasChinese: text => /[\u3400-\u9fff]/.test(text),
-    productDetail: row => ({ id: row.uid, model: '', itemChinese: row.raw[H[10]], modelChinese: row.raw[H[12]], category: controls.category, target: '2.00', badges: [] }),
+    idFor: row => row.modelId || row.uid,
+    getRaw: (row, aliases) => { for (const alias of aliases) if (row.raw[alias] != null && row.raw[alias] !== '') return row.raw[alias]; return ''; },
+    safeImageUrl: value => String(value || ''),
+    safeHttpUrl: value => controls.shopeeUrl || String(value || ''),
+    calc: () => controls.target,
+    marketingBadges: row => row.badges || [],
     inlineBadgesMarkup: () => '',
     esc: value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])),
     canEditWorkspace: () => controls.writable,
@@ -103,16 +116,21 @@ function harness(overrides = {}) {
     async ensureCategoryTranslations(records) { controls.categoryCalls++; return controls.ensureCategory?.(records); },
     async buildOnlineShareLink(records) {
       if (controls.generateError) throw controls.generateError;
-      const row = records[0], payload = { id: row.uid, itemChinese: row.raw[H[10]], modelChinese: row.raw[H[12]], category: controls.category };
+      const row = records[0], payload = context.productDetail(row);
       const url = 'https://example.test/share.html#d=j' + Buffer.from(JSON.stringify(payload)).toString('base64url');
       controls.generatedUrls.push(url); return controls.generate ? controls.generate(records, url) : url;
+    },
+    shareLinkMessage(url, count = 1) {
+      controls.linkMessages.push({ url, count });
+      const info = controls.linkInfo.get(url);
+      return info?.shortened ? '已生成 ' + count + ' 个产品的短链接' : '已生成 ' + count + ' 个产品的完整链接；短链接服务暂不可用';
     },
     copyShareText: async url => { controls.copiedUrls.push(url); return true; },
     closeProductCard() { document.getElementById('productCard')?.remove(); context.activeProductCard = ''; },
     $: id => document.getElementById(id),
     setTimeout(callback) { const id = controls.nextTimer++; controls.timers.set(id, callback); return id; }
   };
-  vm.createContext(context); vm.runInContext(source, context);
+  vm.createContext(context); vm.runInContext(detailSource + '\n' + signatureSource + '\n' + source, context);
   const open = () => { context.toggleProductCard(record.uid, anchor); return document.getElementById('productCard'); };
   const fill = row => { row.raw[H[10]] = '无线音箱'; row.raw[H[12]] = '黑色'; };
   return { H, record, controls, context, document, open, fill };
@@ -209,7 +227,7 @@ test('generation or copy controls remain usable and changed Chinese invalidates 
   const h = harness(); h.fill(h.record); const card = h.open(); await flush();
   h.controls.generateError = new Error('translation transport rejected');
   await card.querySelector('[data-generate-single]').onclick();
-  assert.match(card.querySelector('[data-preview-status]').textContent, /链接生成失败/);
+  assert.match(card.querySelector('[data-preview-status]').textContent, /translation transport rejected/);
   assert.equal(card.querySelector('[data-generate-single]').disabled, false);
   h.controls.generateError = null; await card.querySelector('[data-generate-single]').onclick();
   assert.equal(card.querySelector('[data-preview-link]').hidden, false);
@@ -264,6 +282,74 @@ test('updated title, model or category clears the old open href until a fresh li
   }
 });
 
+test('every actual productDetail field change invalidates an already generated link', async () => {
+  const h = harness(); h.fill(h.record); h.record.raw['Shopee link'] = 'https://shop.example.test/product/1';
+  const card = h.open(); await flush();
+  const fields = [
+    ['id', () => { h.record.modelId = 'FAKE-MODEL-UPDATED'; }],
+    ['model', () => { h.record.modelImage = 'https://images.example.test/updated-model.png'; }],
+    ['itemChinese', () => { h.record.raw[h.H[10]] = '已核对的完整虚构中文标题'; }],
+    ['modelChinese', () => { h.record.raw[h.H[12]] = '已核对的虚构中文型号'; }],
+    ['category', () => { h.controls.category = '影音娱乐 > 便携音箱'; }],
+    ['invitation', () => { h.record.raw[h.H[25]] = '000000000001234567890'; }],
+    ['target', () => { h.controls.target = '3.50'; }],
+    ['shopee', () => { h.record.raw['Shopee link'] = 'https://shop.example.test/product/2'; }],
+    ['shopeeUrl', () => { h.controls.shopeeUrl = 'https://shop.example.test/product/normalized'; }],
+    ['badges', () => { h.record.badges = [{ kind: 'crown', icon: '👑', text: '虚构运营重点主推款' }]; }]
+  ];
+  assert.deepEqual(Object.keys(h.context.productDetail(h.record)), fields.map(([name]) => name));
+  for (const [field, change] of fields) {
+    await card.querySelector('[data-generate-single]').onclick();
+    assert.ok(card.querySelector('[data-open-single]').href, field + ' baseline generated');
+    change(); card.refreshChinese(h.record); assertSingleLinkUnavailable(card);
+  }
+  await card.querySelector('[data-generate-single]').onclick();
+  h.record.badges[0].text = '已变化的虚构营销标'; card.refreshChinese(h.record); assertSingleLinkUnavailable(card);
+});
+
+test('single preview reports the actual short-link or complete-link fallback outcome', async () => {
+  for (const shortened of [true, false]) {
+    const h = harness(); h.fill(h.record);
+    const expectedUrl = shortened ? 'https://is.gd/Fake123' : 'https://example.test/share.html#d=jFakeCompletePayload';
+    h.controls.generate = () => {
+      h.controls.linkInfo.set(expectedUrl, { url: expectedUrl, shortened, reason: shortened ? '' : 'unavailable' });
+      return expectedUrl;
+    };
+    const card = h.open(); await flush(); await card.querySelector('[data-generate-single]').onclick();
+    assert.equal(card.querySelector('[data-open-single]').href, expectedUrl);
+    assert.equal(card.querySelector('[data-preview-link]').querySelector('input').value, expectedUrl);
+    const status = card.querySelector('[data-preview-status]');
+    assert.equal(status.hidden, false);
+    assert.match(status.textContent, shortened ? /短链接/ : /完整链接/);
+    if (!shortened) assert.doesNotMatch(status.textContent, /已生成\s*1\s*个产品的短链接|翻译失败|一键翻译/);
+    assert.deepEqual(h.controls.linkMessages.at(-1), { url: expectedUrl, count: 1 });
+  }
+});
+
+test('generation errors after valid Chinese are not misreported as translation failures', async () => {
+  const h = harness({ generateError: new Error('虚构短链或剪贴板服务不可用') }); h.fill(h.record);
+  const card = h.open(); await flush(); await card.querySelector('[data-generate-single]').onclick();
+  const status = card.querySelector('[data-preview-status]').textContent;
+  assert.match(status, /虚构短链或剪贴板服务不可用/); assert.doesNotMatch(status, /一键翻译|翻译未完成|翻译失败/);
+  assertSingleLinkUnavailable(card);
+});
+
+test('actual shareLinkMessage accurately distinguishes short URLs, all fallback reasons and missing metadata', () => {
+  const builder = function () {}; builder.info = new Map();
+  const context = vm.createContext({ buildOnlineShareLink: builder }); vm.runInContext(messageSource, context);
+  const shortUrl = 'https://is.gd/Fake123'; builder.info.set(shortUrl, { url: shortUrl, shortened: true });
+  assert.match(context.shareLinkMessage(shortUrl, 3), /已生成 3 个产品的短链接/);
+  for (const reason of ['too_long', 'rate_limited', 'timeout', 'network', 'invalid_response', 'service_unavailable', 'unknown']) {
+    const url = 'https://example.test/share.html#d=jFake' + reason;
+    builder.info.set(url, { url, shortened: false, reason });
+    const message = context.shareLinkMessage(url, 3);
+    assert.match(message, /完整链接/); assert.match(message, /复制或打开/);
+    assert.doesNotMatch(message, /已生成 3 个产品的短链接|一键翻译|翻译失败/);
+  }
+  const unknown = context.shareLinkMessage('https://example.test/unknown', 2);
+  assert.match(unknown, /2 个产品的分享链接/); assert.doesNotMatch(unknown, /短链接/);
+});
+
 test('a pending or failed regeneration never exposes the previous successful open URL', async () => {
   const h = harness(); h.fill(h.record); const card = h.open(); await flush();
   await card.querySelector('[data-generate-single]').onclick();
@@ -273,7 +359,7 @@ test('a pending or failed regeneration never exposes the previous successful ope
   assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, true);
   gate.reject(new Error('Fabricated generation failure')); await generating;
   assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, false);
-  assert.match(card.querySelector('[data-preview-status]').textContent, /链接生成失败/);
+  assert.match(card.querySelector('[data-preview-status]').textContent, /Fabricated generation failure/);
 });
 
 test('a link completed after Chinese changes is discarded rather than attributed to the new product snapshot', async () => {
