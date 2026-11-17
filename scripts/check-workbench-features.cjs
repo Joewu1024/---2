@@ -66,8 +66,9 @@ function fakeDatabase() {
 }
 
 function harness(options={}) {
-  const elements = new Map(), controls = { writable: true, batch: [], editors: [], checks: [], versionLabels: [], versionRenames: [], versionTitles: [], calculations: [], downloads: [], renders: 0, parse: null, dbGate: null, promptValue: null }, db = options.db||fakeDatabase();
+  const elements = new Map(), controls = { writable: true, nodesBySelector: {}, batch: [], editors: [], checks: [], versionLabels: [], versionRenames: [], versionTitles: [], calculations: [], downloads: [], renders: 0, parse: null, dbGate: null, promptValue: null }, db = options.db||fakeDatabase();
   const selectAll = selector => {
+    if (Object.hasOwn(controls.nodesBySelector, selector)) return controls.nodesBySelector[selector];
     if (selector === '[data-batch]') return controls.batch;
     if (selector === '[data-edit]') return controls.editors;
     if (selector === '[data-calc-row]') return controls.calculations;
@@ -93,6 +94,7 @@ function harness(options={}) {
     line('const rawLookupCache='), line('const keyMap='),
     ...['key','safeHttpUrl','safeImageUrl','headerScore','isMetaRow','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor','translationWarningField'].map(n=>line('function '+n+'(')),
     between('function drawOptions(i)', 'function statusValue('),
+    between('// group-selection:start', '// group-selection:end'),
     ...['statusValue','statusLines','groupIsOpen','visibleFields','displayColumns','colSize','updateStats','matchesState','updateSelectionUI','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups','renderPager','render'].map(n=>line('function '+n+'(')),
     between('function rowHtml(', 'function closeProductCard('),
     line('function bindTable('), between('function batch()', 'function openWorkbenchDB('),
@@ -132,7 +134,7 @@ function harness(options={}) {
     function download(blob,name){controls.downloads.push({blob,name})}
     function showShareLinkDialog(){} function filterPopup(){} function drawer(){}
     return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,
-      batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,
+      batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,updateSelectionUI,
       updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,mapImportedMatrix,selectImportHeader,importFile,importInvitations,importTranslations,
       writeRecordBatches,saveVersion,listVersions,refreshVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,renameVersion,renameSelectedVersion,flushSave,save,
       get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},
@@ -157,6 +159,16 @@ async function readExportedXlsx(blob) {
 async function reimportExportedXlsx(h, blob) {
   const { matrix } = await readExportedXlsx(blob);
   return h.api.mapImportedMatrix(matrix, h.api.selectImportHeader(matrix, 3));
+}
+function groupedRecords(h, group, count, baseTarget = 100) {
+  return Array.from({ length: count }, (_, index) => Object.assign(record(h, group + '-' + index, {
+    backcal_cogs_non_brand: String(baseTarget + index), grass_region: index === 0 ? 'TH' : 'VN'
+  }), { group, excelRow: index + 2 }));
+}
+function bindGroupCheckboxes(h, groups) {
+  const nodes = groups.map(group => ({ dataset: { selectGroup: group }, checked: false, indeterminate: false, disabled: false }));
+  h.controls.nodesBySelector['[data-select-group]'] = nodes;
+  h.api.bindTable();h.api.updateSelectionUI();return nodes;
 }
 
 test('1688 blank filtering keeps only matching models and never leaks hidden group siblings', () => {
@@ -238,6 +250,86 @@ test('closed product groups hide child rows and reopening reveals exactly their 
   const h=harness(),a=record(h,'a'),b=record(h,'b');h.api.setRows([a,b]);h.api.render();assert.equal(h.api.visibleRows.length,1);
   h.api.setOpened(['shared-group']);h.api.render();assert.deepEqual(ids(h.api.visibleRows),['a','b']);
   h.api.setOpened([]);h.api.render();assert.equal(h.api.visibleRows.length,1);
+});
+
+test('whole-group checkboxes select, partly select and clear the full group without disturbing other choices',()=>{
+  const h=harness(),a=groupedRecords(h,'group-A',3),b=groupedRecords(h,'group-B',2);h.api.setRows([...a,...b]);h.api.render();
+  const [group]=bindGroupCheckboxes(h,['group-A']);h.api.setSelected([b[0].uid]);h.api.updateSelectionUI();
+  assert.equal(group.checked,false);assert.equal(group.indeterminate,false);
+  group.checked=true;group.onchange();assert.deepEqual([...h.api.selected].sort(),[...ids(a),b[0].uid].sort());
+  assert.equal(group.checked,true);assert.equal(group.indeterminate,false);
+  const model={dataset:{select:a[1].uid},checked:false};h.controls.nodesBySelector['[data-select]']=[model];h.api.bindTable();model.onchange();
+  assert.equal(group.checked,false);assert.equal(group.indeterminate,true);assert.equal(h.api.selected.has(a[1].uid),false);
+  group.checked=true;group.onchange();assert.equal(group.checked,true);assert.equal(group.indeterminate,false);
+  group.checked=false;group.onchange();assert.deepEqual([...h.api.selected],[b[0].uid]);
+  assert.equal(group.checked,false);assert.equal(group.indeterminate,false);assert.equal(h.db.transactions.length,0);
+});
+
+test('whole-group selection includes collapsed, filtered and unrendered child batches with an explicit hidden count',()=>{
+  const h=harness(),a=groupedRecords(h,'large-group',120),b=groupedRecords(h,'other-group',2);h.api.setRows([...a,...b]);
+  h.api.setFilters({'Model ID':{values:[a[0].uid]}});h.api.render();assert.deepEqual(ids(h.api.visibleRows),[a[0].uid]);
+  const markup=h.element('table').innerHTML;assert.match(markup,/整组选中/);assert.match(markup,/120/);assert.match(markup,/119/);
+  const [group]=bindGroupCheckboxes(h,['large-group']);group.checked=true;group.onchange();
+  assert.deepEqual([...h.api.selected].sort(),ids(a).sort());assert.equal(h.api.selected.has(b[0].uid),false);
+  h.api.setFilters({});h.api.setOpened(['large-group']);h.api.render();assert.equal(h.api.visibleRows.length,52);assert.equal(group.checked,true);
+  assert.equal((h.element('table').innerHTML.match(/data-select-group=/g)||[]).length,2,'group choices belong only to parent rows');
+  const next={dataset:{childPage:'large-group',offset:'50'}};h.controls.nodesBySelector['[data-child-page]']=[next];h.api.bindTable();next.onclick();
+  assert.equal(h.api.visibleRows.length,52);assert.deepEqual([...h.api.selected].sort(),ids(a).sort());
+  h.api.setOpened([]);h.api.render();assert.equal(h.api.visibleRows.length,2);assert.equal(group.checked,true);
+});
+
+test('group choices survive group pagination and filter changes while the original page selector remains model-only',()=>{
+  const h=harness(),groups=Array.from({length:55},(_,index)=>groupedRecords(h,'page-group-'+index,2,1000-index*10));h.api.setRows(groups.flat());h.api.render();
+  assert.equal(h.api.visibleRows.length,50);const [first]=bindGroupCheckboxes(h,['page-group-0']);first.checked=true;first.onchange();
+  assert.deepEqual([...h.api.selected].sort(),ids(groups[0]).sort());
+  h.element('pageNext').onclick();assert.equal(h.api.visibleRows.length,5);
+  const [last]=bindGroupCheckboxes(h,['page-group-50']);last.checked=true;last.onchange();
+  const chosen=[...ids(groups[0]),...ids(groups[50])].sort();assert.deepEqual([...h.api.selected].sort(),chosen);
+  h.api.setFilters({'status:grass_region':{values:['TH']}});h.api.render();assert.deepEqual([...h.api.selected].sort(),chosen);
+  h.element('clear').onclick();assert.deepEqual([...h.api.selected].sort(),chosen);
+  h.element('unselect').onclick();assert.equal(h.api.selected.size,0);
+  const all=h.element('selectVisible');all.checked=true;all.onchange();
+  assert.equal(h.api.selected.size,50);assert.deepEqual([...h.api.selected].sort(),ids(h.api.visibleRows).sort());
+});
+
+test('three whole-group choices merge every hidden member and persist the highest-target representative',async()=>{
+  const h=harness(),a=groupedRecords(h,'merge-A',3,100),b=groupedRecords(h,'merge-B',75,200),c=groupedRecords(h,'merge-C',4,300),all=[...a,...b,...c];
+  h.api.setRows(all.slice().reverse());h.element('sort').value='asc';h.api.render();
+  assert.deepEqual(Array.from(h.api.recordsGroups(h.api.rows),entry=>entry[1][0].uid),[a[2].uid,b[74].uid,c[3].uid]);
+  h.api.setFilters({'status:grass_region':{values:['TH']}});h.api.render();assert.equal(h.api.visibleRows.length,3);
+  for(const group of bindGroupCheckboxes(h,['merge-A','merge-B','merge-C'])){group.checked=true;group.onchange()}
+  assert.equal(h.api.selected.size,82);h.element('merge').onclick();assert.equal(h.api.selected.size,0);
+  assert.equal(new Set(all.map(row=>row.manualGroup)).size,1);assert.ok(all[0].manualGroup);assert.equal(h.api.rows.length,82);
+  h.api.setFilters({});h.api.setOpened([]);h.api.render();assert.deepEqual(ids(h.api.visibleRows),[c[3].uid]);
+  assert.equal(await h.api.flushSave(),true);assert.equal(h.db.stores.records.size,82);
+  const saved=[...h.db.stores.records.values()];assert.deepEqual(saved.map(row=>row.uid).sort(),ids(all).sort());
+  assert.ok(saved.every(row=>row.manualGroup===all[0].manualGroup&&row.group===all[0].manualGroup));
+  const restored=harness({db:h.db});restored.api.setRows(saved);await restored.api.regroup();restored.api.render();
+  assert.deepEqual(ids(restored.api.visibleRows),[c[3].uid]);assert.equal(restored.api.recordsGroups(restored.api.rows)[0][1].length,82);
+});
+
+test('manual group membership controls whole-group cancellation and moving members out',()=>{
+  const h=harness(),a=groupedRecords(h,'automatic-group',3),b=groupedRecords(h,'other-automatic-group',2),c=record(h,'untouched');
+  a.forEach(row=>row.manualGroup='manual-A');b.forEach(row=>{row.group='automatic-group';row.manualGroup='manual-B'});c.group='automatic-group';
+  h.api.setRows([...a,...b,c]);h.api.render();let [group]=bindGroupCheckboxes(h,['manual-A']);group.checked=true;group.onchange();
+  assert.deepEqual([...h.api.selected].sort(),ids(a).sort());h.element('unselect').onclick();assert.equal(h.api.selected.size,0);
+  assert.ok(a.every(row=>row.manualGroup==='manual-A'));assert.ok(b.every(row=>row.manualGroup==='manual-B'));assert.equal(c.manualGroup,undefined);
+  [group]=bindGroupCheckboxes(h,['manual-A']);group.checked=true;group.onchange();h.element('splitGroup').onclick();
+  assert.equal(h.api.selected.size,0);assert.equal(new Set(a.map(row=>row.manualGroup)).size,3);
+  assert.ok(a.every(row=>row.manualGroup==='单独-'+row.uid));assert.ok(b.every(row=>row.manualGroup==='manual-B'));assert.equal(c.group,'automatic-group');
+  h.api.setSelected([a[0].uid]);h.element('unmerge').onclick();assert.equal(a[0].manualGroup,'');assert.equal(a[0].group,'UNGROUPED-'+a[0].uid);
+  assert.equal(a[1].manualGroup,'单独-'+a[1].uid);assert.ok(b.every(row=>row.manualGroup==='manual-B'));
+});
+
+test('history and ownership loss disable whole-group editing and reject previously attached handlers',()=>{
+  for(const reason of ['history','ownership']){
+    const h=harness(),a=groupedRecords(h,'readonly-group',3);h.api.setRows(a);h.api.render();const [group]=bindGroupCheckboxes(h,['readonly-group']);
+    h.api.setSelected([a[0].uid]);if(reason==='history')h.api.setHistory(true);else h.controls.writable=false;
+    h.api.render();const input=h.element('table').innerHTML.match(/<input\b[^>]*data-select-group="readonly-group"[^>]*>/)?.[0];assert.ok(input);assert.match(input,/\bdisabled\b/);
+    group.checked=true;group.onchange();assert.deepEqual([...h.api.selected],[a[0].uid]);
+    h.element('merge').onclick();h.element('splitGroup').onclick();h.element('unmerge').onclick();
+    assert.ok(a.every(row=>row.group==='readonly-group'&&!row.manualGroup));assert.equal(h.db.transactions.length,0);
+  }
 });
 
 test('history read-only mode still permits expanding a product group',()=>{

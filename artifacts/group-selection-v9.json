@@ -1,0 +1,34 @@
+{
+  "date": "2026-11-17",
+  "synthetic_only": true,
+  "feature_regressions": {"passed": 67, "failed": 0},
+  "browser_check": {
+    "browser": "Codex in-app Chromium on Windows",
+    "fixture_models": 6,
+    "initial_groups_created_with_ui": 3,
+    "models_per_initial_group": 2,
+    "all_groups_collapsed_before_selection": true,
+    "whole_group_checkboxes_selected": 3,
+    "selected_models_including_collapsed_children": 6,
+    "groups_after_one_merge_click": 1,
+    "highest_target_parent_retained": true,
+    "saved_group_restored_after_reload": true,
+    "filter_matches_one_model": true,
+    "filter_hidden_members_label": "含筛选外 5 款",
+    "whole_group_selection_with_filter_selects_all_six": true,
+    "selection_preserved_when_filter_cleared": true,
+    "console_errors_observed": 0,
+    "scope": "Local preview of production code, actual checkbox and merge-button interactions, browser local save and reload. File chooser automation was interrupted once and succeeded after recovery; no browser-state injection was used."
+  },
+  "offline_large_structure_check": {
+    "models": 20000,
+    "groups": 1000,
+    "visible_group_checkboxes": 50,
+    "checkbox_state_refreshes": 10,
+    "full_rows_iterations_during_cached_refreshes": 0,
+    "full_rows_iterations_per_whole_group_toggle": 1,
+    "table_html_writes_from_selection": 0,
+    "database_transactions_from_selection": 0,
+    "scope": "Production functions with fake DOM/IndexedDB and instrumented synthetic arrays. Structural iteration checks only, not browser FPS or elapsed-time claims."
+  }
+}
