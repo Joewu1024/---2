@@ -14,6 +14,13 @@ else {
   if(!app.test(html))throw Error('Workbench script missing');
   html=html.replace(app,match=>providerScript+match);
 }
+for(const [marker,name] of [['buyer-workspace','workbench-workspace.js'],['workbench-import','workbench-import.js'],['workbench-xlsx','workbench-xlsx.js'],['workbench-export','workbench-export.js']]){
+  const body=fs.readFileSync(path.join(root,name),'utf8');
+  const re=new RegExp('<script data-'+marker+'="v1">[\\s\\S]*?<\\/script>');
+  const block='<script data-'+marker+'="v1">\n'+body+'\n</script>\n';
+  if(re.test(html))html=html.replace(re,()=>block.trimEnd());
+  else html=html.replace(/<script>\s*\(function\(\)\{/,match=>block+match);
+}
 let count=0;for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1],{filename:'index-script-'+(++count)});
 fs.writeFileSync(file,html);
 console.log('Translation engine synchronized; '+count+' script blocks parsed');

@@ -5,7 +5,8 @@
 .fold-head span{display:inline-block;vertical-align:middle;max-width:105px;overflow-wrap:anywhere}
 .fold-toggle{width:22px;height:22px;line-height:18px;padding:0;margin-right:5px;border:1px solid #b8cbbb;border-radius:5px;background:#fff;color:#24553f;font-weight:800;font-size:16px;vertical-align:middle}
 .fold-minus{margin:0 4px 2px 0;width:18px;height:18px;line-height:14px;font-size:14px}
-.fold-cell{background:#f8faf8;color:#829087;text-align:center;font-size:10px;vertical-align:middle}</style><style>
+.fold-cell{background:#f8faf8;color:#829087;text-align:center;font-size:10px;vertical-align:middle}.gridbox{scroll-padding-top:calc(var(--table-head-height,0px) + var(--group-parent-height,0px) + 10px)}
+</style><style>
 table{table-layout:fixed;width:max-content;min-width:2200px;font-size:11px}
 th,td{box-sizing:border-box;min-width:0;max-width:none;padding:6px;overflow-wrap:anywhere;word-break:break-word;white-space:normal}
 th{height:auto;line-height:1.25;font-size:10px;vertical-align:top}
@@ -21,7 +22,7 @@ td.status{min-width:0}
 .status div{display:block;white-space:normal;line-height:1.35;padding:1px 0;overflow-wrap:anywhere}
 .precheck{display:flex;flex-direction:column;gap:6px;min-width:0}
 .pre-main{display:flex;flex-direction:column;gap:5px;align-items:stretch}
-.pre-field{display:flex;flex-direction:column;gap:2px;min-width:0;color:#62736a;font-size:9px;line-height:1.2}.pre-field .cell{font-size:11px}.pre-note{grid-column:1/-1}.bulk-pre{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 8px}.bulk-pre label{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#52665a}.bulk-pre select,.bulk-pre input{border:1px solid #cbded2;border-radius:6px;padding:5px 7px;background:#fff;min-height:30px}.bulk-pre select{min-width:72px}.translation-warning{margin-top:4px;font-size:10px;line-height:1.4;color:#9a611c}.translation-source-button{padding:1px 4px;border:1px solid #e0cba9;background:#fffaf1;color:#8c581a;border-radius:4px;font-size:10px}.translation-status{font-size:10px;color:#687a71;max-width:280px}.pager{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:8px 4px;color:#607269;font-size:11px}.pager button,.pager select{border:1px solid #dbe5df;background:#fff;border-radius:7px;padding:5px 8px}.pager button:disabled{opacity:.45;cursor:default}.save-state{font-size:10px;color:#52745f;white-space:nowrap}
+.pre-field{display:flex;flex-direction:column;gap:2px;min-width:0;color:#62736a;font-size:9px;line-height:1.2}.pre-field .cell{font-size:11px}.pre-note{grid-column:1/-1}.bulk-pre{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 8px}.bulk-pre label{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#52665a}.bulk-pre select,.bulk-pre input{border:1px solid #cbded2;border-radius:6px;padding:5px 7px;background:#fff;min-height:30px}.bulk-pre select{min-width:72px}.workspace-notice{padding:12px 18px;background:#fff7e3;color:#6c4d16;border-bottom:1px solid #ead2a2;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.workspace-notice[hidden]{display:none}.group-child-pager{display:flex;align-items:center;gap:10px;padding:8px;position:sticky;left:0;max-width:600px}.translation-warning{margin-top:4px;font-size:10px;line-height:1.4;color:#9a611c}.translation-source-button{padding:1px 4px;border:1px solid #e0cba9;background:#fffaf1;color:#8c581a;border-radius:4px;font-size:10px}.translation-status{font-size:10px;color:#687a71;max-width:280px}.pager{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:8px 4px;color:#607269;font-size:11px}.pager button,.pager select{border:1px solid #dbe5df;background:#fff;border-radius:7px;padding:5px 8px}.pager button:disabled{opacity:.45;cursor:default}.save-state{font-size:10px;color:#52745f;white-space:nowrap}
 td a{display:inline-block;max-width:100%;overflow-wrap:anywhere;word-break:break-all}
 .fbtn.active{background:#cde9d8;color:#08775e}
 .group-toggle{display:block;margin-top:5px;padding:4px 5px;border:1px solid #cbded2;border-radius:6px;background:#edf6ef;color:#285844;font-size:9px;white-space:normal;max-width:100%}
@@ -77,11 +78,11 @@ body{min-width:0}
 #table td .cell{min-width:0!important;width:100%;max-width:100%;padding:3px 4px;font-size:clamp(8px,.52vw,10px)}
 #table td .img{width:100%;max-width:54px;height:50px;object-fit:contain}
 @media(max-width:900px){.page{padding:8px 6px!important}.top{padding:7px 8px}.gridbox{overflow-x:hidden!important}#table th,#table td{padding:3px 2px;font-size:8px}#table th:first-child,#table td:first-child{width:92px!important}#table th:nth-child(2),#table td:nth-child(2){width:26px!important;left:92px!important}}
-</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(145px,26vh,220px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="import">导入 Excel / CSV</button><span class="translation-status" id="translationState">Google 整句翻译 · 品牌型号保留 · 旧自动译文将重新生成</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header>
+</style><style>.product-card-images{grid-template-columns:minmax(0,1fr)!important}.product-card-model-figure{margin:0;min-width:0}.product-card-model-figure>img{display:block;width:100%;height:clamp(145px,26vh,220px);object-fit:contain;background:#f5f8f6;border-radius:8px}.product-card-media-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px;padding-top:5px;border-top:1px solid #e8eee9}.product-card-media-footer figcaption{margin:0!important;font-size:10px;font-weight:700;color:#607269}.share-badges-inline{position:static;display:flex;align-items:center;justify-content:flex-end;gap:4px;flex-wrap:wrap;max-width:76%;pointer-events:none}.share-badges-inline .share-badge{font-size:9px;line-height:1.15;padding:2px 5px;box-shadow:none}.images.single-image{grid-template-columns:minmax(0,1fr)}.image-caption-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.image-caption-row figcaption{margin:0}</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><datalist id="buyerDevOptions"></datalist><datalist id="buyerReasonOptions"></datalist><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">Google 整句翻译 · 品牌型号保留 · 旧自动译文将重新生成</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
 <main class="page"><section class="title"><div><span class="muted">源表字段结构 · 买手筛选与核价</span><h1>寻品工作看板</h1><p>严格按源表标题、顺序和第二行字段说明展示；无筛选时显示全部导入记录。</p></div><span class="tag" id="state">等待导入商品数据</span></section>
 <div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="translateAll" title="补齐全部商品中文，重复标题仅翻译一次">补齐全部中文</button><button class="btn" id="pauseTranslation">暂停翻译</button><button class="btn" id="importTranslations">导入中文翻译</button><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
 <div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并选中组</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <button class="btn" id="unselect">清除勾选</button></div>
-<div class="gridbox"><table id="table"></table></div><div id="pager" class="pager"></div><div class="stats"><div class="stat"><span>筛选后商品组</span><b id="groupsN">0</b></div><div class="stat"><span>筛选后 Model ID</span><b id="modelsN">0</b></div><div class="stat"><span>待买手判断</span><b id="pendingN">0</b></div><div class="stat"><span>无 1688 前置核价</span><b id="priceN">0</b></div></div><p class="help">每页显示 100 个商品组；筛选和导出仍按全部数据计算。买手编辑会自动保存到本机数据库；请使用同一浏览器和本站网址继续工作。</p></main><div id="closeDialog" class="close-dialog" hidden><section class="close-dialog-card"><h3>关闭工作台前保存</h3><p>工作台会自动保存到本机。确认保存后，可关闭当前浏览器标签页；下次使用同一浏览器和本地启动器会恢复数据。</p><div><button class="btn" id="cancelClose">继续工作</button><button class="btn primary" id="confirmSaveClose">确认保存</button></div></section></div><div id="overlay"></div><div id="versionManager"></div><div id="shareLinkDialog" class="modalbg" hidden></div><div id="toast"></div>
+<div class="gridbox"><table id="table"></table></div><div id="pager" class="pager"></div><div class="stats"><div class="stat"><span>筛选后商品组</span><b id="groupsN">0</b></div><div class="stat"><span>筛选后 Model ID</span><b id="modelsN">0</b></div><div class="stat"><span>待买手判断</span><b id="pendingN">0</b></div><div class="stat"><span>无 1688 前置核价</span><b id="priceN">0</b></div></div><p id="workspaceInfo" class="help"></p><p class="help">每页默认显示 50 个商品组；筛选和导出仍按全部数据计算。买手编辑会自动保存到本机数据库；请使用同一浏览器和本站网址继续工作。</p></main><div id="closeDialog" class="close-dialog" hidden><section class="close-dialog-card"><h3>关闭工作台前保存</h3><p>工作台会自动保存到本机。确认保存后，可关闭当前浏览器标签页；下次使用同一浏览器和本地启动器会恢复数据。</p><div><button class="btn" id="cancelClose">继续工作</button><button class="btn primary" id="confirmSaveClose">确认保存</button></div></section></div><div id="overlay"></div><div id="versionManager"></div><div id="shareLinkDialog" class="modalbg" hidden></div><div id="toast"></div>
 <script data-buyer-translation-engine="v3">
 (function (root) {
   'use strict';
@@ -493,28 +494,838 @@ body{min-width:0}
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 </script>
+<script data-buyer-workspace="v1">
+(function (root) {
+  'use strict';
+
+  // Workspace IDs select a local namespace; they are not credentials or accounts.
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  const DEFAULT_DB = 'buyer-pool-workbench';
+  const own = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
+
+  function validateId(value) {
+    if (typeof value !== 'string' || value.length !== 36 || !UUID.test(value)) {
+      throw new Error('工作区地址无效，请使用“分享空白工作台”生成的链接');
+    }
+    return value.toLowerCase();
+  }
+
+  function optionalId(value) {
+    return value == null ? null : validateId(value);
+  }
+
+  function baseName(value) {
+    if (typeof value !== 'string' || !value || value.length > 180) {
+      throw new TypeError('本地存储名称无效');
+    }
+    return value;
+  }
+
+  function dbName(base = DEFAULT_DB, id = null) {
+    base = baseName(base);
+    id = optionalId(id);
+    return id ? base + ':workspace:' + id : base;
+  }
+
+  function storageKey(base, id = null) {
+    return dbName(baseName(base), id);
+  }
+
+  function pageUrl(href) {
+    const url = new URL(href == null ? root.location && root.location.href : href);
+    if (!['https:', 'http:', 'file:'].includes(url.protocol)) {
+      throw new Error('工作台地址必须使用 HTTP、HTTPS 或本地文件');
+    }
+    return url;
+  }
+
+  function cleanUrl(href) {
+    const url = pageUrl(href);
+    url.username = '';
+    url.password = '';
+    url.search = '';
+    url.hash = '';
+    return url;
+  }
+
+  function blankShareUrl(href) {
+    const url = cleanUrl(href);
+    url.searchParams.set('new', '1');
+    return url.href;
+  }
+
+  function workspaceLabel(id = null) {
+    id = optionalId(id);
+    return id ? '本机独立工作区 · ' + id.slice(0, 8) : '本机默认工作区';
+  }
+
+  function randomId(cryptoImpl) {
+    if (cryptoImpl && typeof cryptoImpl.randomUUID === 'function') {
+      return validateId(cryptoImpl.randomUUID());
+    }
+    if (cryptoImpl && typeof cryptoImpl.getRandomValues === 'function') {
+      const bytes = cryptoImpl.getRandomValues(new Uint8Array(16));
+      bytes[6] = (bytes[6] & 15) | 64;
+      bytes[8] = (bytes[8] & 63) | 128;
+      const hex = Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
+      return validateId(hex.slice(0, 8) + '-' + hex.slice(8, 12) + '-' + hex.slice(12, 16) + '-' + hex.slice(16, 20) + '-' + hex.slice(20));
+    }
+    throw new Error('此浏览器无法安全创建独立工作区，请使用较新版本的浏览器');
+  }
+
+  function resolve(options = {}) {
+    const url = pageUrl(options.href);
+    const ids = url.searchParams.getAll('workspace');
+    const newFlags = url.searchParams.getAll('new');
+    if (ids.length > 1 || newFlags.length > 1 || (newFlags.length && newFlags[0] !== '1')) {
+      throw new Error('工作区地址包含重复或无效参数，请重新打开空白工作台链接');
+    }
+    let id = ids.length ? validateId(ids[0]) : null;
+    const created = newFlags[0] === '1';
+    let resolvedHref = url.href;
+    if (created) {
+      const history = own(options, 'history') ? options.history : root.history;
+      if (!history || typeof history.replaceState !== 'function') {
+        throw new Error('浏览器无法保留工作区地址，请使用较新版本的浏览器');
+      }
+      id = randomId(own(options, 'crypto') ? options.crypto : root.crypto);
+      const target = cleanUrl(url.href);
+      target.searchParams.set('workspace', id);
+      resolvedHref = target.href;
+      // Replace before touching persistence: refresh must reopen this same namespace.
+      history.replaceState(history.state == null ? null : history.state, '', resolvedHref);
+    }
+    return Object.freeze({
+      id,
+      isDefault: id === null,
+      created,
+      href: resolvedHref,
+      dbName: (base = DEFAULT_DB) => dbName(base, id),
+      storageKey: base => storageKey(base, id),
+      blankShareUrl: () => blankShareUrl(resolvedHref),
+      workspaceLabel: () => workspaceLabel(id)
+    });
+  }
+
+  function noWriter(status, error) {
+    return Object.freeze({ owner: false, status, error: error || null, release: () => false });
+  }
+
+  function acquireWriter(context, options = {}) {
+    const id = optionalId(context && context.id);
+    const navigator = own(options, 'navigator') ? options.navigator : root.navigator;
+    // No localStorage heartbeat: it cannot atomically prevent concurrent writers.
+    // Callers must keep the page read-only when Web Locks is unavailable or fails.
+    if (!navigator || !navigator.locks || typeof navigator.locks.request !== 'function') {
+      return Promise.resolve(noWriter('unsupported'));
+    }
+    const lockName = dbName(DEFAULT_DB, id) + ':writer';
+    return new Promise(resolveResult => {
+      let settled = false;
+      const finish = result => {
+        if (!settled) {
+          settled = true;
+          resolveResult(result);
+        }
+      };
+      try {
+        const request = navigator.locks.request(lockName, { mode: 'exclusive', ifAvailable: true }, lock => {
+          if (!lock) {
+            finish(noWriter('busy'));
+            return;
+          }
+          return new Promise(releaseLock => {
+            let active = true;
+            finish(Object.freeze({
+              get owner() { return active; },
+              get status() { return active ? 'owner' : 'released'; },
+              error: null,
+              release() {
+                if (!active) return false;
+                active = false;
+                releaseLock();
+                return true;
+              }
+            }));
+          });
+        });
+        Promise.resolve(request).catch(error => finish(noWriter('error', error)));
+      } catch (error) {
+        finish(noWriter('error', error));
+      }
+    });
+  }
+
+  const api = Object.freeze({ validateId, dbName, storageKey, blankShareUrl, workspaceLabel, resolve, acquireWriter });
+  root.BuyerWorkspace = api;
+  if (typeof module === 'object' && module.exports) module.exports = api;
+})(typeof globalThis === 'object' ? globalThis : this);
+
+</script>
+<script data-workbench-import="v1">
+(function (root, factory) {
+  'use strict';
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.WorkbenchImport = factory();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createWorkbenchImport() {
+  'use strict';
+
+  const now = () => typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+  function abortError() {
+    const error = new Error('CSV 导入已取消');
+    error.name = 'AbortError';
+    return error;
+  }
+  function checkAbort(signal) {
+    if (signal && signal.aborted) throw abortError();
+  }
+
+  // stream:true deliberately leaves an incomplete final code point buffered. A
+  // sample ending inside a valid UTF-8 character must not be mistaken for GBK.
+  function detectEncoding(bytes, preferred) {
+    if (preferred && preferred !== 'auto') return preferred;
+    if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) return 'utf-8';
+    if (bytes[0] === 0xff && bytes[1] === 0xfe) return 'utf-16le';
+    if (bytes[0] === 0xfe && bytes[1] === 0xff) return 'utf-16be';
+    let evenZero = 0, oddZero = 0;
+    const length = Math.min(bytes.length - bytes.length % 2, 4096);
+    for (let i = 0; i < length; i += 2) {
+      if (!bytes[i]) evenZero++;
+      if (!bytes[i + 1]) oddZero++;
+    }
+    if (length >= 8 && oddZero / (length / 2) > 0.25 && evenZero / (length / 2) < 0.1) return 'utf-16le';
+    if (length >= 8 && evenZero / (length / 2) > 0.25 && oddZero / (length / 2) < 0.1) return 'utf-16be';
+    try {
+      new TextDecoder('utf-8', { fatal: true }).decode(bytes, { stream: true });
+      return 'utf-8';
+    } catch (_) {
+      return 'gb18030';
+    }
+  }
+
+  function detectDelimiter(text) {
+    const candidates = [',', '\t', ';', '|'];
+    const samples = [];
+    let counts = [0, 0, 0, 0], quoted = false, touched = false;
+    for (let i = 0; i < text.length; i++) {
+      const char = text[i];
+      if (char === '"') {
+        if (quoted && text[i + 1] === '"') { i++; continue; }
+        quoted = !quoted;
+      } else if (!quoted) {
+        const delimiter = candidates.indexOf(char);
+        if (delimiter >= 0) counts[delimiter]++;
+        else if (char === '\r' || char === '\n') {
+          if (touched) samples.push(counts);
+          if (samples.length >= 32) break;
+          counts = [0, 0, 0, 0]; touched = false;
+          if (char === '\r' && text[i + 1] === '\n') i++;
+          continue;
+        }
+      }
+      touched = true;
+    }
+    // Ignore the final partial record unless the sample has no complete row.
+    if (!samples.length && touched) samples.push(counts);
+    let winner = 0, best = 0;
+    candidates.forEach((_, column) => {
+      const frequency = new Map();
+      samples.forEach(row => frequency.set(row[column], (frequency.get(row[column]) || 0) + 1));
+      frequency.forEach((count, separators) => {
+        const score = separators ? count / samples.length * 1000 + Math.min(separators, 100) : 0;
+        if (score > best) { winner = column; best = score; }
+      });
+    });
+    return candidates[winner];
+  }
+
+  // Stateful RFC-style record scanner. Quote, escaped quote, CRLF and UTF code
+  // point boundaries can all occur between chunks. Values remain exact strings.
+  function createCsvParser(delimiter, onRow, options) {
+    options = options || {};
+    if (!delimiter || delimiter.length !== 1 || /["\r\n]/.test(delimiter)) throw new Error('CSV 分隔符无效');
+    let row = [], field = '', quoted = false, pendingQuote = false, skipLF = false, touched = false;
+    let records = 0;
+    function emit() {
+      row.push(field);
+      const value = row;
+      row = []; field = ''; touched = false;
+      if (options.skipEmptyRows !== false && value.every(cell => cell === '')) return;
+      records++;
+      onRow(value, records);
+    }
+    return {
+      write(text) {
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (quoted) {
+            if (!pendingQuote) {
+              const nextQuote = text.indexOf('"', i);
+              if (nextQuote < 0) { field += text.slice(i); return; }
+              field += text.slice(i, nextQuote);
+              pendingQuote = true;
+              i = nextQuote;
+              continue;
+            }
+            pendingQuote = false;
+            if (char === '"') { field += '"'; continue; }
+            quoted = false;
+          }
+          if (skipLF) {
+            skipLF = false;
+            if (char === '\n') continue;
+          }
+          if (char === '"' && field === '') { quoted = true; touched = true; }
+          else if (char === delimiter) { row.push(field); field = ''; touched = true; }
+          else if (char === '\r' || char === '\n') { emit(); skipLF = char === '\r'; }
+          else {
+            // Append spans, rather than creating one string node per character
+            // in long titles. This keeps intermediate allocations small.
+            let end = i + 1;
+            while (end < text.length && text[end] !== delimiter && text[end] !== '\r' && text[end] !== '\n') end++;
+            field += text.slice(i, end); touched = true; i = end - 1;
+          }
+        }
+      },
+      finish() {
+        if (quoted && !pendingQuote) throw new Error('CSV 引号未闭合（第 ' + (records + 1) + ' 条记录）');
+        if (touched || row.length || field) emit();
+        return records;
+      },
+      get records() { return records; }
+    };
+  }
+
+  async function parseFileOnce(file, options) {
+    options = options || {};
+    const signal = options.signal;
+    checkAbort(signal);
+    if (!file || typeof file.slice !== 'function' || !Number.isFinite(file.size)) throw new Error('请选择有效的 CSV 文件');
+    const total = file.size;
+    const chunkSize = Math.max(256, Math.min(4 * 1024 * 1024, Number(options.chunkSize) || 64 * 1024));
+    const sampleSize = Math.max(4, Math.min(256 * 1024, Number(options.sampleSize) || 64 * 1024));
+    const yieldMs = Math.max(1, Number(options.yieldMs) || 8);
+    const progressIntervalMs = options.progressIntervalMs === undefined ? 80 : Math.max(0, Number(options.progressIntervalMs) || 0);
+    let loaded = 0, headers = null, rowsParsed = 0;
+    const matrix = [], objectRows = options.objectRows ? [] : null;
+    let encoding = '', delimiter = '', lastProgress = -Infinity, lastYield = now();
+    function progress(phase, force) {
+      if (typeof options.onProgress !== 'function') return;
+      const time = now();
+      if (!force && time - lastProgress < progressIntervalMs) return;
+      lastProgress = time;
+      options.onProgress({ phase, loaded, total, percent: total ? Math.min(100, Math.floor(loaded / total * 100)) : 100, rowsParsed, encoding, delimiter });
+    }
+    progress('reading', true);
+    const sample = new Uint8Array(await file.slice(0, sampleSize).arrayBuffer());
+    checkAbort(signal);
+    encoding = detectEncoding(sample, options.encoding);
+    const sampleText = new TextDecoder(encoding, { fatal: true }).decode(sample, { stream: true });
+    delimiter = options.delimiter || detectDelimiter(sampleText);
+    const decoder = new TextDecoder(encoding, { fatal: true });
+    function decode(bytes, streaming) {
+      try { return decoder.decode(bytes, { stream: streaming }); }
+      catch (error) {
+        error.csvEncoding = encoding;
+        error.csvHadBOM = sample[0] === 0xef && sample[1] === 0xbb && sample[2] === 0xbf;
+        throw error;
+      }
+    }
+    const parser = createCsvParser(delimiter, cells => {
+      if (!headers) { headers = cells; return; }
+      rowsParsed++;
+      if (objectRows) {
+        const row = Object.create(null);
+        headers.forEach((header, index) => { row[header] = cells[index] === undefined ? '' : cells[index]; });
+        objectRows.push(row);
+      } else matrix.push(cells);
+    }, options);
+    // Slice reads bound intermediate memory and permit cancellation between reads.
+    // The initial sample is reused, so no part of the file is read twice.
+    for (let offset = 0; offset < total;) {
+      checkAbort(signal);
+      const bytes = offset === 0 ? sample : new Uint8Array(await file.slice(offset, offset + chunkSize).arrayBuffer());
+      checkAbort(signal);
+      // The sniff sample can exceed a caller's tiny parsing chunk size. Feed it
+      // in chunks too, which also exercises boundaries in deterministic tests.
+      for (let start = 0; start < bytes.length; start += chunkSize) {
+        checkAbort(signal);
+        const part = bytes.subarray(start, Math.min(bytes.length, start + chunkSize));
+        parser.write(decode(part, true));
+        loaded += part.length;
+        progress('parsing', false);
+        if (now() - lastYield >= yieldMs) { await pause(); checkAbort(signal); lastYield = now(); }
+      }
+      offset += bytes.length;
+    }
+    parser.write(decode(undefined, false));
+    parser.finish();
+    checkAbort(signal);
+    progress('done', true);
+    return { headers: headers || [], matrix: objectRows ? undefined : matrix, objectRows: objectRows || undefined, encoding, delimiter, bytesRead: loaded, rowsParsed, workerUsed: false };
+  }
+
+  async function parseFile(file, options) {
+    options = options || {};
+    try { return await parseFileOnce(file, options); }
+    catch (error) {
+      // An ASCII-only prefix is ambiguous. If GB18030 characters occur only
+      // later, restart the bounded scanner after a fatal UTF-8 decode failure.
+      // Never override an explicit encoding or a UTF-8 BOM, or swallow aborts.
+      if ((!options.encoding || options.encoding === 'auto') && error.csvEncoding === 'utf-8' && !error.csvHadBOM) {
+        checkAbort(options.signal);
+        return parseFileOnce(file, Object.assign({}, options, { encoding: 'gb18030' }));
+      }
+      throw error;
+    }
+  }
+
+  function workerMain(factory) {
+    const api = factory();
+    let controller;
+    self.onmessage = async event => {
+      const message = event.data || {};
+      if (message.type === 'cancel') { if (controller) controller.abort(); return; }
+      if (message.type !== 'parse') return;
+      controller = new AbortController();
+      try {
+        const result = await api.parseFile(message.file, Object.assign({}, message.options, {
+          signal: controller.signal,
+          onProgress: progress => self.postMessage({ type: 'progress', progress })
+        }));
+        result.workerUsed = true;
+        self.postMessage({ type: 'done', result });
+      } catch (error) {
+        self.postMessage({ type: 'error', error: { name: error.name, message: error.message } });
+      }
+    };
+  }
+
+  function createWorkerSource() {
+    return '(' + workerMain.toString() + ')(' + createWorkbenchImport.toString() + ');';
+  }
+
+  async function parseInWorker(file, options) {
+    options = options || {};
+    checkAbort(options.signal);
+    if (options.worker === false || typeof Worker === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL) return parseFile(file, options);
+    let worker, url;
+    try {
+      url = URL.createObjectURL(new Blob([createWorkerSource()], { type: 'text/javascript' }));
+      worker = new Worker(url);
+    } catch (error) {
+      if (url) URL.revokeObjectURL(url);
+      if (options.fallback === false) throw error;
+      return parseFile(file, options);
+    }
+    const result = await new Promise((resolve, reject) => {
+      const signal = options.signal;
+      const cleanup = () => {
+        if (signal) signal.removeEventListener('abort', cancelled);
+        worker.terminate(); URL.revokeObjectURL(url);
+      };
+      const cancelled = () => { cleanup(); reject(abortError()); };
+      if (signal) signal.addEventListener('abort', cancelled, { once: true });
+      worker.onmessage = event => {
+        const message = event.data || {};
+        if (message.type === 'progress') {
+          if (options.onProgress) {
+            try { options.onProgress(message.progress); }
+            catch (error) { cleanup(); reject(error); }
+          }
+        } else if (message.type === 'done') { cleanup(); resolve(message.result); }
+        else if (message.type === 'error') {
+          const error = new Error(message.error.message); error.name = message.error.name;
+          cleanup(); reject(error);
+        }
+      };
+      worker.onerror = event => {
+        const error = new Error(event.message || 'CSV Worker 无法启动');
+        error.workerStartup = true;
+        cleanup(); reject(error);
+      };
+      const settings = {};
+      ['encoding', 'delimiter', 'chunkSize', 'sampleSize', 'yieldMs', 'progressIntervalMs', 'skipEmptyRows', 'objectRows'].forEach(key => {
+        if (options[key] !== undefined) settings[key] = options[key];
+      });
+      try { worker.postMessage({ type: 'parse', file, options: settings }); }
+      catch (error) { cleanup(); reject(error); }
+    }).catch(error => {
+      // Some hosts disallow blob workers via CSP. The same bounded, yielding
+      // scanner remains usable in that host without a second parser implementation.
+      if (error.workerStartup && options.fallback !== false) return parseFile(file, options);
+      throw error;
+    });
+    return result;
+  }
+
+  return { parseFile, parseInWorker, createCsvParser, detectEncoding, detectDelimiter, createWorkerSource };
+});
+
+</script>
+<script data-workbench-xlsx="v1">
+(function (root, factory) {
+  'use strict';
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.WorkbenchXlsx = factory();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createWorkbenchXlsx() {
+  'use strict';
+
+  const now = () => typeof performance !== 'undefined' ? performance.now() : Date.now();
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+  function abortError() {
+    const error = new Error('Excel 导入已取消'); error.name = 'AbortError'; return error;
+  }
+  function checkAbort(signal) { if (signal && signal.aborted) throw abortError(); }
+  function cellString(value) {
+    if (value === null || value === undefined) return '';
+    if (value instanceof Date && Number.isFinite(value.getTime())) return value.toISOString();
+    return String(value);
+  }
+
+  // The browser entry point below always runs this function in a Worker. It is
+  // exported separately for deterministic offline Node checks with the same CE
+  // library. Numeric cells use their underlying .v value; text IDs stay text.
+  async function parseWorkbookBytes(bytes, xlsx, options) {
+    options = options || {};
+    checkAbort(options.signal);
+    if (!xlsx || typeof xlsx.read !== 'function' || !xlsx.utils) throw new Error('Excel 解析库未就绪');
+    const total = bytes.byteLength;
+    let rowsParsed = 0, lastProgress = -Infinity, lastYield = now();
+    function progress(phase, percent, sheet, force) {
+      if (typeof options.onProgress !== 'function') return;
+      const time = now();
+      if (!force && time - lastProgress < 80) return;
+      lastProgress = time;
+      options.onProgress({ phase, percent, loaded: total, total, rowsParsed, sheet: sheet || '' });
+    }
+    progress('decoding', 15, '', true);
+    checkAbort(options.signal);
+    const decodeStart = now();
+    const workbook = xlsx.read(bytes, {
+      type: 'array', dense: true, raw: true, cellDates: false,
+      cellText: false, cellNF: false, cellFormula: false, bookVBA: false
+    });
+    const decodeMilliseconds = now() - decodeStart;
+    checkAbort(options.signal);
+    const extractStart = now(), sheets = [], count = workbook.SheetNames.length;
+    progress('extracting', 40, '', true);
+    for (let index = 0; index < count; index++) {
+      checkAbort(options.signal);
+      const name = workbook.SheetNames[index];
+      const matrix = xlsx.utils.sheet_to_json(workbook.Sheets[name], {
+        header: 1, raw: true, defval: '', blankrows: true, range: 0
+      });
+      // Convert in place, retaining one final matrix per sheet. No JSON copy or
+      // display formatter is used, so decimal precision and textual IDs survive.
+      // Keep leading/interior blank rows: matrix[i] must mean Excel row i + 1,
+      // including when the sheet's used range starts below row 1. AUTO IDs and
+      // old buyer-edit matching depend on those original source row numbers.
+      for (let rowIndex = 0; rowIndex < matrix.length; rowIndex++) {
+        const row = matrix[rowIndex];
+        let nonempty = false;
+        for (let column = 0; column < row.length; column++) {
+          row[column] = cellString(row[column]);
+          if (row[column] !== '') nonempty = true;
+        }
+        if (nonempty) rowsParsed++;
+        if (rowIndex % 500 === 0) {
+          checkAbort(options.signal);
+          progress('extracting', Math.floor(40 + 55 * (index + (rowIndex + 1) / Math.max(1, matrix.length)) / Math.max(1, count)), name, false);
+          if (now() - lastYield >= 8) { await pause(); checkAbort(options.signal); lastYield = now(); }
+        }
+      }
+      sheets.push({ name, matrix });
+      progress('extracting', Math.floor(40 + 55 * (index + 1) / Math.max(1, count)), name, true);
+    }
+    checkAbort(options.signal);
+    const extractMilliseconds = now() - extractStart;
+    progress('done', 100, '', true);
+    return {
+      sheets, bytesRead: total, rowsParsed, sheetCount: sheets.length,
+      engine: 'SheetJS CE', version: xlsx.version,
+      timings: { decodeMilliseconds, extractMilliseconds }
+    };
+  }
+
+  function workerMain(factory) {
+    const api = factory();
+    self.onmessage = async event => {
+      const message = event.data || {};
+      if (message.type !== 'parse') return;
+      try {
+        const vendor = new URL(message.vendorUrl);
+        if (!/^https?:$/.test(vendor.protocol) || vendor.origin !== message.origin) throw new Error('Excel 解析库必须来自本站');
+        self.postMessage({ type: 'progress', progress: { phase: 'reading', percent: 0, loaded: 0, total: message.file.size, rowsParsed: 0 } });
+        importScripts(vendor.href);
+        if (!self.XLSX || self.XLSX.version !== '0.20.3') throw new Error('Excel 解析库版本不正确');
+        const bytes = await message.file.arrayBuffer();
+        self.postMessage({ type: 'progress', progress: { phase: 'reading', percent: 10, loaded: bytes.byteLength, total: message.file.size, rowsParsed: 0 } });
+        const result = await api.parseWorkbookBytes(bytes, self.XLSX, {
+          onProgress: progress => self.postMessage({ type: 'progress', progress })
+        });
+        // Only the final matrices cross the Worker boundary; intermediate
+        // workbook structures and compressed input remain in the Worker.
+        self.postMessage({ type: 'done', result });
+      } catch (error) {
+        self.postMessage({ type: 'error', error: { name: error.name, message: error.message } });
+      }
+    };
+  }
+
+  function createWorkerSource() {
+    return '(' + workerMain.toString() + ')(' + createWorkbenchXlsx.toString() + ');';
+  }
+
+  function resolveVendorUrl(value) {
+    const base = typeof document !== 'undefined' ? document.baseURI : typeof location !== 'undefined' ? location.href : '';
+    const origin = typeof location !== 'undefined' ? location.origin : '';
+    const url = new URL(value || 'vendor/xlsx.full.min.js', base);
+    if (!/^https?:$/.test(url.protocol) || !origin || url.origin !== origin) throw new Error('Excel 解析库必须通过本站地址加载');
+    return url.href;
+  }
+
+  // No implicit main-thread SheetJS fallback: callers can retain their existing
+  // small-file/embedded-image importer when Blob Workers are not available.
+  async function parseInWorker(file, options) {
+    options = options || {};
+    checkAbort(options.signal);
+    if (!file || typeof file.arrayBuffer !== 'function' || !Number.isFinite(file.size)) throw new Error('请选择有效的 Excel 文件');
+    if (typeof Worker === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL) {
+      const error = new Error('当前环境无法启动 Excel 后台解析'); error.name = 'WorkerUnavailableError'; throw error;
+    }
+    const vendorUrl = resolveVendorUrl(options.vendorUrl);
+    const origin = new URL(vendorUrl).origin;
+    const url = URL.createObjectURL(new Blob([createWorkerSource()], { type: 'text/javascript' }));
+    let worker;
+    try { worker = new Worker(url); }
+    catch (error) { URL.revokeObjectURL(url); throw error; }
+    return new Promise((resolve, reject) => {
+      const signal = options.signal;
+      const cleanup = () => {
+        if (signal) signal.removeEventListener('abort', cancelled);
+        worker.terminate(); URL.revokeObjectURL(url);
+      };
+      const cancelled = () => { cleanup(); reject(abortError()); };
+      if (signal) signal.addEventListener('abort', cancelled, { once: true });
+      worker.onmessage = event => {
+        const message = event.data || {};
+        if (message.type === 'progress') {
+          if (typeof options.onProgress === 'function') {
+            try { options.onProgress(message.progress); }
+            catch (error) { cleanup(); reject(error); }
+          }
+        } else if (message.type === 'done') { cleanup(); resolve(message.result); }
+        else if (message.type === 'error') {
+          const error = new Error(message.error.message); error.name = message.error.name;
+          cleanup(); reject(error);
+        }
+      };
+      worker.onerror = event => {
+        const error = new Error(event.message || 'Excel 后台解析启动失败');
+        cleanup(); reject(error);
+      };
+      try { worker.postMessage({ type: 'parse', file, vendorUrl, origin }); }
+      catch (error) { cleanup(); reject(error); }
+    });
+  }
+
+  return { parseInWorker, parseWorkbookBytes, createWorkerSource, resolveVendorUrl };
+});
+
+</script>
+<script data-workbench-export="v1">
+(function (root, factory) {
+  'use strict';
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.WorkbenchExport = factory();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function createWorkbenchExport() {
+  'use strict';
+
+  const pause = () => new Promise(resolve => setTimeout(resolve, 0));
+  function abortError() {
+    const error = new Error('导出已取消'); error.name = 'AbortError'; return error;
+  }
+  function checkAbort(signal) { if (signal && signal.aborted) throw abortError(); }
+  function validate(table, format) {
+    if (format !== 'xlsx' && format !== 'csv') throw new Error('请选择 Excel 或 CSV 导出格式');
+    if (!table || !Array.isArray(table.headers) || !table.headers.length || !Array.isArray(table.data)) {
+      throw new Error('导出数据必须包含 headers 和 data');
+    }
+    if (format === 'xlsx' && (table.headers.length > 16384 || table.data.length > 1048575)) {
+      throw new Error('导出数据超出 Excel 行列限制，请筛选后重试');
+    }
+  }
+
+  // Keep the same XML 1.0 cleaning and Excel UTF-16 cell limit as index.html.
+  function xmlEsc(s) {
+    let input = String(s ?? ''), clean = '';
+    for (let i = 0; i < input.length; i++) {
+      const c = input.charCodeAt(i);
+      if (c === 9 || c === 10 || c === 13 || (c >= 32 && c <= 0xD7FF) || (c >= 0xE000 && c <= 0xFFFD)) { clean += input[i]; continue; }
+      if (c >= 0xD800 && c <= 0xDBFF) { const n = input.charCodeAt(i + 1); if (n >= 0xDC00 && n <= 0xDFFF) clean += input[i] + input[++i]; continue; }
+      if (c >= 0xDC00 && c <= 0xDFFF) continue;
+    }
+    if (clean.length > 32767) clean = clean.slice(0, 32767).replace(/[\uD800-\uDBFF]$/, '');
+    return clean.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function colName(n) {
+    let s = ''; for (n++; n; n = Math.floor((n - 1) / 26)) s = String.fromCharCode(65 + (n - 1) % 26) + s; return s;
+  }
+  function zip(files) {
+    const encoder = new TextEncoder(), parts = [], central = []; let offset = 0;
+    const table = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1); table[n] = c >>> 0; }
+    const crc32 = bytes => { let c = 0xffffffff; for (const b of bytes) c = table[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
+    const put16 = (view, at, value) => view.setUint16(at, value, true), put32 = (view, at, value) => view.setUint32(at, value >>> 0, true);
+    for (const file of files) {
+      const name = encoder.encode(file.n), data = encoder.encode(String(file.d)), crc = crc32(data), local = new Uint8Array(30 + name.length), lv = new DataView(local.buffer);
+      put32(lv, 0, 0x04034b50); put16(lv, 4, 20); put16(lv, 6, 0x0800); put16(lv, 8, 0); put16(lv, 10, 0); put16(lv, 12, 33); put32(lv, 14, crc); put32(lv, 18, data.length); put32(lv, 22, data.length); put16(lv, 26, name.length); put16(lv, 28, 0); local.set(name, 30); parts.push(local, data);
+      const entry = new Uint8Array(46 + name.length), cv = new DataView(entry.buffer);
+      put32(cv, 0, 0x02014b50); put16(cv, 4, 20); put16(cv, 6, 20); put16(cv, 8, 0x0800); put16(cv, 10, 0); put16(cv, 12, 0); put16(cv, 14, 33); put32(cv, 16, crc); put32(cv, 20, data.length); put32(cv, 24, data.length); put16(cv, 28, name.length); put16(cv, 30, 0); put16(cv, 32, 0); put16(cv, 34, 0); put16(cv, 36, 0); put32(cv, 38, 0); put32(cv, 42, offset); entry.set(name, 46); central.push(entry); offset += local.length + data.length;
+    }
+    const directoryLength = central.reduce((sum, part) => sum + part.length, 0), end = new Uint8Array(22), ev = new DataView(end.buffer);
+    put32(ev, 0, 0x06054b50); put16(ev, 4, 0); put16(ev, 6, 0); put16(ev, 8, files.length); put16(ev, 10, files.length); put32(ev, 12, directoryLength); put32(ev, 16, offset); put16(ev, 20, 0);
+    return new Blob([...parts, ...central, end], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+  function csvRow(row) {
+    return row.map(value => { const text = String(value ?? ''); return /[",\r\n]/.test(text) ? '"' + text.replace(/"/g, '""') + '"' : text; }).join(',');
+  }
+  function xlsxRow(row, number) {
+    return '<row r="' + number + '">' + row.map((value, index) => '<c r="' + colName(index) + number + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(value) + '</t></is></c>').join('') + '</row>';
+  }
+
+  async function serializeTable(table, options) {
+    options = options || {};
+    const format = options.format || 'xlsx';
+    checkAbort(options.signal); validate(table, format);
+    const totalRows = table.data.length;
+    const progress = (phase, percent, count) => {
+      if (typeof options.onProgress === 'function') options.onProgress({ phase, percent, rowsExported: count, totalRows });
+      checkAbort(options.signal);
+    };
+    progress('serializing', 0, 0);
+    // The fallback shares these chunks so it yields while building cells. The
+    // final XLSX join/CRC still runs locally when workerUsed is false.
+    await pause(); checkAbort(options.signal);
+    const parts = format === 'csv' ? ['\uFEFF', csvRow(table.headers)] : [xlsxRow(table.headers, 1)];
+    for (let index = 0; index < totalRows; index++) {
+      const row = table.data[index];
+      if (!Array.isArray(row) || row.length !== table.headers.length) throw new Error('导出数据行与表头列数不一致');
+      if (format === 'csv') parts.push('\r\n', csvRow(row));
+      else parts.push(xlsxRow(row, index + 2));
+      if ((index + 1) % 250 === 0) {
+        progress('serializing', Math.floor(85 * (index + 1) / Math.max(1, totalRows)), index + 1);
+        await pause(); checkAbort(options.signal);
+      }
+    }
+    progress('packaging', 90, totalRows);
+    await pause(); checkAbort(options.signal);
+    let blob;
+    if (format === 'csv') blob = new Blob(parts, { type: 'text/csv;charset=utf-8' });
+    else {
+      const end = colName(table.headers.length - 1) + (totalRows + 1);
+      const sheet = '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><sheetData>' + parts.join('') + '</sheetData><autoFilter ref="A1:' + end + '"/></worksheet>';
+      const ct = '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>';
+      const wb = '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="寻品工作看板" sheetId="1" r:id="rId1"/></sheets></workbook>';
+      const re = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+      const br = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';
+      blob = zip([{ n: '[Content_Types].xml', d: ct }, { n: '_rels/.rels', d: re }, { n: 'xl/workbook.xml', d: wb }, { n: 'xl/_rels/workbook.xml.rels', d: br }, { n: 'xl/worksheets/sheet1.xml', d: sheet }]);
+    }
+    progress('done', 100, totalRows);
+    return blob;
+  }
+
+  function workerMain(factory) {
+    const api = factory();
+    self.onmessage = async event => {
+      const message = event.data || {};
+      if (message.type !== 'export') return;
+      try {
+        const blob = await api.serializeTable(message.table, { format: message.format, onProgress: progress => self.postMessage({ type: 'progress', progress }) });
+        self.postMessage({ type: 'done', blob });
+      } catch (error) {
+        self.postMessage({ type: 'error', error: { name: error.name, message: error.message } });
+      }
+    };
+  }
+  function createWorkerSource() { return '(' + workerMain.toString() + ')(' + createWorkbenchExport.toString() + ');'; }
+
+  async function exportInWorker(table, options) {
+    options = options || {};
+    const format = options.format || 'xlsx';
+    checkAbort(options.signal); validate(table, format);
+    const result = (blob, workerUsed) => ({ blob, workerUsed, format, rowsExported: table.data.length });
+    const fallback = async () => result(await serializeTable(table, options), false);
+    if (typeof Worker === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL) return fallback();
+    let url, worker;
+    try {
+      url = URL.createObjectURL(new Blob([createWorkerSource()], { type: 'text/javascript' }));
+      worker = new Worker(url);
+    } catch (error) {
+      if (url) URL.revokeObjectURL(url);
+      return fallback();
+    }
+    return new Promise((resolve, reject) => {
+      const signal = options.signal;
+      let settled = false;
+      const finish = (error, blob) => {
+        if (settled) return;
+        settled = true;
+        if (signal) signal.removeEventListener('abort', cancelled);
+        worker.terminate(); URL.revokeObjectURL(url);
+        if (error) reject(error); else resolve(result(blob, true));
+      };
+      const cancelled = () => finish(abortError());
+      if (signal) signal.addEventListener('abort', cancelled, { once: true });
+      worker.onmessage = event => {
+        const message = event.data || {};
+        if (message.type === 'progress') {
+          if (typeof options.onProgress === 'function') {
+            try { options.onProgress(message.progress); } catch (error) { finish(error); }
+          }
+        } else if (message.type === 'done') finish(null, message.blob);
+        else if (message.type === 'error') {
+          const error = new Error(message.error.message); error.name = message.error.name; finish(error);
+        }
+      };
+      worker.onerror = event => finish(new Error(event.message || '后台导出失败，请重试'));
+      try { checkAbort(signal); worker.postMessage({ type: 'export', table, format }); }
+      catch (error) { finish(error); }
+    });
+  }
+  return { exportInWorker, serializeTable, createWorkerSource, xmlEsc, colName };
+});
+
+</script>
 <script>
 (function(){
+const qaEnabled=new URLSearchParams(location.search).get("qa")==="1";function reportQa(event,detail){if(qaEnabled)console.info("[BuyerQA] "+JSON.stringify({event,...detail}))}
+let workspace;
+try{workspace=BuyerWorkspace.resolve()}catch(error){const notice=document.getElementById('workspaceNotice');notice.hidden=false;notice.textContent=error.message+' ';const link=document.createElement('a');link.href='./?new=1';link.textContent='新建独立空白工作区';notice.append(link);document.querySelector('main').inert=true;return}
+let workspaceWriter=null,workspaceWritable=false;
+function canEditWorkspace(){return workspaceWritable&&workspaceWriter?.owner===true}
 const H=["是否可开发（添加筛选器）","不可开发原因（添加筛选器）","level1_global_be_category（添加筛选器）","level2_global_be_category（添加筛选器）","level3_global_be_category（添加筛选器）","model状态（添加筛选器）","主图图片","model 图片","Shopee link","item name\n原文（添加筛选器）","item name\n中文（添加筛选器）","Model name\n原文（添加筛选器）","Model name\n中文（添加筛选器）","Non Brand 倒算价","1688链接","1688价格","目标价","C8倒算价\n（默认折叠，点击+号可展开查看）","走C8目标价\n（默认折叠，点击+号可展开查看）","价格check","品牌（默认折叠，点击+号可展开查看）","款式（默认折叠，点击+号可展开查看）","件数（默认折叠，点击+号可展开查看）","是否放前置核价","model备注","邀请ID"];
 const S=["是\n否\n待定-倒算价可做，待1688前置核价\n待定-倒算价可做，1688价格申诉中\n待定-其他\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","26/已开发\n27/已重复\n28/禁售类目\n29/禁运类目\n30/超重限制\n31/IP侵权\n32/敏感词(宗教/政治敏感产品/虚拟/盲盒/定制产品等)\n33/赠品/补差\n34/季节性品-节庆品过季\n35/品牌品-大品牌暂不可开发(无quota)\n36/品牌品-Local品牌且无法在中国source到相似品牌(无quota)\n37/原品链接失效\n38/原品model信息不全无法开发\n39/全网找不到相似款，source难度大\n40/类目错配(备注EL和非EL)\n41/其他原因(需备注)\n41/其他原因-虚标\n41/其他原因-CB品牌暂未入驻/无法提品((且无quota))\n41/其他原因-倒算价小于0.5\n41/其他原园-倒算价>=0.5仍不可开发\n41/其他原因-其他价格原因\n41/其他原因-需要强售前售后支持\n41/其他原因-长尾类目但整个item只有单model\n41/其他原因-高rr，不适用全托管\n\n(这个部分买手可以自主选择以上几个选项，默认空白)","系统抓取level1_global_be_category","系统抓取level2_global_be_category","系统抓取level3_global_be_category","系统抓取下面这几个字段的结果展示\npool_type\nis_top_1k\ncspu_group_type_for_testing\ngrass_region\nasp_tag_by_l1\nsource_type_new\nsourcing_status_daily_refresh\n\n(这个部分集中展示，能买手清晰知道这个品的状态，6个结果)","系统抓取item_image表头字段","系统抓取model_image表头字段，如果值为空默认系统抓取item_image表头字段","系统抓取product_link字段","系统抓取item_name","Google 整句翻译；品牌型号保留，损坏原文需核对；手工译文优先","系统抓取model_name","Google 整句翻译；品牌型号保留，损坏原文需核对；手工译文优先","系统抓取backcal_cogs_non_brand","系统抓取final_1688_link","系统抓取final_1688_price_moq_3","系统自己算，取倒算价和1688价格最低值，min（Non Brand 倒算价&1688价格）","系统抓取backcal_cogs_white_label","系统自己算，取倒算价和1688价格最低值，min（C8倒算价&1688价格）","系统抓取backcal_cogs_non_brand是否≥final_1688_price_moq_3","优先抓取 mall_brand_name；为空时从 item name 原文和 Model name 原文提取\n买手可以手动修改结果","系统抓取item_name和model name归纳\n如白色\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","系统抓取item_name和model name归纳\n3pcs\n\n这个地方默认展示系统结果，但是结果方框买手可自己修改结果，自定义","当final_1688_price_moq_3为空值的时候，显示“未前置核价”\n买手可以选择是否放核价：Y/N\n前置核价日期：可双击选择当前年月日\n备注：买手可以自行备注","买手自行备注","买手上传 Model ID 与邀请ID后自动匹配；可编辑" ];
 const FIELD=H.map((h,i)=>({h:h,s:S[i],i:i,display:h.replace(/[（(][^）)]*[）)]/g,"").trim(),filter:true,foldGroup:i>=17&&i<=18?"c8":i>=20&&i<=22?"attrs":""}));
 
-let rows=[],headers=H.slice(),sourceFileName="",selected=new Set(),filters={},opened=new Set(),groupView=true,showFold=false,showC8=false,showAttrs=false,threshold=90,groupingEnabled=false,historyMode=false,liveSnapshot=null,historyRows=[],hasUnsavedChanges=false,saveWaiters=[];let pageIndex=0,pageSize=100,visibleRows=[],activeHashRun=0,dbPromise=null,saveTimer=null,searchTimer=0,saveAllPending=false,dirtyRows=new Set(),saveInProgress=false,saveFailureNotified=false,activeProductCard="",activeZoomSource="",imageZoomTimer=0;const statusFilterKeys=["pool_type","is_top_1k","cspu_group_type_for_testing","grass_region","asp_tag_by_l1","source_type_new","sourcing_status_daily_refresh"];
-let buyerCustomOptions={};try{buyerCustomOptions=JSON.parse(localStorage.getItem("pool-buyer-custom-options-v1")||"{}")}catch(e){};
+let rows=[],headers=H.slice(),sourceFileName="",selected=new Set(),filters={},opened=new Set(),groupView=true,showFold=false,showC8=false,showAttrs=false,threshold=90,groupingEnabled=false,historyMode=false,liveSnapshot=null,historyRows=[],hasUnsavedChanges=false,saveWaiters=[];let pageIndex=0,pageSize=50,visibleRows=[],activeHashRun=0,dbPromise=null,saveTimer=null,searchTimer=0,saveAllPending=false,dirtyRows=new Set(),saveInProgress=false,saveFailureNotified=false,activeProductCard="",activeZoomSource="",imageZoomTimer=0;const statusFilterKeys=["pool_type","is_top_1k","cspu_group_type_for_testing","grass_region","asp_tag_by_l1","source_type_new","sourcing_status_daily_refresh"];
+let buyerCustomOptions={};try{buyerCustomOptions=JSON.parse(localStorage.getItem(workspace.storageKey("pool-buyer-custom-options-v1"))||"{}")}catch(e){};
 const rawLookupCache=new WeakMap(),rawSchemaLookup=new Map();const $=x=>document.getElementById(x),esc=x=>String(x==null?"":x).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])),norm=x=>String(x||"").toLowerCase().replace(/[\s_（）():：-]/g,""),number=x=>{if(x==null||String(x).trim()==="")return null;let n=Number(String(x).replace(/[¥,$，\s]/g,""));return Number.isFinite(n)?n:null},toast=x=>{$("toast").textContent=x;setTimeout(()=>$("toast").textContent="",2600)};
 const keyMap=[["是否可开发","dev"],["不可开发原因","reason"],["level1_global_be_category","l1"],["level2_global_be_category","l2"],["level3_global_be_category","l3"],["model状态","status"],["主图图片","main"],["model图片","modelimage"],["shopee link","product"],["item name原文","itemoriginal"],["item name中文","itemchinese"],["model name原文","modeloriginal"],["model name中文","modelchinese"],["non brand倒算价","nb"],["1688链接","ali"],["1688价格","price"],["目标价","target"],["c8倒算价","c8"],["走c8目标价","c8target"],["价格check","check"],["品牌","brand"],["款式","style"],["件数","qty"],["是否放前置核价","pre"],["model备注","note"],["邀请ID","invite"]];
-function key(h){let n=norm(h);if(!n)return "";let mapped=keyMap.find(x=>n.includes(norm(x[0]))||norm(x[0]).includes(n));if(mapped)return mapped[1];let aliases=[["item_image","main"],["main_image","main"],["model_image","modelimage"],["product_link","product"],["item_name","itemoriginal"],["model_name","modeloriginal"],["backcal_cogs_non_brand","nb"],["final_1688_link","ali"],["final_1688_price_moq_3","price"],["backcal_cogs_white_label","c8"]];return aliases.find(x=>norm(x[0])===n)?.[1]||""}
+function key(h){const memo=key.memo||(key.memo=new Map());if(memo.has(h))return memo.get(h);const result=(()=>{let n=norm(h);if(!n)return "";let mapped=keyMap.find(x=>n.includes(norm(x[0]))||norm(x[0]).includes(n));if(mapped)return mapped[1];let aliases=[["item_image","main"],["main_image","main"],["model_image","modelimage"],["product_link","product"],["item_name","itemoriginal"],["model_name","modeloriginal"],["backcal_cogs_non_brand","nb"],["final_1688_link","ali"],["final_1688_price_moq_3","price"],["backcal_cogs_white_label","c8"]];return aliases.find(x=>norm(x[0])===n)?.[1]||""})();memo.set(h,result);return result}
 function safeHttpUrl(value){let text=String(value||"").trim();if(!text)return "";try{let u=new URL(text,location.href);return u.protocol==="https:"||u.protocol==="http:"?u.href:""}catch(e){return ""}}
 function safeImageUrl(value){let text=String(value||"").trim();if(/^data:image\/(?:png|jpe?g|webp|gif);base64,/i.test(text))return text;return safeHttpUrl(text)}
 function headerScore(row){let known=new Set(H.concat(FIELD.map(f=>f.display),statusFilterKeys,["item_image","main_image","model_image","product_link","item_name","model_name","model_id","backcal_cogs_non_brand","final_1688_link","final_1688_price_moq_3","backcal_cogs_white_label","invitation_id","invite_id","Invitation ID"]).map(norm));return row.reduce((n,h)=>n+(known.has(norm(h))?1:0),0)}
 function isMetaRow(values){let s=values.map(x=>String(x??"")).join(" ");return /系统抓取|自主选择以上几个选项|默认折叠，点击\+号|这个部分买手可以自主选择/.test(s)}
-function getRaw(r,aliases){let raw=r?.raw||{},cache=rawLookupCache.get(raw);if(!cache){let keys=Object.keys(raw),signature=keys.join("\u001f");cache=rawSchemaLookup.get(signature);if(!cache){let exact=new Map(),entries=[];for(let h of keys){let n=norm(h);entries.push([n,h]);if(!exact.has(n))exact.set(n,h)}cache={exact,entries};rawSchemaLookup.set(signature,cache)}rawLookupCache.set(raw,cache)}for(let alias of aliases){let h=cache.exact.get(norm(alias));if(h!=null&&raw[h]!==""&&raw[h]!=null)return raw[h]}for(let alias of aliases){let n=norm(alias);for(let [key,h] of cache.entries)if(key.includes(n)&&raw[h]!==""&&raw[h]!=null)return raw[h]}return ""}
-function invalidateRaw(r){if(r?.raw)rawLookupCache.delete(r.raw)}
+function getRaw(r,aliases){if(!getRaw.normalizeAlias){const aliasesMemo=new Map();getRaw.normalizeAlias=alias=>{if(!aliasesMemo.has(alias))aliasesMemo.set(alias,norm(alias));return aliasesMemo.get(alias)}}let raw=r?.raw||{},cache=rawLookupCache.get(raw);if(!cache){let keys=Object.keys(raw),signature=keys.join("\u001f");cache=rawSchemaLookup.get(signature);if(!cache){let exact=new Map(),entries=[];for(let h of keys){let n=norm(h);entries.push([n,h]);if(!exact.has(n))exact.set(n,h)}cache={exact,entries};rawSchemaLookup.set(signature,cache)}rawLookupCache.set(raw,cache)}for(let alias of aliases){let h=cache.exact.get(getRaw.normalizeAlias(alias));if(h!=null&&raw[h]!==""&&raw[h]!=null)return raw[h]}for(let alias of aliases){let n=getRaw.normalizeAlias(alias);for(let [key,h] of cache.entries)if(key.includes(n)&&raw[h]!==""&&raw[h]!=null)return raw[h]}return ""}
+function invalidateRaw(r){if(r?.raw)rawLookupCache.delete(r.raw);if(typeof calc==="function")calc.memo?.delete(r);if(typeof filtered==="function")filtered.memo?.delete(r);if(typeof textTokens==="function")textTokens.memo?.delete(r)}
 function normalizeModelId(value){let id=String(value??"").replace(/^\uFEFF/,"").trim().replace(/[\s,]/g,"");if(!id)return "";if(/^\d+\.0+$/.test(id))id=id.replace(/\.0+$/,"");if(/^\d+(?:\.\d+)?e[+-]?\d+$/i.test(id)){let n=Number(id);if(Number.isSafeInteger(n))id=String(n)}return id}function idFor(r){let id=normalizeModelId(getRaw(r,["Model ID","model_id","modelid","模型id"]));return id||"AUTO-"+String(r.excelRow||0).padStart(5,"0")}
 function round2(n){let x=Number(n);return Math.round((x+Math.sign(x||1)*Number.EPSILON)*100)/100}
 function format2(n){let x=number(n);return x==null?"":round2(x).toFixed(2)}
-function calc(r,k){let p=number(getRaw(r,["1688价格","final_1688_price_moq_3"]));if(k==="target"){let n=number(getRaw(r,["Non Brand 倒算价","backcal_cogs_non_brand"])),v=n!=null&&p!=null?Math.min(n,p):n??p??number(getRaw(r,["目标价"]));return v==null?"":format2(v)}if(k==="c8target"){let c=number(getRaw(r,["C8倒算价","backcal_cogs_white_label"])),v=c!=null&&p!=null?Math.min(c,p):c??p??number(getRaw(r,["走C8目标价"]));return v==null?"":format2(v)}if(k==="check"){let n=number(getRaw(r,["Non Brand 倒算价","backcal_cogs_non_brand"]));return n==null||p==null?"":n>=p?"是":"否"}return null}
-function value(r,h){if(norm(h).includes("modelid"))return idFor(r);if(norm(h).includes("商品组"))return r.manualGroup||r.group;if(h==="前置核价日期")return r.preDate||"";if(h==="前置核价备注")return r.preNote||"";let k=key(h);if(k==="target"||k==="c8target"||k==="check")return calc(r,k);if(k==="nb")return format2(getRaw(r,["Non Brand 倒算价","backcal_cogs_non_brand"]));if(k==="c8")return format2(getRaw(r,["C8倒算价","backcal_cogs_white_label"]));if(k==="main")return r.main||getRaw(r,["主图图片","item_image"]);if(k==="modelimage")return r.modelImage||getRaw(r,["model 图片","model_image"])||r.main||"";if(k==="status")return statusLines(r).map(x=>x[1]).join("\n");if(k==="pre")return r.preValue??getRaw(r,["是否放前置核价"]);if(k==="preDate")return r.preDate||"";if(k==="preNote")return r.preNote||"";let raw=r.raw||{},direct=raw[h],edited=(r.userEditedFields||[]).includes(h);if(edited||Object.prototype.hasOwnProperty.call(raw,h))return direct??"";return getRaw(r,aliasFor(k))??""}
+function calc(r,k){const memo=calc.memo||(calc.memo=new WeakMap());let c=memo.get(r);if(!c||c.raw!==r.raw){const raw=r.raw||{},read=(header,aliases)=>Object.prototype.hasOwnProperty.call(raw,header)?raw[header]:getRaw(r,aliases),p=number(read(H[15],['1688价格','final_1688_price_moq_3'])),n=number(read(H[13],['Non Brand 倒算价','backcal_cogs_non_brand'])),white=number(read(H[17],['C8倒算价','backcal_cogs_white_label']));c={raw,p,n,white,target:n!=null&&p!=null?Math.min(n,p):n??p??number(read(H[16],['目标价'])),c8target:white!=null&&p!=null?Math.min(white,p):white??p??number(read(H[18],['走C8目标价']))};memo.set(r,c)}if(k==='_targetNumber')return c.target;if(k==='_price')return c.p;if(k==='_nb')return c.n;if(k==='_c8')return c.white;if(k==='target'||k==='c8target')return c[k]==null?'':format2(c[k]);if(k==='check')return c.n==null||c.p==null?'':c.n>=c.p?'是':'否';return null}
+function value(r,h){if(norm(h).includes("modelid"))return idFor(r);if(norm(h).includes("商品组"))return r.manualGroup||r.group;if(h==="前置核价日期")return r.preDate||"";if(h==="前置核价备注")return r.preNote||"";let k=key(h);if(k==="target"||k==="c8target"||k==="check")return calc(r,k);if(k==="nb")return format2(calc(r,"_nb"));if(k==="c8")return format2(calc(r,"_c8"));if(k==="main")return r.main||getRaw(r,["主图图片","item_image"]);if(k==="modelimage")return r.modelImage||getRaw(r,["model 图片","model_image"])||r.main||"";if(k==="status")return statusLines(r).map(x=>x[1]).join("\n");if(k==="pre")return r.preValue??getRaw(r,["是否放前置核价"]);if(k==="preDate")return r.preDate||"";if(k==="preNote")return r.preNote||"";let raw=r.raw||{},direct=raw[h],edited=(r.userEditedFields||[]).includes(h);if(edited||Object.prototype.hasOwnProperty.call(raw,h))return direct??"";return getRaw(r,aliasFor(k))??""}
 function filterValue(r,h){let k=key(h);if(norm(h).includes("modelid"))return idFor(r);if(k==="main"||k==="modelimage")return String(value(r,h)||"").trim()?"有图片":"空白";return String(value(r,h)??"").trim()}
 function aliasFor(k){let x={dev:["是否可开发"],reason:["不可开发原因"],l1:["level1_global_be_category"],l2:["level2_global_be_category"],l3:["level3_global_be_category"],product:["Shopee link","product_link"],itemoriginal:["item name 原文","item_name"],itemchinese:["item name 中文"],modeloriginal:["Model name 原文","model_name"],modelchinese:["Model name 中文"],nb:["Non Brand 倒算价","backcal_cogs_non_brand"],ali:["1688链接","final_1688_link"],price:["1688价格","final_1688_price_moq_3"],c8:["C8倒算价","backcal_cogs_white_label"],brand:["品牌","mall_brand_name"],style:["款式"],qty:["件数"],note:["model备注"],invite:["邀请ID","invitation_id","invite_id"]};return x[k]||[]}
 function drawOptions(i) {
@@ -538,7 +1349,7 @@ function rememberBuyerOption(field, value) {
   const list = buyerCustomOptions[norm(field)] || [];
   if (!list.includes(v)) {
     list.push(v); buyerCustomOptions[norm(field)] = list;
-    try { localStorage.setItem("pool-buyer-custom-options-v1", JSON.stringify(buyerCustomOptions)); } catch (e) {}
+    try { localStorage.setItem(workspace.storageKey("pool-buyer-custom-options-v1"), JSON.stringify(buyerCustomOptions)); } catch (e) {}
     refreshBuyerDatalists();
   }
 }
@@ -550,23 +1361,23 @@ function visibleFields(){return FIELD.filter(f=>f.foldGroup!==""&&groupIsOpen(f.
 function displayColumns(){let out=[],foldAdded=new Set(),openSeen=new Set();for(let f of FIELD){if(f.foldGroup&&!groupIsOpen(f.foldGroup)){if(!foldAdded.has(f.foldGroup)){foldAdded.add(f.foldGroup);out.push({h:f.foldGroup==="c8"?"C8/核价列":"品牌/款式/件数",display:f.foldGroup==="c8"?"C8/核价（2列）":"品牌/款式/件数（3列）",s:"点击加号展开此列组。",k:"fold",foldGroup:f.foldGroup})}continue}let x=Object.assign({},f,{k:key(f.h)});if(f.foldGroup&&!openSeen.has(f.foldGroup)){x.collapseGroup=f.foldGroup;openSeen.add(f.foldGroup)}out.push(x)}return out}
 
 function colSize(f){let w={id:124,select:32,fold:112,dev:82,reason:145,l1:80,l2:80,l3:80,status:170,main:72,modelimage:72,product:88,itemoriginal:112,itemchinese:112,modeloriginal:112,modelchinese:112,nb:80,ali:96,price:72,target:72,c8:76,c8target:82,check:68,brand:72,style:76,qty:48,pre:180,note:220,invite:112};let idWidth=innerWidth<=900?92:w.id,selectWidth=innerWidth<=900?26:w.select;if(f.k==="id")return idWidth;if(f.k==="select")return selectWidth;let columns=displayColumns(),total=columns.reduce((n,c)=>n+(w[c.k]||118),0),box=document.querySelector(".gridbox"),available=Math.max(300,(box?.clientWidth||document.documentElement.clientWidth)-idWidth-selectWidth-2);return Math.max(1,Math.floor(available*(w[f.k]||118)/Math.max(1,total)))}
-function updateStats(a,g){$("groupsN").textContent=g.length;$("modelsN").textContent=a.length;$("pendingN").textContent=a.filter(r=>!String(getRaw(r,["是否可开发"])||"").trim()).length;$("priceN").textContent=a.filter(r=>!number(getRaw(r,["1688价格","final_1688_price_moq_3"]))).length;$("state").textContent=rows.length?(sourceFileName?sourceFileName+" · ":"")+rows.length+" 条源表记录":sourceFileName?sourceFileName+" · 未发现商品数据行":"等待导入商品数据";$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID"}
+function updateStats(a,g){$("groupsN").textContent=g.length;$("modelsN").textContent=a.length;$("pendingN").textContent=a.filter(r=>!String(value(r,H[0])||"").trim()).length;$("priceN").textContent=a.filter(r=>calc(r,"_price")==null).length;$("state").textContent=rows.length?(sourceFileName?sourceFileName+" · ":"")+rows.length+" 条源表记录":sourceFileName?sourceFileName+" · 未发现商品数据行":"等待导入商品数据";$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID"}
 function matchesState(state,v){if(!state)return true;let hasValues=Array.isArray(state.values),hasQuery=!!state.query,valueMatch=hasValues&&state.values.includes(String(v??"").trim()),queryMatch=hasQuery&&norm(v).includes(norm(state.query));if(hasValues&&hasQuery)return valueMatch&&queryMatch;if(hasValues)return valueMatch;return hasQuery?queryMatch:true}
-function updateSelectionUI(){let selectedVisible=0;for(let r of visibleRows)if(selected.has(r.uid))selectedVisible++;let all=$("selectVisible");if(all){all.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;all.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length}$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID";document.querySelectorAll("[data-select]").forEach(x=>x.checked=selected.has(x.dataset.select))}function filtered(){let q=norm($("search").value),idState=filters["Model ID"],fieldStates=FIELD.filter(f=>filters[f.h]),stateKeys=statusFilterKeys.filter(k=>filters["status:"+k]);if(!q&&!idState&&!fieldStates.length&&!stateKeys.length)return rows.slice();return rows.filter(r=>{if(q&&!norm(FIELD.map(f=>value(r,f.h)).join(" ")+" "+idFor(r)).includes(q))return false;if(idState&&!matchesState(idState,idFor(r)))return false;for(let f of fieldStates)if(!matchesState(filters[f.h],filterValue(r,f.h)))return false;for(let k of stateKeys)if(!matchesState(filters["status:"+k],statusValue(r,k)))return false;return true})}
+function updateSelectionUI(){let selectedVisible=0;for(let r of visibleRows)if(selected.has(r.uid))selectedVisible++;let all=$("selectVisible");if(all){all.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;all.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length}$("bulk").hidden=!selected.size;$("selText").textContent="已选 "+selected.size+" 个 Model ID";document.querySelectorAll("[data-select]").forEach(x=>x.checked=selected.has(x.dataset.select))}function filtered(){if(!filtered.searchText){filtered.memo=new WeakMap();filtered.searchText=r=>{let s=filtered.memo.get(r);if(s===undefined){s=norm(FIELD.filter(f=>f.i!==6&&f.i!==7).map(f=>value(r,f.h)).join(' ')+' '+idFor(r));filtered.memo.set(r,s)}return s}}let q=norm($("search").value),idState=filters["Model ID"],fieldStates=FIELD.filter(f=>filters[f.h]),stateKeys=statusFilterKeys.filter(k=>filters["status:"+k]);if(!q&&!idState&&!fieldStates.length&&!stateKeys.length)return rows.slice();return rows.filter(r=>{if(q&&!filtered.searchText(r).includes(q))return false;if(idState&&!matchesState(idState,idFor(r)))return false;for(let f of fieldStates)if(!matchesState(filters[f.h],filterValue(r,f.h)))return false;for(let k of stateKeys)if(!matchesState(filters["status:"+k],statusValue(r,k)))return false;return true})}
 function selectedSummary(values){return values.length?values.slice(0,3).map(v=>v||"（空白）").join(" 或 ")+(values.length>3?" 等 "+values.length+" 项":""):"无匹配项"}
 function activeFilterItems(){let a=[],q=$("search").value.trim();if(q)a.push({id:"__search",label:"全文搜索："+q});let idState=filters["Model ID"];if(idState){let bits=[];if(idState.values)bits.push(selectedSummary(idState.values));if(idState.query)bits.push("包含 "+idState.query);if(bits.length)a.push({id:"Model ID",label:"Model ID："+bits.join(" 且 ")})}for(let f of FIELD){let s=filters[f.h];if(!s)continue;let bits=[];if(s.values)bits.push(selectedSummary(s.values));if(s.query)bits.push("包含 "+s.query);if(bits.length)a.push({id:f.h,label:f.display+"："+bits.join(" 且 ")})}for(let k of statusFilterKeys){let s=filters["status:"+k];if(!s)continue;let bits=[];if(s.values)bits.push(selectedSummary(s.values));if(s.query)bits.push("包含 "+s.query);if(bits.length)a.push({id:"status:"+k,label:k+"："+bits.join(" 且 ")})}return a}
 function renderFilterSummary(a,g){$("result").textContent="当前结果："+a.length+" 个 Model ID · "+g.length+" 个商品组";let items=activeFilterItems();$("filterBadge").textContent=items.length?items.length+" 个筛选条件":"未添加筛选条件";$("filterChips").innerHTML=items.map(x=>'<span class="filter-chip" title="'+esc(x.label)+'"><span>'+esc(x.label)+'</span><button type="button" aria-label="移除筛选条件" data-remove-filter="'+esc(x.id)+'">×</button></span>').join("");document.querySelectorAll("[data-remove-filter]").forEach(b=>b.onclick=()=>{if(b.dataset.removeFilter==="__search")$("search").value="";else delete filters[b.dataset.removeFilter];render()})}
-function sorted(list){let dir=$("sort")?.value==="asc"?1:-1;return list.slice().sort((a,b)=>{let x=number(calc(a,"target")),y=number(calc(b,"target"));if(x==null)return y==null?(a.excelRow||0)-(b.excelRow||0):1;if(y==null)return -1;return (x-y)*dir})}
-function recordsGroups(list){let m=new Map();for(let r of list){let id=r.manualGroup||r.group||r.uid;if(!m.has(id))m.set(id,[]);m.get(id).push(r)}let groups=[...m.entries()];for(let [,a] of groups)a.sort((x,y)=>(number(calc(y,"target"))??-Infinity)-(number(calc(x,"target"))??-Infinity));let dir=$("sort")?.value==="asc"?1:-1;groups.sort((a,b)=>{let x=number(calc(a[1][0],"target")),y=number(calc(b[1][0],"target"));if(x==null)return y==null?0:1;if(y==null)return -1;return (x-y)*dir});return groups}
-function renderPager(totalGroups,totalModels){let pages=Math.max(1,Math.ceil(totalGroups/pageSize)),first=totalGroups?pageIndex*pageSize+1:0,last=Math.min(totalGroups,(pageIndex+1)*pageSize);$("pager").innerHTML='<span>显示组 '+first+'–'+last+' / '+totalGroups+'（'+totalModels+' 个 Model ID）</span><button type="button" id="pagePrev" '+(pageIndex<=0?'disabled':'')+'>上一页</button><span>第 '+(pageIndex+1)+' / '+pages+' 页</span><button type="button" id="pageNext" '+(pageIndex>=pages-1?'disabled':'')+'>下一页</button><label>每页 <select id="pageSize">'+[50,100,200,500].map(n=>'<option value="'+n+'" '+(n===pageSize?'selected':'')+'>'+n+'</option>').join('')+'</select> 组</label>';$("pagePrev").onclick=()=>{if(pageIndex>0){pageIndex--;render()}};$("pageNext").onclick=()=>{if(pageIndex<pages-1){pageIndex++;render()}};$("pageSize").onchange=()=>{pageSize=Number($("pageSize").value)||100;pageIndex=0;render()}}
-function render(){closeProductCard();closeImageZoom();let a=filtered(),g=recordsGroups(a),idcol={h:"Model ID",display:"Model ID",s:"源表没有 Model ID 时按源表行号自动生成。",k:"id",filter:true},selcol={h:"勾选",display:"勾选",s:"选择 Model ID 以进行批量填充或手动合并。",k:"select",filter:false},cols=[idcol,selcol].concat(displayColumns()),collapsed=FIELD.length-visibleFields().length,pages=Math.max(1,Math.ceil(g.length/pageSize));pageIndex=Math.max(0,Math.min(pageIndex,pages-1));let start=pageIndex*pageSize,pageGroups=g.slice(start,start+pageSize);visibleRows=[];for(let [gid,list] of pageGroups){visibleRows.push(list[0]);if(opened.has(gid))for(let r of list.slice(1))visibleRows.push(r)}updateStats(a,g);renderFilterSummary(a,g);$("result").textContent="当前结果："+a.length+" 个 Model ID · "+g.length+" 个商品组；26 个数据表头，折叠 "+collapsed+" 列";renderPager(g.length,a.length);let html="<colgroup>"+cols.map(f=>"<col style=\"width:"+colSize(f)+"px\">").join("")+"</colgroup><thead><tr>"+cols.map(f=>{if(f.k==="select")return "<th title=\"勾选本页可见 Model ID\"><input id=\"selectVisible\" type=\"checkbox\" aria-label=\"勾选本页可见 Model ID\"></th>";if(f.k==="fold")return "<th class=\"fold-head\"><button type=\"button\" class=\"fold-toggle\" data-fold=\""+f.foldGroup+"\" title=\"展开列组\">＋</button><span>"+esc(f.display)+"</span></th>";let active=filters[f.h]||(f.k==="id"&&filters["Model ID"])||(f.k==="status"&&statusFilterKeys.some(k=>filters["status:"+k]));return "<th title=\""+esc(f.s)+"\"><div class=\"thtext\">"+(f.collapseGroup?'<button type=\"button\" class=\"fold-toggle fold-minus\" data-fold=\"'+f.collapseGroup+'\" title=\"折叠列组\">−</button>':"")+esc(f.display).replace(/\n/g,"<br>")+"</div>"+(f.filter?"<button class=\"fbtn "+(active?"active":"")+"\" data-filter=\""+esc(f.h)+"\">"+(f.k==="status"?"7项状态筛选 ▾":"筛选 ▾")+"</button>":"")+"</th>"}).join("")+"</tr></thead>";if(!rows.length)html+="<tbody><tr><td colspan=\""+cols.length+"\" class=\"empty\"><b>等待导入商品数据</b>所选文件如果只有表头和字段说明，会显示 0 条记录；请选择包含商品数据行的 XLSX 或 CSV。</td></tr></tbody>";else if(!a.length)html+="<tbody><tr><td colspan=\""+cols.length+"\" class=\"empty\">当前筛选没有匹配记录</td></tr></tbody>";else for(let [gid,list] of pageGroups){html+='<tbody class="group-body">'+rowHtml(list[0],cols,list.length,gid,false);if(opened.has(gid))for(let r of list.slice(1))html+=rowHtml(r,cols,list.length,gid,true);html+="</tbody>"}$("table").innerHTML=html;let grid=document.querySelector(".gridbox"),thead=$("table").querySelector("thead");if(grid&&thead)grid.style.setProperty("--table-head-height",thead.getBoundingClientRect().height+"px");updateSelectionUI();bindTable();queueVisibleTranslation()}
+function sorted(list){let dir=$("sort")?.value==="asc"?1:-1;return list.slice().sort((a,b)=>{let x=calc(a,"_targetNumber"),y=calc(b,"_targetNumber");if(x==null)return y==null?(a.excelRow||0)-(b.excelRow||0):1;if(y==null)return -1;return (x-y)*dir})}
+function recordsGroups(list){let m=new Map();for(let r of list){let id=r.manualGroup||r.group||r.uid;if(!m.has(id))m.set(id,[]);m.get(id).push(r)}let groups=[...m.entries()];for(let [,a] of groups)a.sort((x,y)=>(calc(y,"_targetNumber")??-Infinity)-(calc(x,"_targetNumber")??-Infinity));let dir=$("sort")?.value==="asc"?1:-1;groups.sort((a,b)=>{let x=calc(a[1][0],"_targetNumber"),y=calc(b[1][0],"_targetNumber");if(x==null)return y==null?0:1;if(y==null)return -1;return (x-y)*dir});return groups}
+function renderPager(totalGroups,totalModels){let pages=Math.max(1,Math.ceil(totalGroups/pageSize)),first=totalGroups?pageIndex*pageSize+1:0,last=Math.min(totalGroups,(pageIndex+1)*pageSize);$("pager").innerHTML='<span>显示组 '+first+'–'+last+' / '+totalGroups+'（'+totalModels+' 个 Model ID）</span><button type="button" id="pagePrev" '+(pageIndex<=0?'disabled':'')+'>上一页</button><span>第 '+(pageIndex+1)+' / '+pages+' 页</span><button type="button" id="pageNext" '+(pageIndex>=pages-1?'disabled':'')+'>下一页</button><label>每页 <select id="pageSize">'+[25,50,100,200].map(n=>'<option value="'+n+'" '+(n===pageSize?'selected':'')+'>'+n+'</option>').join('')+'</select> 组</label>';$("pagePrev").onclick=()=>{if(pageIndex>0){pageIndex--;render()}};$("pageNext").onclick=()=>{if(pageIndex<pages-1){pageIndex++;render()}};$("pageSize").onchange=()=>{pageSize=Number($("pageSize").value)||50;pageIndex=0;render()}}
+function render(){const renderStarted=Date.now();closeProductCard();closeImageZoom();if(!render.childOffsets)render.childOffsets=new Map();if(render.dataset!==rows){render.dataset=rows;render.childOffsets.clear()}const criteria=JSON.stringify(filters)+'\u0000'+$('search').value;if(render.criteria!==criteria){render.criteria=criteria;pageIndex=0}const childrenFor=(gid,list)=>{const total=list.length-1,offset=Math.max(0,Math.min(render.childOffsets.get(gid)||0,Math.max(0,Math.floor((total-1)/50)*50)));render.childOffsets.set(gid,offset);return list.slice(offset+1,offset+51)};let a=filtered(),g=recordsGroups(a),idcol={h:"Model ID",display:"Model ID",s:"源表没有 Model ID 时按源表行号自动生成。",k:"id",filter:true},selcol={h:"勾选",display:"勾选",s:"选择 Model ID 以进行批量填充或手动合并。",k:"select",filter:false},cols=[idcol,selcol].concat(displayColumns()),collapsed=FIELD.length-visibleFields().length,pages=Math.max(1,Math.ceil(g.length/pageSize));pageIndex=Math.max(0,Math.min(pageIndex,pages-1));let start=pageIndex*pageSize,pageGroups=g.slice(start,start+pageSize);visibleRows=[];for(let [gid,list] of pageGroups){visibleRows.push(list[0]);if(opened.has(gid))for(let r of childrenFor(gid,list))visibleRows.push(r)}updateStats(a,g);renderFilterSummary(a,g);$("result").textContent="当前结果："+a.length+" 个 Model ID · "+g.length+" 个商品组；26 个数据表头，折叠 "+collapsed+" 列";renderPager(g.length,a.length);let html="<colgroup>"+cols.map(f=>"<col style=\"width:"+colSize(f)+"px\">").join("")+"</colgroup><thead><tr>"+cols.map(f=>{if(f.k==="select")return "<th title=\"勾选本页可见 Model ID\"><input id=\"selectVisible\" type=\"checkbox\" aria-label=\"勾选本页可见 Model ID\"></th>";if(f.k==="fold")return "<th class=\"fold-head\"><button type=\"button\" class=\"fold-toggle\" data-fold=\""+f.foldGroup+"\" title=\"展开列组\">＋</button><span>"+esc(f.display)+"</span></th>";let active=filters[f.h]||(f.k==="id"&&filters["Model ID"])||(f.k==="status"&&statusFilterKeys.some(k=>filters["status:"+k]));return "<th title=\""+esc(f.s)+"\"><div class=\"thtext\">"+(f.collapseGroup?'<button type=\"button\" class=\"fold-toggle fold-minus\" data-fold=\"'+f.collapseGroup+'\" title=\"折叠列组\">−</button>':"")+esc(f.display).replace(/\n/g,"<br>")+"</div>"+(f.filter?"<button class=\"fbtn "+(active?"active":"")+"\" data-filter=\""+esc(f.h)+"\">"+(f.k==="status"?"7项状态筛选 ▾":"筛选 ▾")+"</button>":"")+"</th>"}).join("")+"</tr></thead>";if(!rows.length)html+="<tbody><tr><td colspan=\""+cols.length+"\" class=\"empty\"><b>等待导入商品数据</b>所选文件如果只有表头和字段说明，会显示 0 条记录；请选择包含商品数据行的 XLSX 或 CSV。</td></tr></tbody>";else if(!a.length)html+="<tbody><tr><td colspan=\""+cols.length+"\" class=\"empty\">当前筛选没有匹配记录</td></tr></tbody>";else for(let [gid,list] of pageGroups){html+='<tbody class="group-body">'+rowHtml(list[0],cols,list.length,gid,false);if(opened.has(gid)){for(let r of childrenFor(gid,list))html+=rowHtml(r,cols,list.length,gid,true);if(list.length>51){const offset=render.childOffsets.get(gid)||0,total=list.length-1;html+='<tr class="group-child"><td colspan="'+cols.length+'"><div class="group-child-pager"><button class="btn" data-child-page="'+esc(gid)+'" data-offset="'+Math.max(0,offset-50)+'" '+(offset===0?'disabled':'')+'>上一批</button><span>同组子型号 '+(offset+1)+'–'+Math.min(total,offset+50)+' / '+total+'</span><button class="btn" data-child-page="'+esc(gid)+'" data-offset="'+(offset+50)+'" '+(offset+50>=total?'disabled':'')+'>下一批</button></div></td></tr>'}}html+="</tbody>"}$("table").innerHTML=html;let grid=document.querySelector(".gridbox"),thead=$("table").querySelector("thead");if(grid&&thead)grid.style.setProperty("--table-head-height",thead.getBoundingClientRect().height+"px");if(grid){const parents=[...$("table").querySelectorAll(".group-parent-sticky")];grid.style.setProperty("--group-parent-height",Math.max(0,...parents.map(el=>el.getBoundingClientRect().height))+"px")}updateSelectionUI();bindTable();queueVisibleTranslation();if(typeof reportQa==="function"&&rows.length)reportQa("render",{rows:rows.length,visible:visibleRows.length,milliseconds:Date.now()-renderStarted})}
 function rowHtml(r, cols, count, gid, isChild) {
-  const disabled = historyMode ? " disabled" : "";
+  const disabled = historyMode || !canEditWorkspace() ? " disabled" : "";
   const rowClass = !isChild && count > 1 && opened.has(gid) ? "group-parent-sticky" : isChild ? "group-child" : "";
   return "<tr class=\"" + rowClass + "\">" + cols.map(f => {
     if (f.k === "id") {
       const label = opened.has(gid) ? "收起同组型号" : "同组型号 · " + count + " 个";
-      return "<td><div class=\"modelid-line\"><span>" + esc(idFor(r)) + "</span><button class=\"share-btn\" type=\"button\" data-share=\"" + esc(r.uid) + "\" title=\"生成产品信息卡片\" aria-label=\"预览 " + esc(idFor(r)) + "\">↗</button></div>" + (count > 1 && !isChild ? "<button class=\"group-toggle\" data-toggle=\"" + esc(gid) + "\"" + disabled + ">" + label + "</button>" : isChild ? "<span class=\"muted\">同组展开明细</span>" : "") + "</td>";
+      return "<td><div class=\"modelid-line\"><span>" + esc(idFor(r)) + "</span><button class=\"share-btn\" type=\"button\" data-share=\"" + esc(r.uid) + "\" title=\"生成产品信息卡片\" aria-label=\"预览 " + esc(idFor(r)) + "\">↗</button></div>" + (count > 1 && !isChild ? "<button class=\"group-toggle\" data-toggle=\"" + esc(gid) + "\"" + ">" + label + "</button>" : isChild ? "<span class=\"muted\">同组展开明细</span>" : "") + "</td>";
     }
     if (f.k === "select") return "<td><input class=\"selectbox\" type=\"checkbox\" data-select=\"" + esc(r.uid) + "\" " + (selected.has(r.uid) ? "checked" : "") + disabled + "></td>";
     if (f.k === "fold") return "<td class=\"fold-cell\">该组已折叠</td>";
@@ -749,7 +1560,12 @@ function toggleProductCard(uid, anchor) {
     if (target && document.body.contains(card)) target.textContent = categoryPath(r);
   }).catch(() => {});
 }
-function bindTable(){document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onclick=e=>{e.stopPropagation();showImageZoom(x)};x.onpointerleave=scheduleImageZoomClose});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode)return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode)return;if(k==="raw"){r.raw[field]=x.value;if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
+async function uploadRowImage(input){
+  if(!canEditWorkspace()||historyMode)return;const file=input.files?.[0],record=rows.find(r=>r.uid===input.dataset.image);if(!file||!record)return;
+  if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>8*1024*1024){toast("请选择不超过 8MB 的 PNG/JPEG/WebP/GIF 图片");return}
+  try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file)});if(!canEditWorkspace()||historyMode||!rows.includes(record))return;const kind=input.dataset.kind==="modelImage"?"modelImage":"main",field=kind==="main"?H[6]:H[7];record[kind]=data;record.raw[field]=data;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),field])];record.hash="";invalidateRaw(record);markDirty(record);save();render();toast("图片已更新并加入自动保存")}catch(error){toast("图片读取失败："+(error.message||"请重试"))}
+}
+function bindTable(){document.querySelectorAll("[data-image]").forEach(input=>input.onchange=()=>uploadRowImage(input));document.querySelectorAll("[data-edit=preDate]").forEach(input=>input.ondblclick=()=>{if(historyMode||!canEditWorkspace())return;const now=new Date();input.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0")+"-"+String(now.getDate()).padStart(2,"0");input.dispatchEvent(new Event("change",{bubbles:true}))});document.querySelectorAll("[data-child-page]").forEach(button=>button.onclick=()=>{render.childOffsets.set(button.dataset.childPage,Number(button.dataset.offset));render()});document.querySelectorAll("[data-translation-source]").forEach(button=>button.onclick=()=>editTranslationSource(button.dataset.id,Number(button.dataset.translationSource)));document.querySelectorAll("[data-fold]").forEach(x=>x.onclick=()=>{if(x.dataset.fold==="c8")showC8=!showC8;else showAttrs=!showAttrs;render()});document.querySelectorAll("[data-toggle]").forEach(x=>x.onclick=()=>{let k=x.dataset.toggle;opened.has(k)?opened.delete(k):opened.add(k);render()});document.querySelectorAll("[data-share]").forEach(x=>x.onclick=e=>{e.stopPropagation();toggleProductCard(x.dataset.share,x)});document.querySelectorAll("[data-zoom]").forEach(x=>{x.onclick=e=>{e.stopPropagation();showImageZoom(x)};x.onpointerleave=scheduleImageZoomClose});document.querySelectorAll("[data-select]").forEach(x=>x.onchange=()=>{x.checked?selected.add(x.dataset.select):selected.delete(x.dataset.select);updateSelectionUI()});let all=$("selectVisible");if(all){all.onchange=()=>{for(let r of visibleRows)all.checked?selected.add(r.uid):selected.delete(r.uid);updateSelectionUI()}}document.querySelectorAll("[data-filter]").forEach(x=>x.onclick=e=>{e.stopPropagation();filterPopup(x.dataset.filter,x)});document.querySelectorAll("[data-edit]").forEach(x=>{if(x.dataset.edit==="raw"&&(x.tagName==="INPUT"||x.tagName==="TEXTAREA")&&x.type!=="date")x.oninput=()=>{let r=rows.find(y=>y.uid===x.dataset.id),field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;r.raw[field]=x.value;invalidateRaw(r);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;markDirty(r);if([H[13],H[15],H[17]].includes(field)||key(field)==="price"||key(field)==="nb"||key(field)==="c8")updateCalculatedCells(r);save()}});document.querySelectorAll("[data-edit]").forEach(x=>x.onchange=async()=>{let r=rows.find(y=>y.uid===x.dataset.id),k=x.dataset.edit,field=x.dataset.field;if(!r||historyMode||!canEditWorkspace())return;if(k==="raw"){r.raw[field]=x.value;invalidateRaw(r);if(field===H[0]||field===H[1])rememberBuyerOption(field,x.value);r.userEditedFields=[...new Set([...(r.userEditedFields||[]),field])];if(field===H[10]){r.autoItemChinese=false;r.localTranslatedItem=false}if(field===H[12]){r.autoModelChinese=false;r.localTranslatedModel=false}if(field===H[9]){r.autoItemChinese=true;r.localTranslatedItem=false}if(field===H[11]){r.autoModelChinese=true;r.localTranslatedModel=false}if(field===H[20])r.autoBrand=false;if(field===H[21])r.autoStyle=false;if(field===H[22])r.autoQty=false;if([H[9],H[11],H[20],H[21],H[22]].includes(field)){deriveRecord(r);await regroup()}}else if(k==="preValue"){r.preValue=x.value;r.preTouched=true}else if(k==="preDate"){r.preDate=x.value;r.preTouched=true}else{r.preNote=x.value;r.preTouched=true}markDirty(r);render();save()})}
 function filterPopup(h,anchor){
   if(key(h)==="status"){statusFilterPopup(anchor);return}
   document.querySelector(".filterpop")?.remove();
@@ -769,7 +1585,7 @@ function filterPopup(h,anchor){
   drawOptions()
 }function statusFilterPopup(anchor){document.querySelector(".filterpop")?.remove();let p=document.createElement("div"),rect=anchor.getBoundingClientRect(),vals={},draft={},parts=[];p.className="filterpop";for(let k of statusFilterKeys){vals[k]=[...new Set(rows.map(r=>statusValue(r,k)))].sort((a,b)=>a.localeCompare(b));let id="status:"+k,state=filters[id];draft[k]=new Set(state?.values||vals[k]);parts.push("<details class=\"status-filter-group\" open><summary>"+esc(k)+(state?" · 已设置":"")+"</summary><input class=\"status-search\" data-status-search=\""+esc(k)+"\" placeholder=\"包含筛选 "+esc(k)+"\" value=\""+esc(state?.query||"")+"\"><div><button class=\"btn\" type=\"button\" data-status-all=\""+esc(k)+"\">全选</button> <button class=\"btn\" type=\"button\" data-status-none=\""+esc(k)+"\">清空勾选</button></div><div class=\"status-filter-values\">"+vals[k].map(v=>"<label data-status-option><input type=\"checkbox\" data-status-key=\""+esc(k)+"\" data-status-value=\""+esc(v)+"\" "+(draft[k].has(v)?"checked":"")+"> "+esc(v||"（空白）")+"</label>").join("")+"</div></details>")}let width=Math.min(420,innerWidth-12),left=Math.max(6,Math.min(rect.left,innerWidth-width-6)),top=Math.max(6,Math.min(rect.bottom+4,innerHeight-520));p.style.cssText="position:fixed;z-index:100;background:white;padding:12px;border:1px solid #dce6df;border-radius:9px;width:"+width+"px;max-height:min(520px,calc(100vh - 12px));overflow:auto;left:"+left+"px;top:"+top+"px";p.innerHTML="<button class=\"filter-close\" id=\"filterClose\" type=\"button\" aria-label=\"关闭筛选\">×</button><b>model状态 · 7 个独立字段</b><p class=\"muted\">字段之间按“且”组合；同一字段勾选多个值按“或”匹配。也可输入包含内容。</p>"+parts.join("")+"<div class=\"filter-actions\"><button class=\"btn\" id=\"statusClear\">清空全部状态条件</button> <button class=\"btn primary\" id=\"statusApply\">应用状态筛选</button></div>";document.body.append(p);p.querySelector("#filterClose").onclick=()=>p.remove();p.querySelectorAll("[data-status-key]").forEach(x=>x.onchange=()=>{let k=x.dataset.statusKey;x.checked?draft[k].add(x.dataset.statusValue):draft[k].delete(x.dataset.statusValue)});p.querySelectorAll("[data-status-all]").forEach(x=>x.onclick=()=>{let k=x.dataset.statusAll;draft[k]=new Set(vals[k]);p.querySelectorAll('[data-status-key="'+k+'"]').forEach(y=>y.checked=true)});p.querySelectorAll("[data-status-none]").forEach(x=>x.onclick=()=>{let k=x.dataset.statusNone;draft[k]=new Set();p.querySelectorAll('[data-status-key="'+k+'"]').forEach(y=>y.checked=false)});p.querySelector("#statusClear").onclick=()=>{for(let k of statusFilterKeys)delete filters["status:"+k];delete filters[H[5]];p.remove();render()};p.querySelector("#statusApply").onclick=()=>{for(let k of statusFilterKeys){let id="status:"+k,query=p.querySelector('[data-status-search="'+k+'"]').value.trim(),values=draft[k].size<vals[k].length?[...draft[k]]:null;if(values||query)filters[id]={...(values?{values}:{}),...(query?{query}:{})};else delete filters[id]}p.remove();render()}}
 function drawer(kind){let content;if(kind==="schema")content=FIELD.map(f=>"<div class=\"schema\"><b>"+esc(f.display)+"</b><div>"+esc(f.s)+"</div></div>").join("")+"<div class=\"schema\"><b>Model ID</b><div>源表未提供此字段时，由工作台按源表行号生成；导入文件若有 Model ID 列则优先读取。</div></div>";else{let entries=[{id:"Model ID",label:"Model ID"}].concat(FIELD.map(f=>({id:f.h,label:f.display})),statusFilterKeys.map(k=>({id:"status:"+k,label:"model状态 · "+k})));content="<p class=\"muted\">输入内容会在对应字段中做包含筛选；不同字段条件按“且”组合。要多选具体值，请点表头的筛选器。</p>"+entries.map(x=>"<div class=\"filterrow\"><label>"+esc(x.label)+"</label><input data-dfilter=\""+esc(x.id)+"\" value=\""+esc(filters[x.id]?.query||"")+"\" placeholder=\"输入包含内容\"></div>").join("")} $("overlay").innerHTML="<div class=\"panel\"><aside class=\"drawer\"><div class=\"dhead\"><b>"+(kind==="schema"?"字段内容与来源（Excel 第 2 行）":"所有字段筛选")+"</b><button class=\"btn\" id=\"closeDrawer\">关闭</button></div>"+content+"</aside></div>";$("closeDrawer").onclick=()=>$("overlay").innerHTML="";$("overlay").querySelector(".panel").onclick=e=>{if(e.target.classList.contains("panel"))$("overlay").innerHTML=""};document.querySelectorAll("[data-dfilter]").forEach(x=>x.oninput=()=>{let id=x.dataset.dfilter,q=x.value.trim(),s=filters[id]||{};if(q)s.query=q;else delete s.query;if(s.values||s.query)filters[id]=s;else delete filters[id];render()})}
-function batch() {
+function batch() {if(!canEditWorkspace()||historyMode)return;
   const fields = [H[0],H[1],H[20],H[21],H[22],H[24]];
   const rowsHtml = fields.map(h => {
     const name = FIELD.find(f => f.h === h)?.display || h, choice = h === H[0] || h === H[1];
@@ -778,7 +1594,7 @@ function batch() {
   }).join("");
   $("overlay").innerHTML = "<div class=\"modalbg\"><div class=\"modal\"><h3>其他字段批量填充</h3><p>作用于 " + selected.size + " 个已选 Model ID；空白字段保持不变。是否可开发和不可开发原因可选默认项，也可输入新值；新值会加入本机选项。</p>" + rowsHtml + "<div class=\"rowf\"><label>1688价格</label><input type=\"number\" step=\"0.01\" data-batch=\"1688价格\"></div><button class=\"btn\" id=\"cancel\">取消</button> <button class=\"btn primary\" id=\"applyBatch\">应用</button></div></div>";
   $("cancel").onclick = () => $("overlay").innerHTML = "";
-  $("applyBatch").onclick = () => {
+  $("applyBatch").onclick = () => {if(!canEditWorkspace()||historyMode)return;
     const vals = {};
     document.querySelectorAll("[data-batch]").forEach(x => vals[x.dataset.batch] = x.value);
     for (const r of rows.filter(x => selected.has(x.uid))) {
@@ -788,7 +1604,7 @@ function batch() {
         r.raw[field] = vals[k]; invalidateRaw(r);
         r.userEditedFields = Array.from(new Set([...(r.userEditedFields || []),field]));
         if (field === H[0] || field === H[1]) rememberBuyerOption(field, vals[k]);
-        if (field === H[20]) r.autoBrand = false;
+        if (field === H[20]) r.autoBrand = false;if (field === H[21]) r.autoStyle = false;if (field === H[22]) r.autoQty = false;
         changed = true;
       }
       if (changed) markDirty(r);
@@ -797,26 +1613,48 @@ function batch() {
   };
 }
 
-function merge(on){let a=rows.filter(r=>selected.has(r.uid));if(on&&a.length<2){toast("请至少勾选两个 Model ID");return}let id="手动组-"+Date.now();for(let r of a){r.manualGroup=on?id:"";r.group=on?id:"UNGROUPED-"+r.uid;markDirty(r)}selected.clear();if(!on&&groupingEnabled)regroup().then(()=>{save();render()});save();render()}function splitSelectedFromGroups(){let chosen=rows.filter(r=>selected.has(r.uid));if(!chosen.length){toast("请先勾选要移出的 Model ID");return}for(let r of chosen){r.manualGroup="单独-"+r.uid;r.group=r.manualGroup;markDirty(r)}selected.clear();save();render();toast("已将 "+chosen.length+" 个 Model ID 从原组移出并单独展示")}function openWorkbenchDB(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{if(!window.indexedDB){reject(Error("浏览器未开放本地数据库"));return}let req=indexedDB.open("buyer-pool-workbench",2);req.onupgradeneeded=()=>{let db=req.result;if(!db.objectStoreNames.contains("records"))db.createObjectStore("records",{keyPath:"uid"});if(!db.objectStoreNames.contains("meta"))db.createObjectStore("meta",{keyPath:"key"});if(!db.objectStoreNames.contains("versions"))db.createObjectStore("versions",{keyPath:"id"});if(!db.objectStoreNames.contains("versionRecords")){let store=db.createObjectStore("versionRecords",{keyPath:["versionId","uid"]});store.createIndex("versionId","versionId",{unique:false})}};req.onsuccess=()=>resolve(req.result);req.onerror=()=>{dbPromise=null;reject(req.error||Error("打开本地数据库失败"))}});return dbPromise}
+function merge(on){if(!canEditWorkspace()||historyMode)return;let a=rows.filter(r=>selected.has(r.uid));if(on&&a.length<2){toast("请至少勾选两个 Model ID");return}let id="手动组-"+Date.now();for(let r of a){r.manualGroup=on?id:"";r.group=on?id:"UNGROUPED-"+r.uid;markDirty(r)}selected.clear();if(!on&&groupingEnabled)regroup().then(()=>{save();render()});save();render()}function splitSelectedFromGroups(){if(!canEditWorkspace()||historyMode)return;let chosen=rows.filter(r=>selected.has(r.uid));if(!chosen.length){toast("请先勾选要移出的 Model ID");return}for(let r of chosen){r.manualGroup="单独-"+r.uid;r.group=r.manualGroup;markDirty(r)}selected.clear();save();render();toast("已将 "+chosen.length+" 个 Model ID 从原组移出并单独展示")}function openWorkbenchDB(){if(dbPromise)return dbPromise;dbPromise=new Promise((resolve,reject)=>{if(!window.indexedDB){reject(Error("浏览器未开放本地数据库"));return}let req=indexedDB.open(workspace.dbName(),2);req.onupgradeneeded=()=>{let db=req.result;if(!db.objectStoreNames.contains("records"))db.createObjectStore("records",{keyPath:"uid"});if(!db.objectStoreNames.contains("meta"))db.createObjectStore("meta",{keyPath:"key"});if(!db.objectStoreNames.contains("versions"))db.createObjectStore("versions",{keyPath:"id"});if(!db.objectStoreNames.contains("versionRecords")){let store=db.createObjectStore("versionRecords",{keyPath:["versionId","uid"]});store.createIndex("versionId","versionId",{unique:false})}};req.onsuccess=()=>resolve(req.result);req.onerror=()=>{dbPromise=null;reject(req.error||Error("打开本地数据库失败"))}});return dbPromise}
 function dbRequest(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||Error("本地数据库请求失败"))})}
 async function loadWorkbenchState(){let db=await openWorkbenchDB(),tx=db.transaction(["records","meta"],"readonly"),rowsReq=tx.objectStore("records").getAll(),metaReq=tx.objectStore("meta").get("current"),result=await Promise.all([dbRequest(rowsReq),dbRequest(metaReq)]);return{rows:result[0]||[],meta:result[1]||null}}
 function localDateKey(d=new Date()){return String(d.getFullYear())+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")}
 async function listVersions(){let db=await openWorkbenchDB(),tx=db.transaction(["versions"],"readonly");return (await dbRequest(tx.objectStore("versions").getAll())).sort((a,b)=>b.createdAt-a.createdAt)}
 async function refreshVersions(selectId=""){let versions=await listVersions(),el=$("versionSelect");el.innerHTML=versions.length?versions.map(v=>'<option value="'+esc(v.id)+'">'+esc(v.label)+" · "+v.rowCount+" 条</option>").join(""):'<option value="">暂无历史版本</option>';if(selectId&&versions.some(v=>v.id===selectId))el.value=selectId;historyRows=versions;return versions}
-async function openVersionManager(){let versions=await listVersions(),box=$("versionManager");box.innerHTML='<div class="modalbg" id="versionManagerBackdrop"><div class="modal version-modal"><div class="version-head"><h3>管理历史版本</h3><button type="button" class="btn" id="closeVersionManager" aria-label="关闭">×</button></div><p class="muted">勾选要删除的版本；删除后，该版本及其本机快照记录会一起移除。</p><div class="version-list" id="versionDeleteList">'+(versions.length?versions.map(v=>'<label class="version-row"><input type="checkbox" data-version-delete="'+esc(v.id)+'"><span><b>'+esc(v.label)+'</b><small>'+esc(new Date(v.createdAt).toLocaleString('zh-CN'))+' · '+v.rowCount+' 条记录</small></span></label>').join(""):'<div class="empty">当前没有历史版本</div>')+'</div><div class="version-actions"><label><input type="checkbox" id="selectAllVersions"> 全选</label><div><button type="button" class="btn" id="cancelVersionDelete">关闭</button><button type="button" class="btn primary" id="deleteSelectedVersions" '+(versions.length?'':'disabled')+'>删除所选版本（0）</button></div></div></div></div>';let backdrop=$("versionManagerBackdrop"),all=$("selectAllVersions"),del=$("deleteSelectedVersions");$("closeVersionManager").onclick=$("cancelVersionDelete").onclick=()=>box.innerHTML="";backdrop.onclick=e=>{if(e.target===backdrop)box.innerHTML=""};function update(){let checks=[...box.querySelectorAll("[data-version-delete]")],n=checks.filter(x=>x.checked).length;del.disabled=!n;del.textContent="删除所选版本（"+n+"）";all.checked=checks.length>0&&n===checks.length;all.indeterminate=n>0&&n<checks.length}box.querySelectorAll("[data-version-delete]").forEach(x=>x.onchange=update);all.onchange=()=>{box.querySelectorAll("[data-version-delete]").forEach(x=>x.checked=all.checked);update()};del.onclick=async()=>{let ids=[...box.querySelectorAll("[data-version-delete]:checked")].map(x=>x.dataset.versionDelete);if(!ids.length)return;if(!confirm("确定永久删除所选 "+ids.length+" 个历史版本及对应快照记录吗？"))return;del.disabled=true;try{let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["versions","versionRecords"],"readwrite"),versionsStore=tx.objectStore("versions"),recordIndex=tx.objectStore("versionRecords").index("versionId");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("删除历史版本失败"));tx.onabort=()=>reject(tx.error||Error("删除历史版本已中断"));for(let id of ids){versionsStore.delete(id);let req=recordIndex.openCursor(IDBKeyRange.only(id));req.onsuccess=e=>{let cursor=e.target.result;if(cursor){cursor.delete();cursor.continue()}}}});box.innerHTML="";await refreshVersions();toast("已删除 "+ids.length+" 个历史版本及其快照记录")}catch(e){console.error(e);toast("删除历史版本失败："+(e?.message||"本机存储异常"));del.disabled=false}};update()}
-async function saveVersion(){if(historyMode){toast("请先返回当前数据再保存版本");return}save(true);clearTimeout(saveTimer);let ok=await flushSave();if(!ok){toast("自动保存失败，未创建版本");return}let versions=await listVersions(),prefix=localDateKey(),seq=versions.filter(v=>v.id.startsWith(prefix+"-V")).length+1,id=prefix+"-V"+seq,label=id,meta={id,label,createdAt:Date.now(),sourceFileName:sourceFileName,threshold:threshold,groupingEnabled:groupingEnabled,headers:headers.slice(),rowCount:rows.length};let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["versions","versionRecords"],"readwrite");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("保存历史版本失败"));tx.onabort=()=>reject(tx.error||Error("保存历史版本已中断"));tx.objectStore("versions").put(meta);let store=tx.objectStore("versionRecords");for(let r of rows)store.put({versionId:id,uid:r.uid,record:r})});await refreshVersions(id);toast("历史版本已保存："+label)}
+async function openVersionManager(){let versions=await listVersions(),box=$("versionManager");box.innerHTML='<div class="modalbg" id="versionManagerBackdrop"><div class="modal version-modal"><div class="version-head"><h3>管理历史版本</h3><button type="button" class="btn" id="closeVersionManager" aria-label="关闭">×</button></div><p class="muted">勾选要删除的版本；删除后，该版本及其本机快照记录会一起移除。</p><div class="version-list" id="versionDeleteList">'+(versions.length?versions.map(v=>'<label class="version-row"><input type="checkbox" data-version-delete="'+esc(v.id)+'"><span><b>'+esc(v.label)+'</b><small>'+esc(new Date(v.createdAt).toLocaleString('zh-CN'))+' · '+v.rowCount+' 条记录</small></span></label>').join(""):'<div class="empty">当前没有历史版本</div>')+'</div><div class="version-actions"><label><input type="checkbox" id="selectAllVersions"> 全选</label><div><button type="button" class="btn" id="cancelVersionDelete">关闭</button><button type="button" class="btn primary" id="deleteSelectedVersions" '+(versions.length?'':'disabled')+'>删除所选版本（0）</button></div></div></div></div>';let backdrop=$("versionManagerBackdrop"),all=$("selectAllVersions"),del=$("deleteSelectedVersions");$("closeVersionManager").onclick=$("cancelVersionDelete").onclick=()=>box.innerHTML="";backdrop.onclick=e=>{if(e.target===backdrop)box.innerHTML=""};function update(){let checks=[...box.querySelectorAll("[data-version-delete]")],n=checks.filter(x=>x.checked).length;del.disabled=!n;del.textContent="删除所选版本（"+n+"）";all.checked=checks.length>0&&n===checks.length;all.indeterminate=n>0&&n<checks.length}box.querySelectorAll("[data-version-delete]").forEach(x=>x.onchange=update);all.onchange=()=>{box.querySelectorAll("[data-version-delete]").forEach(x=>x.checked=all.checked);update()};del.onclick=async()=>{if(!canEditWorkspace()||historyMode)return;let ids=[...box.querySelectorAll("[data-version-delete]:checked")].map(x=>x.dataset.versionDelete);if(!ids.length)return;if(!confirm("确定永久删除所选 "+ids.length+" 个历史版本及对应快照记录吗？"))return;del.disabled=true;try{let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["versions","versionRecords"],"readwrite"),versionsStore=tx.objectStore("versions"),recordIndex=tx.objectStore("versionRecords").index("versionId");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("删除历史版本失败"));tx.onabort=()=>reject(tx.error||Error("删除历史版本已中断"));for(let id of ids){versionsStore.delete(id);let req=recordIndex.openCursor(IDBKeyRange.only(id));req.onsuccess=e=>{let cursor=e.target.result;if(cursor){cursor.delete();cursor.continue()}}}});box.innerHTML="";await refreshVersions();toast("已删除 "+ids.length+" 个历史版本及其快照记录")}catch(e){console.error(e);toast("删除历史版本失败："+(e?.message||"本机存储异常"));del.disabled=false}};update()}
+async function saveVersion(){
+  if(!canEditWorkspace()){toast("此工作区已在其他标签编辑，请关闭旧标签后刷新");return}
+  if(historyMode){toast("请先返回当前数据再保存版本");return}
+  if(saveVersion.running){toast("历史版本正在保存，请稍候");return}
+  saveVersion.running=true;const button=$("saveVersion");if(button)button.disabled=true;
+  try{
+    // Freeze both row values and metadata before any asynchronous save/import can change them.
+    const snapshot=rows.map(record=>({...record,raw:{...record.raw},...(Array.isArray(record.userEditedFields)?{userEditedFields:record.userEditedFields.slice()}:{})}));
+    const sourceMeta={sourceFileName,threshold,groupingEnabled,headers:headers.slice(),rowCount:snapshot.length};
+    save(true);clearTimeout(saveTimer);const ok=await flushSave();
+    if(!ok){toast("自动保存失败，未创建版本");return}
+    const versions=await listVersions(),prefix=localDateKey(),seq=versions.reduce((maximum,version)=>{const match=String(version.id).match(new RegExp("^"+prefix+"-V(\\d+)$"));return match?Math.max(maximum,Number(match[1])):maximum},0)+1,id=prefix+"-V"+seq;
+    if(!canEditWorkspace())throw Error("当前工作区已失去编辑权限，未创建版本");
+    const meta={id,label:id,createdAt:Date.now(),...sourceMeta},db=await openWorkbenchDB();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(["versions","versionRecords"],"readwrite");tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error||Error("保存历史版本失败"));tx.onabort=()=>reject(tx.error||Error("保存历史版本已中断"));
+      tx.objectStore("versions").add(meta);
+      writeRecordBatches(tx,tx.objectStore("versionRecords"),snapshot,record=>({versionId:id,uid:record.uid,record}),(done,total)=>{if(total>500)$("saveState").textContent="保存历史版本 "+done.toLocaleString()+" / "+total.toLocaleString()});
+    });
+    await refreshVersions(id);$("saveState").textContent="历史版本已保存 · "+id;toast("历史版本已保存："+id);
+  }finally{saveVersion.running=false;if(button)button.disabled=!canEditWorkspace()||historyMode}
+}
 async function readVersion(id){if(!id)throw Error("请先选择历史版本");let db=await openWorkbenchDB(),tx=db.transaction(["versions","versionRecords"],"readonly"),metaReq=tx.objectStore("versions").get(id),rowsReq=tx.objectStore("versionRecords").index("versionId").getAll(IDBKeyRange.only(id)),result=await Promise.all([dbRequest(metaReq),dbRequest(rowsReq)]);if(!result[0])throw Error("历史版本不存在或已删除");return{meta:result[0],rows:result[1].map(x=>x.record)}}
-async function showVersion(id){if(!historyMode&&(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress)){clearTimeout(saveTimer);if(!await flushSave())throw Error("当前编辑尚未保存，无法切换历史版本")}let snap=await readVersion(id);if(!liveSnapshot)liveSnapshot={rows:rows,headers:headers,sourceFileName:sourceFileName,threshold:threshold,groupingEnabled:groupingEnabled};rows=snap.rows;headers=snap.meta.headers||H.slice();sourceFileName=snap.meta.sourceFileName||snap.meta.label;threshold=Number(snap.meta.threshold)||90;groupingEnabled=!!snap.meta.groupingEnabled;if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;historyMode=true;filters={};selected.clear();opened.clear();pageIndex=0;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";$("returnCurrent").hidden=false;$("groupState").textContent="历史只读 · "+snap.meta.label;render();toast("正在查看历史版本 "+snap.meta.label)}
+async function showVersion(id){if(importFile.running){toast("请先完成或取消当前导入");return}if(!historyMode&&(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress)){clearTimeout(saveTimer);if(!await flushSave())throw Error("当前编辑尚未保存，无法切换历史版本")}let snap=await readVersion(id);if(!liveSnapshot)liveSnapshot={rows:rows,headers:headers,sourceFileName:sourceFileName,threshold:threshold,groupingEnabled:groupingEnabled};rows=snap.rows;headers=snap.meta.headers||H.slice();sourceFileName=snap.meta.sourceFileName||snap.meta.label;threshold=Number(snap.meta.threshold)||90;groupingEnabled=!!snap.meta.groupingEnabled;if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;historyMode=true;filters={};selected.clear();opened.clear();pageIndex=0;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";$("returnCurrent").hidden=false;$("groupState").textContent="历史只读 · "+snap.meta.label;render();toast("正在查看历史版本 "+snap.meta.label)}
 function returnToCurrent(){if(!liveSnapshot)return;rows=liveSnapshot.rows;headers=liveSnapshot.headers;sourceFileName=liveSnapshot.sourceFileName;threshold=liveSnapshot.threshold;groupingEnabled=!!liveSnapshot.groupingEnabled;liveSnapshot=null;historyMode=false;filters={};selected.clear();opened.clear();pageIndex=0;$("returnCurrent").hidden=true;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";$("groupState").textContent=groupingEnabled?"图片相似度分组已启用":"当前为平铺未分组";render()}
-async function restoreVersionAsCurrent(id){if(!id)throw Error("请先选择历史版本");if(!confirm("将历史版本恢复为当前工作数据？当前数据会被替换，但仍可从历史版本列表查看已保存版本。"))return;let snap=await readVersion(id);rows=snap.rows;headers=snap.meta.headers||H.slice();sourceFileName=snap.meta.sourceFileName||snap.meta.label;threshold=Number(snap.meta.threshold)||90;groupingEnabled=!!snap.meta.groupingEnabled;historyMode=false;liveSnapshot=null;filters={};selected.clear();opened.clear();pageIndex=0;$("returnCurrent").hidden=true;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";await regroup();save(true);render();toast("已恢复为当前数据："+snap.meta.label)}
-function markDirty(r){if(historyMode||!r?.uid)return;refreshTranslationReadiness(r);scheduleTranslationStatus();dirtyRows.add(r.uid);hasUnsavedChanges=true;if($("saveState"))$("saveState").textContent="有未保存的更改 · 正在自动保存"}
-function save(all=false){if(historyMode)return;if(all)saveAllPending=true;if(!all&&!dirtyRows.size)return;hasUnsavedChanges=true;$("saveState").textContent="保存中…";clearTimeout(saveTimer);saveTimer=setTimeout(()=>flushSave(),120)}
-async function flushSave(){if(historyMode)return true;if(saveInProgress)return new Promise(resolve=>saveWaiters.push(resolve));if(!saveAllPending&&!dirtyRows.size){hasUnsavedChanges=false;return true}saveInProgress=true;let failed=false,all=saveAllPending,ids=[...dirtyRows];saveAllPending=false;dirtyRows.clear();let wanted=new Set(ids),records=all?rows.slice():rows.filter(r=>wanted.has(r.uid)),succeeded=false;try{let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["records","meta"],"readwrite"),store=tx.objectStore("records");tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error("保存本地记录失败"));tx.onabort=()=>reject(tx.error||Error("本地保存已中断"));if(all)store.clear();for(let r of records)store.put(r);tx.objectStore("meta").put({key:"current",headers:headers,sourceFileName:sourceFileName,threshold:threshold,groupingEnabled:groupingEnabled,savedAt:Date.now()})});succeeded=true;$(("saveState")).textContent="已保存到本机 · "+new Date().toLocaleTimeString();saveFailureNotified=false}catch(e){failed=true;console.error(e);if(all)saveAllPending=true;else for(let id of ids)dirtyRows.add(id);$("saveState").textContent="本机保存失败 · 请检查存储空间";if(!saveFailureNotified){saveFailureNotified=true;toast("本机保存失败，请先导出 Excel 备份再继续编辑")}}finally{saveInProgress=false;if(!failed&&(saveAllPending||dirtyRows.size)){clearTimeout(saveTimer);saveTimer=setTimeout(()=>flushSave(),180)}else{hasUnsavedChanges=failed;if(saveWaiters.length){let waiters=saveWaiters.splice(0);for(let resolve of waiters)resolve(succeeded)}}}return succeeded}
+async function restoreVersionAsCurrent(id){if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()){toast("当前工作区不可写");return}if(!id)throw Error("请先选择历史版本");if(!confirm("将历史版本恢复为当前工作数据？当前数据会被替换，但仍可从历史版本列表查看已保存版本。"))return;let snap=await readVersion(id);rows=snap.rows;headers=snap.meta.headers||H.slice();sourceFileName=snap.meta.sourceFileName||snap.meta.label;threshold=Number(snap.meta.threshold)||90;groupingEnabled=!!snap.meta.groupingEnabled;historyMode=false;liveSnapshot=null;filters={};selected.clear();opened.clear();pageIndex=0;$("returnCurrent").hidden=true;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";await regroup();save(true);render();toast("已恢复为当前数据："+snap.meta.label)}
+function markDirty(r){if(!canEditWorkspace()||historyMode||!r?.uid)return;if(typeof filtered==="function")filtered.memo?.delete(r);refreshTranslationReadiness(r);scheduleTranslationStatus();dirtyRows.add(r.uid);hasUnsavedChanges=true;if($("saveState"))$("saveState").textContent="有未保存的更改 · 正在自动保存"}
+function save(all=false){if(!canEditWorkspace()||historyMode)return;if(all)saveAllPending=true;if(!all&&!dirtyRows.size)return;hasUnsavedChanges=true;$("saveState").textContent="保存中…";clearTimeout(saveTimer);saveTimer=setTimeout(()=>flushSave(),120)}
+function writeRecordBatches(tx,store,records,project,progress){let next=0;function pump(){try{let last;const end=Math.min(records.length,next+200);for(;next<end;next++)last=store.put(project?project(records[next]):records[next]);if(progress)progress(next,records.length);if(next<records.length){if(last&&'onsuccess' in last)last.onsuccess=pump;else pump()}}catch(error){if(typeof tx.abort==='function')tx.abort();else throw error}}pump()}
+async function flushSave(){if(!canEditWorkspace())return false;if(historyMode)return true;if(saveInProgress)return new Promise(resolve=>saveWaiters.push(resolve));if(!saveAllPending&&!dirtyRows.size){hasUnsavedChanges=false;return true}saveInProgress=true;let failed=false,all=saveAllPending,ids=[...dirtyRows];saveAllPending=false;dirtyRows.clear();let wanted=new Set(ids),records=all?rows.slice():rows.filter(r=>wanted.has(r.uid)),succeeded=false;try{let db=await openWorkbenchDB();await new Promise((resolve,reject)=>{let tx=db.transaction(["records","meta"],"readwrite"),store=tx.objectStore("records");tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error||Error("保存本地记录失败"));tx.onabort=()=>reject(tx.error||Error("本地保存已中断"));if(all)store.clear();writeRecordBatches(tx,store,records,null,(done,total)=>{if(total>500)$("saveState").textContent="保存到本机 "+done.toLocaleString()+" / "+total.toLocaleString()});tx.objectStore("meta").put({key:"current",headers:headers,sourceFileName:sourceFileName,threshold:threshold,groupingEnabled:groupingEnabled,savedAt:Date.now()})});succeeded=true;$(("saveState")).textContent="已保存到本机 · "+new Date().toLocaleTimeString();saveFailureNotified=false}catch(e){failed=true;console.error(e);if(all)saveAllPending=true;else for(let id of ids)dirtyRows.add(id);$("saveState").textContent="本机保存失败 · 请检查存储空间";if(!saveFailureNotified){saveFailureNotified=true;toast("本机保存失败，请先导出 Excel 备份再继续编辑")}}finally{saveInProgress=false;if(!failed&&(saveAllPending||dirtyRows.size)){clearTimeout(saveTimer);saveTimer=setTimeout(()=>flushSave(),180)}else{hasUnsavedChanges=failed;if(saveWaiters.length){let waiters=saveWaiters.splice(0);for(let resolve of waiters)resolve(succeeded)}}}return succeeded}
 function base64(a){let s="";for(let i=0;i<a.length;i+=30000)s+=String.fromCharCode(...a.subarray(i,i+30000));return btoa(s)}
 const hashCache=new Map();
 
 async function hash(src){let key=String(src||"");if(!key)return "";if(hashCache.has(key))return hashCache.get(key);let promise=new Promise(ok=>{let done=false,finish=x=>{if(!done){done=true;ok(x)}},im=new Image(),timer=setTimeout(()=>finish(""),5000);im.crossOrigin="anonymous";im.onload=()=>{clearTimeout(timer);try{let c=document.createElement("canvas"),x=c.getContext("2d",{willReadFrequently:true});function makeHash(draw){c.width=9;c.height=8;x.fillStyle="#fff";x.fillRect(0,0,9,8);draw(x);let d=x.getImageData(0,0,9,8).data,b="";for(let y=0;y<8;y++)for(let q=0;q<8;q++){let a=(y*9+q)*4;b+=d[a]+d[a+1]+d[a+2]>d[a+4]+d[a+5]+d[a+6]?"1":"0"}return b}let side=Math.min(im.naturalWidth,im.naturalHeight)*.78,cx=(im.naturalWidth-side)/2,cy=(im.naturalHeight-side)/2,center=makeHash(ctx=>ctx.drawImage(im,cx,cy,side,side,0,0,9,8)),scale=Math.min(9/im.naturalWidth,8/im.naturalHeight),w=im.naturalWidth*scale,h=im.naturalHeight*scale,full=makeHash(ctx=>ctx.drawImage(im,(9-w)/2,(8-h)/2,w,h));finish(center+"|"+full)}catch(e){finish("")}};im.onerror=()=>{clearTimeout(timer);finish("")};im.src=key});hashCache.set(key,promise);return promise}
-function textTokens(r){let raw=[getRaw(r,["item name原文","item_name","item_name_original"]),getRaw(r,["item name中文","item name中文"]),getRaw(r,["Model name原文","model_name"]),getRaw(r,["Model name中文","Model name中文"]),getRaw(r,["品牌"]),getRaw(r,["款式"]),getRaw(r,["件数"])].join(" ").toLowerCase().replace(/https?:\/\/\S+/g," ").replace(/\b(?:new|hot|sale|free|shipping|official|original|best|selling|promotion|discount|202[0-9])\b/g," ").replace(/\b(?:black|white|red|blue|green|pink|yellow|gray|grey|purple|orange|brown|beige|gold|silver)\b/g," ").replace(/\b\d+\s*(?:pcs?|pieces?|pack|sets?)\b/g," ");let out=new Set();for(let w of raw.match(/[a-z0-9]+/g)||[])if(w.length>1)out.add(w);for(let chunk of raw.match(/[\u4e00-\u9fff]+/g)||[]){if(chunk.length===1)out.add(chunk);else for(let i=0;i<chunk.length-1;i++)out.add(chunk.slice(i,i+2))}return out}
+function textTokens(r){if(!textTokens.memo)textTokens.memo=new WeakMap();if(textTokens.memo.has(r))return textTokens.memo.get(r);let raw=[getRaw(r,["item name原文","item_name","item_name_original"]),getRaw(r,["item name中文","item name中文"]),getRaw(r,["Model name原文","model_name"]),getRaw(r,["Model name中文","Model name中文"]),getRaw(r,["品牌"]),getRaw(r,["款式"]),getRaw(r,["件数"])].join(" ").toLowerCase().replace(/https?:\/\/\S+/g," ").replace(/\b(?:new|hot|sale|free|shipping|official|original|best|selling|promotion|discount|202[0-9])\b/g," ").replace(/\b(?:black|white|red|blue|green|pink|yellow|gray|grey|purple|orange|brown|beige|gold|silver)\b/g," ").replace(/\b\d+\s*(?:pcs?|pieces?|pack|sets?)\b/g," ");let out=new Set();for(let w of raw.match(/[a-z0-9]+/g)||[])if(w.length>1)out.add(w);for(let chunk of raw.match(/[\u4e00-\u9fff]+/g)||[]){if(chunk.length===1)out.add(chunk);else for(let i=0;i<chunk.length-1;i++)out.add(chunk.slice(i,i+2))}textTokens.memo.set(r,out);return out}
 function titleSimilarity(a,b){let x=textTokens(a),y=textTokens(b);if(!x.size||!y.size)return 0;let n=0;for(let t of x)if(y.has(t))n++;return 2*n/(x.size+y.size)}
 function imageDistance(a,b){if(!a||!b)return 99;let aa=String(a).split("|"),bb=String(b).split("|");if(aa.length<2||bb.length<2)return 99;let dist=(x,y)=>{if(x.length!==y.length)return 99;let d=0;for(let i=0;i<x.length;i++)if(x[i]!==y[i])d++;return d};return dist(aa[0],bb[0])*.8+dist(aa[1],bb[1])*.2}
 function imageKey(r){let src=String(r.main||r.modelImage||"");if(!src)return "";if(src.startsWith("data:"))return src;try{let u=new URL(src,location.href);return (u.host+u.pathname).toLowerCase().replace(/@resize[^/]*$/,"").replace(/\.(?:jpg|jpeg|png|webp)$/,"")}catch(e){return src.split(/[?#]/)[0].toLowerCase()}}
@@ -906,7 +1744,7 @@ function categoryPath(r) {
   const labels = names.map(categoryLabel);
   return labels.every(Boolean) ? labels.join(" > ") : "类目翻译中";
 }
-function deriveRecord(r){let item=translationSource(r,9),model=translationSource(r,11),mix=item+" "+model;deriveChineseField(r,9,10,"autoItemChinese","localTranslatedItem","translationItemSource");deriveChineseField(r,11,12,"autoModelChinese","localTranslatedModel","translationModelSource");let brand=String(getRaw(r,["品牌"])||"").trim(),style=String(getRaw(r,["款式"])||"").trim(),qty=String(getRaw(r,["件数"])||"").trim();if(!brand)r.autoBrand=true;if(!style)r.autoStyle=true;if(!qty)r.autoQty=true;let mallBrand=String(getRaw(r,["mall_brand_name"])||"").trim();if((r.userEditedFields||[]).includes(H[20]))r.autoBrand=false;else{r.autoBrand=true;r.raw[H[20]]=mallBrand||extractBrand(mix)};if(r.autoStyle)r.raw[H[21]]=extractStyle(mix);if(r.autoQty)r.raw[H[22]]=extractQty(mix);invalidateRaw(r)}
+function deriveRecord(r){let item=translationSource(r,9),model=translationSource(r,11),mix=item+" "+model;deriveChineseField(r,9,10,"autoItemChinese","localTranslatedItem","translationItemSource");deriveChineseField(r,11,12,"autoModelChinese","localTranslatedModel","translationModelSource");let brand=String(getRaw(r,["品牌"])||"").trim(),style=String(getRaw(r,["款式"])||"").trim(),qty=String(getRaw(r,["件数"])||"").trim();if(!brand)r.autoBrand=true;if((r.userEditedFields||[]).includes(H[21]))r.autoStyle=false;else if(!style)r.autoStyle=true;if((r.userEditedFields||[]).includes(H[22]))r.autoQty=false;else if(!qty)r.autoQty=true;let mallBrand=String(getRaw(r,["mall_brand_name"])||"").trim();if((r.userEditedFields||[]).includes(H[20]))r.autoBrand=false;else{r.autoBrand=true;r.raw[H[20]]=mallBrand||extractBrand(mix)};if(r.autoStyle)r.raw[H[21]]=extractStyle(mix);if(r.autoQty)r.raw[H[22]]=extractQty(mix);invalidateRaw(r)}
 // translation-integration-v3:start
 function hasChinese(text){return /[\u3400-\u9fff]/.test(String(text||''))}
 const SIMPLE_CHINESE={black:'黑色',white:'白色',blue:'蓝色',red:'红色',purple:'紫色',pink:'粉色',green:'绿色',yellow:'黄色',brown:'棕色',orange:'橙色',grey:'灰色',gray:'灰色',silver:'银色',gold:'金色','size s':'S号','size m':'M号','size l':'L号',preto:'黑色',branco:'白色',marrom:'棕色',bivolt:'双电压','black and brass':'黑色与黄铜色','น้ำตาล':'棕色','สีน้ําตาล m':'棕色 M号','สีน้ําตาล s':'棕色 S号'};
@@ -915,7 +1753,7 @@ function translationPassthrough(text){return BuyerTranslation.passthrough(text)}
 function translationSource(r,index){return BuyerTranslation.normalize(value(r,H[index]))}
 function manualChinese(r,index){return (r.userEditedFields||[]).some(field=>key(field)===(index===10?'itemchinese':'modelchinese'))}
 function persistTranslationRow(r){
-  if(historyMode||translationDataset!==rows||!translationRecordSet.has(r))return;
+  if(!canEditWorkspace()||historyMode||translationDataset!==rows||!translationRecordSet.has(r))return;
   if(!dirtyRows.has(r.uid))markDirty(r);
   if(!translationPersistTimer)translationPersistTimer=setTimeout(()=>{translationPersistTimer=0;save()},100);
 }
@@ -955,7 +1793,15 @@ function syncTranslationDataset(){
   translationBackgroundRun++;translationBackgroundDataset=null;
   translationQueue.cancelQueued();translationDataset=rows;translationRecordSet=new Set(rows);
   translationReadiness=new WeakMap();translationReadyCount=0;
-  for(const r of rows){const ready=rowChineseReady(r);translationReadiness.set(r,ready);if(ready)translationReadyCount++}
+  const dataset=rows;let position=0;syncTranslationDataset.pending=dataset.length;
+  function scan(){
+    if(translationDataset!==dataset)return;
+    const end=Math.min(dataset.length,position+100);
+    for(;position<end;position++)refreshTranslationReadiness(dataset[position]);
+    syncTranslationDataset.pending=dataset.length-position;scheduleTranslationStatus();
+    if(position<dataset.length)setTimeout(scan,0);
+  }
+  if(dataset.length<=200){for(const r of dataset)refreshTranslationReadiness(r);syncTranslationDataset.pending=0}else scan();
 }
 function scheduleTranslationStatus(){if(!translationStatusTimer)translationStatusTimer=setTimeout(()=>{translationStatusTimer=0;updateTranslationStatus()},300)}
 function updateTranslationStatus(){
@@ -963,7 +1809,8 @@ function updateTranslationStatus(){
   syncTranslationDataset();
   const queued=translationQueue.jobs.size;
   el.textContent='Google 中文已生成 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+
-    (historyMode?' · 历史版本只读':translationUserPaused?' · 已暂停':queued?' · 正在翻译，待处理 '+queued+' 条文本':translationLastError&&translationReadyCount<rows.length?' · '+translationLastError:'');
+    (syncTranslationDataset.pending?' · 后台统计中':'')+
+    (historyMode?' · 历史版本只读':translationUserPaused?' · 已暂停':translationQueue.cooldown>Date.now()?' · Google 服务限流，等待重试':queued?' · 正在翻译，待处理 '+queued+' 条文本':translationLastError&&translationReadyCount<rows.length?' · '+translationLastError:'');
   const review=rows.filter(r=>r.translationItemWarning||r.translationModelWarning).length;
   if(review)el.textContent+=' · 原文需核对 '+review.toLocaleString()+' 款';
   const pause=$('pauseTranslation');if(pause)pause.textContent=translationUserPaused?'继续翻译':'暂停翻译';
@@ -979,7 +1826,7 @@ const translationQueue=new BuyerTranslation.Queue({
   cache:translationCache,concurrency:3,batchSize:1,maxChars:2400,
   simple:text=>SIMPLE_CHINESE[text.toLowerCase()]||'',requestBatch:translateQueuedBatch,
   onCache:(source,chinese)=>{translationCacheDirty.set(source,chinese);saveTranslationCache()},
-  onActivity:scheduleTranslationStatus,onError:()=>{translationLastError='部分原文或译文需核对，可修正原文后重试';scheduleTranslationStatus()}
+  onActivity:scheduleTranslationStatus,onError:error=>{translationLastError=error?.rateLimited?'Google 服务限流，译文待补齐；稍后点击补齐全部中文重试':error?.timeout?'Google 翻译连接超时，稍后重试':error?.permanent?'部分原文或译文需核对，可修正原文后重试':'Google 翻译暂不可用，原文和已保存译文保留；稍后重试';if(typeof reportQa==='function')reportQa('translation-error',{rateLimited:!!error?.rateLimited,timeout:!!error?.timeout,quality:!!error?.permanent});scheduleTranslationStatus()}
 });
 function translateCn(text,options={}){return translationQueue.request(text,{...options,language:options.language||translationLanguage(text)})}
 function translationRegionHint(r){return ({BR:'pt',VN:'vi',TH:'th',MY:'ms',ID:'id',TW:'en',SG:'en',PH:'en',MX:'es',CO:'es',CL:'es'})[String(getRaw(r,['grass_region'])||'').trim().toUpperCase()]||''}
@@ -1012,7 +1859,7 @@ async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,
 }
 async function translateVisible(list,priority=0){
   await translationCacheReady;
-  if(historyMode)return;
+  if(!canEditWorkspace()||historyMode)return;
   const jobs=[];
   for(const r of list||[]){
     jobs.push(translateRecordField(r,9,10,'autoItemChinese','localTranslatedItem','translationItemSource',priority));
@@ -1021,7 +1868,7 @@ async function translateVisible(list,priority=0){
   await Promise.all(jobs);scheduleTranslationStatus();
 }
 async function startBackgroundTranslation(force=false){
-  if(historyMode||translationUserPaused||!rows.length)return;
+  if(!canEditWorkspace()||historyMode||translationUserPaused||!rows.length)return;
   if(!force&&translationBackgroundDataset===rows)return;
   const dataset=rows,run=++translationBackgroundRun;translationBackgroundDataset=dataset;
   try{
@@ -1060,7 +1907,7 @@ function toggleTranslationPause(){
 }
 
 function editTranslationSource(uid,sourceIndex){
-  if(historyMode||![9,11].includes(sourceIndex))return;
+  if(!canEditWorkspace()||historyMode||![9,11].includes(sourceIndex))return;
   const record=rows.find(row=>row.uid===uid);if(!record)return;
   const overlay=$('overlay'),current=translationSource(record,sourceIndex);
   overlay.innerHTML='<div class="modalbg"><section class="modal"><h3>修正'+(sourceIndex===9?'商品标题':'型号名称')+'原文</h3><p class="muted">请填入完整原文。已经变成问号的字母无法可靠还原，也可重新导入原始 Excel 或 UTF-8 CSV。</p><textarea class="cell" id="repairTranslationSource" rows="6">'+esc(current)+'</textarea><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button class="btn" id="cancelTranslationSource">取消</button><button class="btn primary" id="saveTranslationSource">保存并重新翻译</button></div></section></div>';
@@ -1091,22 +1938,221 @@ async function ensureProductTranslations(records){
 }
 async function ensureCategoryTranslations(records){const names=Array.from(new Set((records||[]).flatMap(categoryValues)));const missing=names.filter(name=>!categoryLabel(name));if(!missing.length)return;const translated=await Promise.all(missing.map(async name=>[name,await translateCn(name,{priority:-1})]));for(const [name,value] of translated)if(value&&hasChinese(value))categoryTranslationCache.set(categoryKey(name),value);try{localStorage.setItem("pool-category-translation-google-v4",JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(e){}const unresolved=missing.filter(name=>!categoryLabel(name));if(unresolved.length)throw new Error("部分上新类目没有获得中文翻译："+unresolved.slice(0,3).join("、"))}
 
-async function regroup(){if(!groupingEnabled){for(let r of rows)r.group=r.manualGroup||"UNGROUPED-"+r.uid;return}let groups=[],ordered=rows.slice().sort((a,b)=>(number(calc(b,"target"))??-1)-(number(calc(a,"target"))??-1)),byUid=new Map(),imageIndex=new Map(),hashIndex=new Map(),tokenIndex=new Map(),tokenCache=new Map();let processed=0;function add(index,key,r){if(!key)return;let a=index.get(key);if(!a)index.set(key,a=[]);a.push(r)}function tokens(r){if(!tokenCache.has(r.uid))tokenCache.set(r.uid,textTokens(r));return tokenCache.get(r.uid)}function hashBands(r){let out=[];for(let h of String(r.hash||"").split("|"))if(h.length>=64)for(let i=0;i+4<=h.length;i+=4)out.push(i+":"+h.slice(i,i+4));return out}for(let r of ordered){processed++;if(r.manualGroup){r.group=r.manualGroup;if(processed%1000===0){$("groupState").textContent="后台归类中 "+processed+" / "+ordered.length;await new Promise(resolve=>setTimeout(resolve,0))};continue}let candidates=new Set(),key=imageKey(r);for(let q of imageIndex.get(key)||[])candidates.add(q);for(let b of hashBands(r))for(let q of hashIndex.get(b)||[])candidates.add(q);for(let token of tokens(r)){let bucket=tokenIndex.get(token);if(bucket&&bucket.length<=300)for(let q of bucket)candidates.add(q)}let group=null;for(let q of candidates){if(similarProduct(q,r)){group=byUid.get(q.uid);break}}if(!group){group={id:"IMG-"+String(groups.length+1).padStart(4,"0"),members:[]};groups.push(group)}group.members.push(r);byUid.set(r.uid,group);add(imageIndex,key,r);for(let b of hashBands(r))add(hashIndex,b,r);for(let token of tokens(r))add(tokenIndex,token,r);if(processed%1000===0){$("groupState").textContent="后台归类中 "+processed+" / "+ordered.length;await new Promise(resolve=>setTimeout(resolve,0))}}let assigned=0;for(let g of groups)for(let r of g.members){r.group=g.id;if(++assigned%1000===0)await new Promise(resolve=>setTimeout(resolve,0))}}
+async function regroup() {
+  const MAX_CANDIDATES = 128;
+  const MAX_GROUP_REPRESENTATIVES = 4;
+  const MAX_IMAGE_BUCKET = 128;
+  const MAX_HASH_BUCKET = 64;
+  const MAX_TOKEN_BUCKET = 24;
+  const MAX_TOKENS_PER_ROW = 64;
+  const run = activeHashRun, sourceRows = rows, sourceThreshold = threshold;
+  const enabled = !!groupingEnabled, snapshot = sourceRows.slice();
+  const planned = new Map(), manualSnapshot = new Map();
+  const stale = () => run !== activeHashRun || rows !== sourceRows ||
+    rows.length !== snapshot.length || !!groupingEnabled !== enabled || !Object.is(threshold, sourceThreshold);
+
+  async function yieldProgress(label, done) {
+    if (stale()) return false;
+    const state = $('groupState');
+    if (state) state.textContent = label + ' ' + done + ' / ' + snapshot.length;
+    await new Promise(resolve => setTimeout(resolve, 0));
+    return !stale();
+  }
+
+  // No row is mutated until all work and validation have finished. The final
+  // synchronous loop has no yield, so a cancellation cannot split the commit.
+  function commit() {
+    if (stale()) return false;
+    for (let i = 0; i < snapshot.length; i++) {
+      const record = snapshot[i];
+      if (sourceRows[i] !== record || (record.manualGroup || '') !== manualSnapshot.get(record)) return false;
+    }
+    if (stale()) return false;
+    for (const record of snapshot) record.group = planned.get(record);
+    return true;
+  }
+
+  if (!enabled) {
+    for (let i = 0; i < snapshot.length; i++) {
+      const record = snapshot[i], manual = record.manualGroup || '';
+      manualSnapshot.set(record, manual);
+      planned.set(record, manual || 'UNGROUPED-' + record.uid);
+      if ((i + 1) % 100 === 0 && !await yieldProgress('正在更新归类', i + 1)) return false;
+    }
+    return commit();
+  }
+
+  const ordered = [], hashFrequency = new Map(), tokenFrequency = new Map();
+  function frequency(map, key, cap) {
+    const count = map.get(key) || 0;
+    if (count <= cap) map.set(key, count + 1);
+  }
+  function bands(record) {
+    const result = [];
+    const components = String(record.hash || '').split('|').slice(0, 2);
+    for (let component = 0; component < components.length; component++) {
+      const hash = components[component];
+      if (!/^[01]{64}$/.test(hash)) continue;
+      result.push('h' + component + ':full:' + hash);
+      // Twelve-bit overlapping bands have much better selectivity than the
+      // former four-bit buckets; the two image hashes have separate namespaces.
+      for (let offset = 0; offset + 12 <= hash.length; offset += 8) {
+        result.push('h' + component + ':' + offset + ':' + hash.slice(offset, offset + 12));
+      }
+    }
+    return result;
+  }
+
+  // Global frequencies prevent common early buckets from admitting candidates
+  // simply because only a few of their eventual members have been visited.
+  for (let i = 0; i < snapshot.length; i++) {
+    const record = snapshot[i], manual = record.manualGroup || '';
+    manualSnapshot.set(record, manual);
+    if (manual) planned.set(record, manual);
+    else {
+      const feature = {
+        image: imageKey(record), bands: bands(record),
+        tokens: Array.from(textTokens(record)).slice(0, MAX_TOKENS_PER_ROW)
+      };
+      for (const key of feature.bands) frequency(hashFrequency, key, MAX_HASH_BUCKET);
+      for (const key of feature.tokens) frequency(tokenFrequency, key, MAX_TOKEN_BUCKET);
+      ordered.push({ record, feature, price: number(calc(record, 'target')) ?? -1 });
+    }
+    if ((i + 1) % 100 === 0 && !await yieldProgress('准备归类', i + 1)) return false;
+  }
+  if (stale()) return false;
+  ordered.sort((a, b) => b.price - a.price);
+
+  const groups = [], imageIndex = new Map(), hashIndex = new Map(), tokenIndex = new Map();
+  function add(index, key, representative, limit) {
+    if (!key) return;
+    let bucket = index.get(key);
+    if (!bucket) { bucket = []; index.set(key, bucket); }
+    if (bucket.length < limit) bucket.push(representative);
+  }
+  function addRepresentative(group, record, feature) {
+    if (group.representatives >= MAX_GROUP_REPRESENTATIVES) return;
+    group.representatives++;
+    const representative = { record, group };
+    add(imageIndex, feature.image, representative, MAX_IMAGE_BUCKET);
+    for (const key of feature.bands) {
+      const count = hashFrequency.get(key) || 0;
+      if (count > 1 && count <= MAX_HASH_BUCKET) add(hashIndex, key, representative, MAX_HASH_BUCKET);
+    }
+    for (const key of feature.tokens) {
+      const count = tokenFrequency.get(key) || 0;
+      if (count > 1 && count <= MAX_TOKEN_BUCKET) add(tokenIndex, key, representative, MAX_TOKEN_BUCKET);
+    }
+  }
+
+  for (let index = 0; index < ordered.length; index++) {
+    const { record, feature } = ordered[index];
+    const candidates = new Map();
+    function collect(bucket) {
+      for (const representative of bucket || []) {
+        if (candidates.size >= MAX_CANDIDATES) break;
+        const group = representative.group;
+        // One fixed anchor is tested per group. Other representatives improve
+        // recall, but can never create an A~B~C chain where A is unlike C.
+        if (!candidates.has(group.id)) candidates.set(group.id, group);
+      }
+    }
+    // Exact image matches get first claim on the bounded candidate budget.
+    collect(imageIndex.get(feature.image));
+    const rareBands = feature.bands.filter(key => {
+      const count = hashFrequency.get(key) || 0;
+      return count > 1 && count <= MAX_HASH_BUCKET;
+    }).sort((a, b) => hashFrequency.get(a) - hashFrequency.get(b));
+    for (const key of rareBands) {
+      if (candidates.size >= MAX_CANDIDATES) break;
+      collect(hashIndex.get(key));
+    }
+    const rareTokens = feature.tokens.filter(key => {
+      const count = tokenFrequency.get(key) || 0;
+      return count > 1 && count <= MAX_TOKEN_BUCKET;
+    }).sort((a, b) => tokenFrequency.get(a) - tokenFrequency.get(b));
+    for (const key of rareTokens) {
+      if (candidates.size >= MAX_CANDIDATES) break;
+      collect(tokenIndex.get(key));
+    }
+    let group = null;
+    for (const candidate of candidates.values()) {
+      if (similarProduct(candidate.anchor, record)) { group = candidate; break; }
+    }
+    if (!group) {
+      group = { id: 'IMG-' + String(groups.length + 1).padStart(4, '0'), anchor: record, representatives: 0 };
+      groups.push(group);
+    }
+    planned.set(record, group.id);
+    addRepresentative(group, record, feature);
+    if ((index + 1) % 100 === 0 && !await yieldProgress('后台归类中', index + 1)) return false;
+  }
+  return commit();
+}
+
 async function prepareImageHashes(list,token){let pending=list.filter(r=>!r.hash&&(safeImageUrl(r.main)||safeImageUrl(r.modelImage)));if(!pending.length||token!==activeHashRun)return 0;let next=0,done=0,workers=Array.from({length:Math.min(3,pending.length)},async()=>{while(next<pending.length&&token===activeHashRun){let r=pending[next++];r.hash=await hash(safeImageUrl(r.main)||safeImageUrl(r.modelImage));done++;if(done%25===0){$("groupState").textContent="准备图片特征 "+done+" / "+pending.length;await new Promise(resolve=>setTimeout(resolve,0))}}});await Promise.all(workers);if(token!==activeHashRun)return 0;return done}
 function normPath(b,t){let a=(b.slice(0,b.lastIndexOf("/")+1)+t).split("/"),o=[];for(let x of a){if(!x||x===".")continue;if(x==="..")o.pop();else o.push(x)}return o.join("/")}
-function all(n,t){return Array.from(n?.getElementsByTagName("*")||[]).filter(x=>x.localName===t)}function first(n,t){return all(n,t)[0]||null}function xml(a){return new DOMParser().parseFromString(new TextDecoder().decode(a),"application/xml")}function col(ref){let s=(ref.match(/[A-Z]+/)||["A"])[0],n=0;for(let x of s)n=n*26+x.charCodeAt(0)-64;return n-1}
+function all(n,t){if(n?.getElementsByTagNameNS)return Array.from(n.getElementsByTagNameNS("*",t));return Array.from(n?.getElementsByTagName("*")||[]).filter(x=>x.localName===t)}function first(n,t){return all(n,t)[0]||null}function xml(a){return new DOMParser().parseFromString(new TextDecoder().decode(a),"application/xml")}function col(ref){let s=(ref.match(/[A-Z]+/)||["A"])[0],n=0;for(let x of s)n=n*26+x.charCodeAt(0)-64;return n-1}
 async function unzip(buf){let v=new DataView(buf),u16=o=>v.getUint16(o,true),u32=o=>v.getUint32(o,true),e=-1;for(let p=buf.byteLength-22;p>=Math.max(0,buf.byteLength-65557);p--)if(u32(p)===0x06054b50){e=p;break}if(e<0)throw Error("无效 XLSX");let count=u16(e+10),p=u32(e+16),m=new Map();for(let i=0;i<count;i++){let nl=u16(p+28),el=u16(p+30),cl=u16(p+32),lo=u32(p+42),name=new TextDecoder().decode(new Uint8Array(buf,p+46,nl)),method=u16(p+10),size=u32(p+20),a=u16(lo+26),b=u16(lo+28),data=new Uint8Array(buf.slice(lo+30+a+b,lo+30+a+b+size));if(method===8)data=new Uint8Array(await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());m.set(name,data);p+=46+nl+el+cl}return m}
-async function parseXlsx(file,minScore=3){
+async function parseXlsxLegacy(file,minScore=3){
  let z=await unzip(await file.arrayBuffer()),wb=xml(z.get("xl/workbook.xml")),wr=xml(z.get("xl/_rels/workbook.xml.rels")),rels=all(wr,"Relationship"),ssDoc=z.get("xl/sharedStrings.xml")?xml(z.get("xl/sharedStrings.xml")):null,ss=ssDoc?all(ssDoc,"si").map(x=>all(x,"t").map(t=>t.textContent).join("")):[];
  function resolveTarget(base,target){let t=String(target||"").replace(/^\/+/,"");return t.startsWith("xl/")?t:normPath(base,t)}
  async function matrixOf(doc){let out=[],sourceRows=all(doc,"row");for(let ri=0;ri<sourceRows.length;ri++){let row=sourceRows[ri],v=[];for(let c of Array.from(row.children).filter(x=>x.localName==="c")){let ix=col(c.getAttribute("r")),type=c.getAttribute("t"),value=first(c,"v")?.textContent||"";if(type==="s")value=ss[+value]||"";if(type==="inlineStr")value=all(first(c,"is")||c,"t").map(x=>x.textContent).join("");v[ix]=value}out.push({rn:+row.getAttribute("r"),v});if(ri&&ri%500===0){$("state").textContent=(sourceFileName?sourceFileName+" · ":"")+"解析 Excel 行 "+ri+" / "+sourceRows.length;await new Promise(resolve=>setTimeout(resolve,0))}}return out}let candidates=[];for(let sh of all(wb,"sheet")){let rid=sh.getAttribute("r:id")||sh.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id"),rel=rels.find(x=>x.getAttribute("Id")===rid);if(!rel)continue;let sp=resolveTarget("xl/workbook.xml",rel.getAttribute("Target"));if(!z.get(sp))continue;let doc=xml(z.get(sp)),matrix=await matrixOf(doc);if(!matrix.length)continue;let headerIndex=0,bestScore=-1;for(let i=0;i<Math.min(matrix.length,25);i++){let score=headerScore(matrix[i].v.map(x=>String(x||"").trim()));if(score>bestScore){bestScore=score;headerIndex=i}}let dataCount=matrix.slice(headerIndex+1).filter(row=>row.v.some(v=>String(v??"").trim()!=="")&&!isMetaRow(row.v)).length;candidates.push({name:sh.getAttribute("name"),sp:sp,doc:doc,matrix:matrix,headerIndex:headerIndex,score:bestScore,dataCount:dataCount})}
- if(!candidates.length)throw Error("没有找到可读取的 Excel 工作表");candidates.sort((a,b)=>b.dataCount-a.dataCount||b.score-a.score);let chosen=candidates[0];if(chosen.score<minScore)throw Error("未识别到看板表头，请确认 Excel 中包含寻品字段标题");let matrix=chosen.matrix,hh=matrix[chosen.headerIndex].v.map(x=>String(x||"").trim()),iMain=hh.findIndex(h=>key(h)==="main"),iModel=hh.findIndex(h=>key(h)==="modelimage"),pics={},sp=chosen.sp,doc=chosen.doc;
+ if(!candidates.length)throw Error("没有找到可读取的 Excel 工作表");candidates=candidates.filter(candidate=>candidate.score>=minScore);candidates.sort((a,b)=>b.dataCount-a.dataCount||b.score-a.score);let chosen=candidates[0];if(chosen.score<minScore)throw Error("未识别到看板表头，请确认 Excel 中包含寻品字段标题");let matrix=chosen.matrix,hh=matrix[chosen.headerIndex].v.map(x=>String(x||"").trim()),iMain=hh.findIndex(h=>key(h)==="main"),iModel=hh.findIndex(h=>key(h)==="modelimage"),pics={},sp=chosen.sp,doc=chosen.doc;
  try{let rp=sp.slice(0,sp.lastIndexOf("/")+1)+"_rels/"+sp.slice(sp.lastIndexOf("/")+1)+".rels";if(z.get(rp)){let sr=xml(z.get(rp)),dr=first(doc,"drawing");if(dr){let rid=dr.getAttribute("r:id")||dr.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id"),rr=all(sr,"Relationship").find(x=>x.getAttribute("Id")===rid);if(rr){let dp=resolveTarget(sp,rr.getAttribute("Target"));if(z.get(dp)){let dd=xml(z.get(dp)),rp2=dp.slice(0,dp.lastIndexOf("/")+1)+"_rels/"+dp.slice(dp.lastIndexOf("/")+1)+".rels";if(z.get(rp2)){let imageRels=all(xml(z.get(rp2)),"Relationship");for(let an of all(dd,"twoCellAnchor").concat(all(dd,"oneCellAnchor"))){let fr=first(an,"from"),bl=first(an,"blip");if(!fr||!bl)continue;let id=bl.getAttribute("r:embed")||bl.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","embed"),ir=imageRels.find(x=>x.getAttribute("Id")===id);if(!ir)continue;let path=resolveTarget(dp,ir.getAttribute("Target")),data=z.get(path);if(!data)continue;let rn=+all(fr,"row")[0]?.textContent+1,cn=+all(fr,"col")[0]?.textContent,ext=/\.(jpe?g)$/i.test(path)?"jpeg":"png";(pics[rn]||(pics[rn]={}))[cn]="data:image/"+ext+";base64,"+base64(data)}}}}}}}catch(e){console.warn("Excel 图片读取失败，将继续导入单元格数据",e)}
  let out=[];for(let entry of matrix.slice(chosen.headerIndex+1)){let raw={};hh.forEach((h,i)=>{if(h)raw[h]=entry.v[i]??""});let vals=Object.values(raw);if(!vals.some(v=>String(v).trim())||isMetaRow(vals))continue;let p=pics[entry.rn]||{},r={uid:"m"+chosen.name+"-"+entry.rn,excelRow:entry.rn,raw:raw,main:p[iMain]||String(getRaw({raw:raw},["主图图片","item_image"])||""),modelImage:p[iModel]||String(getRaw({raw:raw},["model 图片","model_image"])||getRaw({raw:raw},["主图图片","item_image"])||""),preDate:"",preNote:"",preValue:""};let sourceId=getRaw(r,["Model ID","model_id","modelid","模型id"]);r.raw._modelId=sourceId||("AUTO-"+String(entry.rn).padStart(5,"0"));invalidateRaw(r);let x=String(getRaw(r,[H[23]])||""),parts=x.split("|");r.preValue=(parts[0]||"").trim();r.preDate=(parts[1]||"").trim();r.preNote=parts.slice(2).join("|").trim();r.hash="";out.push(r)}return{headers:hh,rows:out,sheet:chosen.name,headerRow:chosen.matrix[chosen.headerIndex].rn}
 }
 function parseDelimited(text,delimiter){let out=[],row=[],cell="",quoted=false;for(let i=0;i<text.length;i++){let c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=false;else cell+=c}else if(c==='"')quoted=true;else if(c===delimiter){row.push(cell);cell=""}else if(c==="\r"||c==="\n"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(cell);out.push(row);row=[];cell=""}else cell+=c}if(cell!==""||row.length){row.push(cell);out.push(row)}return out}
 async function walkDelimited(text,delimiter,onRow,onProgress){let row=[],cell="",quoted=false,nextYield=65536;for(let i=0;i<text.length;i++){let c=text[i];if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=false;else cell+=c}else if(c==='"')quoted=true;else if(c===delimiter){row.push(cell);cell=""}else if(c==="\r"||c==="\n"){if(c==="\r"&&text[i+1]==="\n")i++;row.push(cell);onRow(row);row=[];cell=""}else cell+=c;if(i>=nextYield){onProgress(Math.min(99,Math.floor(i/Math.max(1,text.length)*100)));await new Promise(resolve=>setTimeout(resolve,0));nextYield+=65536}}if(cell!==""||row.length){row.push(cell);onRow(row)}onProgress(100)}
-async function parseCsv(file,onProgress=()=>{},minScore=3){let sampleBytes=new Uint8Array(await file.slice(0,Math.min(file.size,200000)).arrayBuffer()),encoding="utf-8";if(sampleBytes[0]===0xff&&sampleBytes[1]===0xfe)encoding="utf-16le";else if(sampleBytes[0]===0xfe&&sampleBytes[1]===0xff)encoding="utf-16be";let sample,previewBytes=file.size>sampleBytes.length&&encoding==="utf-8"&&sampleBytes.length>4?sampleBytes.slice(0,sampleBytes.length-4):sampleBytes;try{sample=new TextDecoder(encoding).decode(previewBytes);if(encoding==="utf-8"&&sample.includes("�")){encoding="gb18030";sample=new TextDecoder(encoding).decode(previewBytes)}}catch(e){encoding="gb18030";sample=new TextDecoder(encoding).decode(previewBytes)}sample=sample.replace(/^\uFEFF/,"");let delimiters=[",","\t",";"],probes=delimiters.map(delimiter=>({delimiter,matrix:parseDelimited(sample,delimiter)})).sort((a,b)=>(b.matrix[0]?.length||0)-(a.matrix[0]?.length||0)),delimiter=probes[0].delimiter,sampleRows=probes[0].matrix,headerIndex=0,bestScore=-1;for(let i=0;i<Math.min(sampleRows.length,25);i++){let score=headerScore(sampleRows[i]);if(score>bestScore){bestScore=score;headerIndex=i}}if(bestScore<minScore)throw Error("未识别到 CSV 表头，请确认文件包含寻品字段标题");let hh=(sampleRows[headerIndex]||[]).map(x=>String(x||"").trim()),out=[],iMain=hh.findIndex(h=>key(h)==="main"),iModel=hh.findIndex(h=>key(h)==="modelimage"),sourceRow=0,reader=file.stream().getReader(),decoder=new TextDecoder(encoding),row=[],cell="",quoted=false,skipLF=false,carry="",read=0,chunks=0;function acceptRow(){row.push(cell);let values=row;row=[];cell="";let n=sourceRow++;if(n<=headerIndex)return;let raw={};hh.forEach((h,i)=>{if(h)raw[h]=values[i]??""});if(!Object.values(raw).some(v=>String(v).trim())||isMetaRow(Object.values(raw)))return;let r={uid:"csv"+(n+1),excelRow:n+1,raw:raw,main:iMain>=0?String(values[iMain]||"") :"",modelImage:iModel>=0?String(values[iModel]||"") :"",preDate:"",preNote:"",preValue:"",hash:""};r.raw._modelId=getRaw(r,["Model ID","model_id","modelid","模型id"])||("AUTO-"+String(n+1).padStart(5,"0"));invalidateRaw(r);let pre=String(getRaw(r,[H[23]])||"").split("|");r.preValue=(pre[0]||"").trim();r.preDate=(pre[1]||"").trim();r.preNote=pre.slice(2).join("|").trim();out.push(r)}function consume(chunk,final=false){let text=carry+chunk;carry="";if(!final){let q=text.length;while(q>0&&text[q-1]==='"')q--;if(q<text.length){carry=text.slice(q);text=text.slice(0,q)}}for(let i=0;i<text.length;i++){let c=text[i];if(skipLF){skipLF=false;if(c==="\n")continue}if(quoted){if(c==='"'&&text[i+1]==='"'){cell+='"';i++}else if(c==='"')quoted=false;else cell+=c}else if(c==='"')quoted=true;else if(c===delimiter){row.push(cell);cell=""}else if(c==="\r"){acceptRow();skipLF=true}else if(c==="\n")acceptRow();else cell+=c}}onProgress(0);while(true){let part=await reader.read();if(part.done)break;read+=part.value.length;chunks++;consume(decoder.decode(part.value,{stream:true}));onProgress(Math.min(99,Math.floor(read/Math.max(1,file.size)*100)));if(chunks%3===0)await new Promise(resolve=>setTimeout(resolve,0))}consume(decoder.decode(),true);if(cell!==""||row.length)acceptRow();onProgress(100);return{headers:hh,rows:out}}
+function selectImportHeader(matrix,minScore){let headerIndex=0,score=-1;for(let i=0;i<Math.min(25,matrix.length);i++){const current=headerScore(matrix[i].map(cell=>String(cell??'').trim()));if(current>score){score=current;headerIndex=i}}if(score<minScore)throw Error('未识别到有效表头，请检查 Model ID 和商品字段标题');return {headerIndex,score,headers:matrix[headerIndex].map(cell=>String(cell??'').trim())}}
+async function mapImportedMatrix(matrix,choice,options={}){
+  const signal=options.signal,headers=choice.headers,out=[],start=choice.headerIndex+1;
+  const mainIndex=headers.findIndex(header=>key(header)==='main'),modelIndex=headers.findIndex(header=>key(header)==='modelimage');
+  for(let i=start;i<matrix.length;i++){
+    if(signal?.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});
+    const values=matrix[i];
+    if(!values.some(value=>String(value??'').trim()!==''))continue;
+    const raw=Object.create(null);headers.forEach((header,column)=>{if(header)raw[header]=String(values[column]??'')});
+    const rowNumber=i+1,r={uid:(options.prefix||'row')+rowNumber,excelRow:rowNumber,raw,main:mainIndex>=0?String(values[mainIndex]||''):'',modelImage:modelIndex>=0?String(values[modelIndex]||''):'',preDate:'',preNote:'',preValue:'',hash:''};
+    const id=getRaw(r,['Model ID','model_id','modelid','模型id']);
+    if(i<start+5&&isMetaRow(values)&&(!id||/[\u3400-\u9fff]/.test(id)))continue;
+    r.raw._modelId=id||('AUTO-'+String(rowNumber).padStart(5,'0'));
+    const pre=String(getRaw(r,[H[23]])||'').split('|');r.preValue=(pre[0]||'').trim();r.preDate=(pre[1]||'').trim();r.preNote=pre.slice(2).join('|').trim();
+    out.push(r);
+    if((i-start)%250===0){options.onProgress?.(80+Math.floor((i-start)/Math.max(1,matrix.length-start)*19));await new Promise(resolve=>setTimeout(resolve,0))}
+  }
+  options.onProgress?.(100);return {headers,rows:out};
+}
+async function parseCsv(file,onProgress=()=>{},minScore=3,options={}){
+  const parsed=await WorkbenchImport.parseInWorker(file,{signal:options.signal,skipEmptyRows:false,onProgress:progress=>onProgress(Math.min(79,Math.floor(progress.percent*0.79)))});
+  const matrix=parsed.matrix;matrix.unshift(parsed.headers);
+  const result=await mapImportedMatrix(matrix,selectImportHeader(matrix,minScore),{signal:options.signal,onProgress,prefix:'csv'});
+  result.reader=parsed.workerUsed?'CSV Worker':'CSV 分段解析';return result;
+}
+async function workbookHasEmbeddedImages(file){
+  if(!/\.(xlsx|xlsm)$/i.test(file.name||'')||file.size<22)return false;
+  const tail=await file.slice(Math.max(0,file.size-65557)).arrayBuffer(),view=new DataView(tail);let end=-1;
+  for(let i=tail.byteLength-22;i>=0;i--)if(view.getUint32(i,true)===0x06054b50){end=i;break}
+  if(end<0)return false;
+  const offset=view.getUint32(end+16,true),size=view.getUint32(end+12,true);
+  if(offset+size>file.size)return false;
+  const central=await file.slice(offset,offset+size).arrayBuffer(),entries=new DataView(central),decoder=new TextDecoder();
+  for(let i=0;i+46<=central.byteLength;){if(entries.getUint32(i,true)!==0x02014b50)break;const length=entries.getUint16(i+28,true),extra=entries.getUint16(i+30,true),comment=entries.getUint16(i+32,true);if(i+46+length>central.byteLength)break;const name=decoder.decode(new Uint8Array(central,i+46,length));if(/^xl\/media\//.test(name))return true;i+=46+length+extra+comment}
+  return false;
+}
+async function parseXlsx(file,minScore=3,options={}){
+  if(await workbookHasEmbeddedImages(file)){const legacy=await parseXlsxLegacy(file,minScore);legacy.reader='Excel 内嵌图片兼容解析';return legacy}
+  if(typeof Worker==='undefined'||!/^https?:$/.test(location.protocol))return parseXlsxLegacy(file,minScore);
+  let parsed;
+  try{parsed=await WorkbenchXlsx.parseInWorker(file,{vendorUrl:new URL('vendor/xlsx.full.min.js',location.href).href,signal:options.signal,onProgress:p=>options.onProgress?.(Math.min(79,Math.floor(p.percent*0.79)))})}
+  catch(error){if(error.name==='AbortError')throw error;if(file.size>8*1024*1024||/\.xls$/i.test(file.name||''))throw error;console.warn('Excel Worker 暂不可用，使用兼容解析',error);return parseXlsxLegacy(file,minScore)}
+  const candidates=[];
+  for(const sheet of parsed.sheets){try{const choice=selectImportHeader(sheet.matrix,minScore);candidates.push({matrix:sheet.matrix,choice,count:sheet.matrix.length-choice.headerIndex-1})}catch(error){}}
+  candidates.sort((a,b)=>b.count-a.count||b.choice.score-a.choice.score);if(!candidates.length)throw Error('Excel 中未找到包含有效商品表头的工作表');
+  const selected=candidates[0],result=await mapImportedMatrix(selected.matrix,selected.choice,{signal:options.signal,onProgress:options.onProgress,prefix:'xlsx'});
+  result.reader='Excel Worker';return result;
+}
+
 function xmlEsc(s){
   let input=String(s??""),clean="";
   for(let i=0;i<input.length;i++){
@@ -1118,7 +2164,7 @@ function xmlEsc(s){
   if(clean.length>32767)clean=clean.slice(0,32767).replace(/[\uD800-\uDBFF]$/,"");
   return clean.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }function colName(n){let s="";for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s}
-function exportRows(list){let headers=["Model ID"].concat(FIELD.map(f=>f.display));let data=list.map(r=>[idFor(r)].concat(FIELD.map(f=>{let v=key(f.h)==="pre"?[r.preValue,r.preDate,r.preNote].filter(Boolean).join(" | "):value(r,f.h);return typeof v==="string"&&v.startsWith("data:image")?"[图片已用于工作台分组]":v??""})));return{headers,data}}
+function exportRows(list){let headers=["Model ID"].concat(FIELD.map(f=>f.display));let data=list.map(r=>[idFor(r)].concat(FIELD.map(f=>{let v=key(f.h)==="pre"?[r.preValue||"",r.preDate||"",r.preNote||""].join(" | "):value(r,f.h);return typeof v==="string"&&v.startsWith("data:image")?"[图片已用于工作台分组]":v??""})));return{headers,data}}
 function exportCsv(list){let x=exportRows(list),cell=v=>{let t=String(v??"");return /[",\r\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t},text="\uFEFF"+[x.headers,...x.data].map(r=>r.map(cell).join(",")).join("\r\n");return new Blob([text],{type:"text/csv;charset=utf-8"})}
 function zip(files){
   const encoder=new TextEncoder(),parts=[],central=[];let offset=0;
@@ -1135,13 +2181,129 @@ function zip(files){
 }
 function exportXlsx(list){let x=exportRows(list),cols=x.headers,rr=[];function c(i,r,v){return '<c r="'+colName(i)+r+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v)+'</t></is></c>'}rr.push('<row r="1">'+cols.map((v,i)=>c(i,1,v)).join("")+"</row>");x.data.forEach((data,j)=>{let row=j+2;rr.push('<row r="'+row+'">'+data.map((v,i)=>c(i,row,v)).join("")+"</row>")});let end=colName(cols.length-1)+(x.data.length+1),sheet='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><sheetData>'+rr.join("")+'</sheetData><autoFilter ref="A1:'+end+'"/></worksheet>',ct='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',wb='<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="寻品工作看板" sheetId="1" r:id="rId1"/></sheets></workbook>',re='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',br='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';return zip([{n:"[Content_Types].xml",d:ct},{n:"_rels/.rels",d:re},{n:"xl/workbook.xml",d:wb},{n:"xl/_rels/workbook.xml.rels",d:br},{n:"xl/worksheets/sheet1.xml",d:sheet}])}
 function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let old of previous||[]){let id=idFor(old);if(id&&!byId.has(id))byId.set(id,old)}for(let r of incoming){let old=byId.get(idFor(r));if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(old,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(old,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&old.localTranslatedItem){r.raw[H[10]]=old.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=old.translationItemSource;r.translationItemVersion=old.translationItemVersion}if(sameModel&&old.localTranslatedModel){r.raw[H[12]]=old.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=old.translationModelSource;r.translationModelVersion=old.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
-async function runDeferredProcessing(token){try{for(let i=0;i<rows.length;i++){if(token!==activeHashRun)return;deriveRecord(rows[i]);if(i&&i%400===0){$("state").textContent=(sourceFileName?sourceFileName+" · ":"")+"后台整理字段 "+i+" / "+rows.length;await new Promise(resolve=>setTimeout(resolve,0))}}if(token!==activeHashRun)return;for(let r of rows)r.group=r.manualGroup||"UNGROUPED-"+r.uid;save(true);render();if(token===activeHashRun)$("groupState").textContent="字段已整理 · 默认平铺；点击按阈值分组时再处理图片"}catch(e){console.error(e);if(token===activeHashRun){$("groupState").textContent="后台处理失败，可重新归类";toast("后台图片/字段处理失败："+(e?.message||"请重试"))}}}
-async function importFile(f){if(!f)return;if(historyMode)returnToCurrent();let hashToken=++activeHashRun,oldRows=rows,oldHeaders=headers,oldSource=sourceFileName,oldGrouping=groupingEnabled;sourceFileName=f.name;$("state").textContent=f.name+" · 正在读取";try{let x=/\.(csv|txt)$/i.test(f.name)||f.type==="text/csv"?await parseCsv(f,pct=>{$("state").textContent=f.name+" · 正在解析 CSV "+pct+"%"}):await parseXlsx(f);if(hashToken!==activeHashRun)return;headers=x.headers;rows=mergeBuyerEdits(x.rows,oldRows);groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();selected.clear();filters={};pageIndex=0;$("groupState").textContent="数据已载入 · 图片特征后台准备中；当前平铺未分组";save(true);render();toast(rows.length?"数据已载入："+rows.length+" 条；先展示平铺列表，图片特征将在后台准备":"未找到商品记录："+f.name+" 只有表头/说明，请选择含商品行的数据文件");setTimeout(()=>runDeferredProcessing(hashToken),30)}catch(e){if(hashToken!==activeHashRun)return;console.error(e);rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;$("state").textContent=(sourceFileName?sourceFileName+" · ":"")+"导入失败";render();toast("导入失败："+(e?.message||"请确认文件为标准 XLSX 或 CSV"))}}
-async function importInvitations(file){if(!file||!rows.length)return;if(historyMode){toast("历史版本只读，请返回当前数据后导入邀请ID");return}try{$("translationState").textContent="正在读取邀请ID表…";let parsed=/\.(csv|txt)$/i.test(file.name)||file.type==="text/csv"?await parseCsv(file,pct=>{$("translationState").textContent="邀请ID CSV "+pct+"%"},2):await parseXlsx(file,2),hh=parsed.headers||[],idHeader=hh.find(h=>/modelid|模型id/.test(norm(h))),inviteHeader=hh.find(h=>/邀请id|invitationid|inviteid/.test(norm(h)));if(!idHeader||!inviteHeader)throw Error("邀请ID表需要 Model ID 和 邀请ID 两列");let map=new Map();for(let source of parsed.rows){let id=normalizeModelId(source.raw?.[idHeader]);if(id)map.set(id,String(source.raw?.[inviteHeader]??"").trim())}let matched=0,updated=0;for(let i=0;i<rows.length;i++){let r=rows[i],id=idFor(r);if(map.has(id)){matched++;let invite=map.get(id);if(String(value(r,H[25])||"")!==invite){r.raw[H[25]]=invite;r.userEditedFields=[...new Set([...(r.userEditedFields||[]),H[25]])];invalidateRaw(r);markDirty(r);updated++}}if(i&&i%1000===0){$("translationState").textContent="正在匹配邀请ID "+i+" / "+rows.length;await new Promise(resolve=>setTimeout(resolve,0))}}save(true);render();let message="邀请ID导入完成 · 匹配 "+matched+" 个 Model ID，更新 "+updated+" 条";$("translationState").textContent=message;toast(message)}catch(e){console.error(e);$("translationState").textContent="邀请ID导入失败";toast("邀请ID导入失败："+(e?.message||"请检查列名"))}}async function importTranslations(file){if(!file||!rows.length)return;if(historyMode){toast("历史版本只读，请返回当前数据后导入翻译");return}try{$("translationState").textContent="正在读取翻译表…";let parsed=/\.(csv|txt)$/i.test(file.name)||file.type==="text/csv"?await parseCsv(file):await parseXlsx(file),hh=parsed.headers||[],idHeader=hh.find(h=>/modelid|模型id/.test(norm(h))),itemHeader=hh.find(h=>key(h)==="itemchinese"||["itemname中文","itemnamechinese"].includes(norm(h))),modelHeader=hh.find(h=>key(h)==="modelchinese"||["modelname中文","modelnamechinese"].includes(norm(h)));if(!idHeader||(!itemHeader&&!modelHeader))throw Error("翻译表至少需要 Model ID，并包含 item name 中文或 Model name 中文列");let map=new Map();for(let source of parsed.rows){let id=normalizeModelId(source.raw?.[idHeader]);if(!id)continue;map.set(id,{item:itemHeader?String(source.raw?.[itemHeader]??"").trim():"",model:modelHeader?String(source.raw?.[modelHeader]??"").trim():""})}let matched=0,updated=0;for(let i=0;i<rows.length;i++){let r=rows[i],entry=map.get(idFor(r));if(entry){matched++;let changed=false;if(entry.item){if(String(value(r,H[10])??"").trim()!==entry.item)updated++;r.raw[H[10]]=entry.item;r.autoItemChinese=false;r.localTranslatedItem=false;r.userEditedFields=[...new Set([...(r.userEditedFields||[]),H[10]])];changed=true}if(entry.model){if(String(value(r,H[12])??"").trim()!==entry.model)updated++;r.raw[H[12]]=entry.model;r.autoModelChinese=false;r.localTranslatedModel=false;r.userEditedFields=[...new Set([...(r.userEditedFields||[]),H[12]])];changed=true}if(changed){invalidateRaw(r);markDirty(r)}}if(i&&i%1000===0){$("translationState").textContent="正在匹配 Model ID "+i+" / "+rows.length;await new Promise(resolve=>setTimeout(resolve,0))}}if(matched){save(true);render()}let message="翻译导入完成 · 匹配 "+matched+" 个 Model ID，更新 "+updated+" 个中文字段";if(matched===0)message+="；请确认 Model ID 与当前看板为同一批数据（已自动清理空格、逗号和 .0 格式）";else if(updated===0)message+="；中文字段内容没有变化";$("translationState").textContent=message;toast(message)}catch(e){console.error(e);$("translationState").textContent="翻译导入失败";toast("翻译导入失败："+(e?.message||"请检查翻译表标题行和列名"))}}
+async function runDeferredProcessing(token){
+  const dataset=rows;
+  try{
+    for(let i=0;i<dataset.length;i++){
+      if(rows!==dataset||historyMode||!canEditWorkspace())return;
+      deriveRecord(dataset[i]);filtered.searchText?.(dataset[i]);
+      if(i&&i%100===0){if(!importFile.running)$('state').textContent=(sourceFileName?sourceFileName+' · ':'')+'后台整理字段 '+i+' / '+dataset.length;await new Promise(resolve=>setTimeout(resolve,0))}
+    }
+    if(rows!==dataset||historyMode||!canEditWorkspace())return;
+    if(!groupingEnabled)for(const r of dataset)r.group=r.manualGroup||'UNGROUPED-'+r.uid;
+    save(true);render();
+    if(!groupingEnabled&&token===activeHashRun)$('groupState').textContent='字段已整理 · 默认平铺；点击按阈值分组时再处理图片';
+  }catch(error){console.error(error);if(rows===dataset){$('groupState').textContent='后台字段处理失败，可重试';toast('后台字段处理失败：'+(error.message||'请重试'))}}
+}
+async function importFile(f){
+  if(!canEditWorkspace()){toast('当前工作区不可写，请关闭其他编辑标签后刷新');return}if(!f)return;if(historyMode)returnToCurrent();
+  importFile.activeController?.abort();const controller=new AbortController();importFile.activeController=controller;importFile.running=true;
+  const hashToken=++activeHashRun,oldRows=rows,oldHeaders=headers,oldSource=sourceFileName,oldGrouping=groupingEnabled,started=Date.now();
+  $('cancelImport').hidden=false;$('state').textContent=f.name+' · 正在读取';
+  const onProgress=pct=>{if(hashToken===activeHashRun)$('state').textContent=f.name+' · 正在导入 '+pct+'%'};
+  try{
+    const parsed=/\.(csv|txt)$/i.test(f.name)||f.type==='text/csv'?await parseCsv(f,onProgress,3,{signal:controller.signal}):await parseXlsx(f,3,{signal:controller.signal,onProgress});
+    if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;if(!parsed.rows.length)throw new Error('文件没有商品数据行，已保留原工作台数据');
+    headers=parsed.headers;rows=mergeBuyerEdits(parsed.rows,oldRows);sourceFileName=f.name;groupingEnabled=false;
+    for(const r of rows){r.manualGroup='';r.group='UNGROUPED-'+r.uid}opened.clear();selected.clear();filters={};pageIndex=0;
+    $('groupState').textContent='数据已载入 · 默认平铺；识图归类按需执行';save(true);render();
+    if(typeof reportQa==='function')reportQa('import',{rows:rows.length,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
+    toast(rows.length?'已导入 '+rows.length.toLocaleString()+' 个 Model ID；正在后台整理字段':'未发现商品数据行，请检查文件');setTimeout(()=>runDeferredProcessing(hashToken),30);
+  }catch(error){if(hashToken!==activeHashRun)return;rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;render();if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast('导入失败：'+(error.message||'请检查文件格式'))}}
+  finally{if(hashToken===activeHashRun){importFile.running=false;importFile.activeController=null;$('cancelImport').hidden=true}}
+}
+
+async function importInvitations(file){
+  if(!canEditWorkspace()||!file||!rows.length)return;
+  if(historyMode){toast("历史版本只读，请返回当前数据后导入邀请ID");return}
+  const sourceRows=rows,stillCurrent=()=>rows===sourceRows&&!historyMode&&canEditWorkspace();
+  const cancelled=()=>toast("工作数据已切换，已取消邀请ID导入");
+  try{
+    $("translationState").textContent="正在读取邀请ID表…";
+    const parsed=/\.(csv|txt)$/i.test(file.name)||file.type==="text/csv"?await parseCsv(file,pct=>{$("translationState").textContent="邀请ID CSV "+pct+"%"},2):await parseXlsx(file,2);
+    if(!stillCurrent()){cancelled();return}
+    const hh=parsed.headers||[],idHeader=hh.find(h=>/modelid|模型id/.test(norm(h))),inviteHeader=hh.find(h=>/邀请id|invitationid|inviteid/.test(norm(h)));
+    if(!idHeader||!inviteHeader)throw Error("邀请ID表需要 Model ID 和 邀请ID 两列");
+    const map=new Map();
+    for(const source of parsed.rows){const id=normalizeModelId(source.raw?.[idHeader]);if(id)map.set(id,String(source.raw?.[inviteHeader]??"").trim())}
+    let matched=0,updated=0;
+    for(let i=0;i<sourceRows.length;i++){
+      if(!stillCurrent()){cancelled();return}
+      const record=sourceRows[i],id=idFor(record);
+      if(map.has(id)){matched++;const invite=map.get(id);if(String(value(record,H[25])||"")!==invite){record.raw[H[25]]=invite;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[25]])];invalidateRaw(record);markDirty(record);updated++}}
+      if(i&&i%1000===0){$("translationState").textContent="正在匹配邀请ID "+i+" / "+sourceRows.length;await new Promise(resolve=>setTimeout(resolve,0));if(!stillCurrent()){cancelled();return}}
+    }
+    if(!stillCurrent()){cancelled();return}
+    save(true);render();const message="邀请ID导入完成 · 匹配 "+matched+" 个 Model ID，更新 "+updated+" 条";$("translationState").textContent=message;toast(message);
+  }catch(error){if(!stillCurrent())return;console.error(error);$("translationState").textContent="邀请ID导入失败";toast("邀请ID导入失败："+(error?.message||"请检查列名"))}
+}
+async function importTranslations(file){
+  if(!canEditWorkspace()||!file||!rows.length)return;
+  if(historyMode){toast("历史版本只读，请返回当前数据后导入翻译");return}
+  const sourceRows=rows,stillCurrent=()=>rows===sourceRows&&!historyMode&&canEditWorkspace();
+  const cancelled=()=>toast("工作数据已切换，已取消翻译导入");
+  try{
+    $("translationState").textContent="正在读取翻译表…";
+    const parsed=/\.(csv|txt)$/i.test(file.name)||file.type==="text/csv"?await parseCsv(file,()=>{},2):await parseXlsx(file,2);
+    if(!stillCurrent()){cancelled();return}
+    const hh=parsed.headers||[],idHeader=hh.find(h=>/modelid|模型id/.test(norm(h))),itemHeader=hh.find(h=>key(h)==="itemchinese"||["itemname中文","itemnamechinese"].includes(norm(h))),modelHeader=hh.find(h=>key(h)==="modelchinese"||["modelname中文","modelnamechinese"].includes(norm(h)));
+    if(!idHeader||(!itemHeader&&!modelHeader))throw Error("翻译表至少需要 Model ID，并包含 item name 中文或 Model name 中文列");
+    const map=new Map();
+    for(const source of parsed.rows){const id=normalizeModelId(source.raw?.[idHeader]);if(id)map.set(id,{item:itemHeader?String(source.raw?.[itemHeader]??"").trim():"",model:modelHeader?String(source.raw?.[modelHeader]??"").trim():""})}
+    let matched=0,updated=0;
+    for(let i=0;i<sourceRows.length;i++){
+      if(!stillCurrent()){cancelled();return}
+      const record=sourceRows[i],entry=map.get(idFor(record));
+      if(entry){
+        matched++;let changed=false;
+        if(entry.item){if(String(value(record,H[10])??"").trim()!==entry.item)updated++;record.raw[H[10]]=entry.item;record.autoItemChinese=false;record.localTranslatedItem=false;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[10]])];changed=true}
+        if(entry.model){if(String(value(record,H[12])??"").trim()!==entry.model)updated++;record.raw[H[12]]=entry.model;record.autoModelChinese=false;record.localTranslatedModel=false;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[12]])];changed=true}
+        if(changed){invalidateRaw(record);markDirty(record)}
+      }
+      if(i&&i%1000===0){$("translationState").textContent="正在匹配 Model ID "+i+" / "+sourceRows.length;await new Promise(resolve=>setTimeout(resolve,0));if(!stillCurrent()){cancelled();return}}
+    }
+    if(!stillCurrent()){cancelled();return}
+    if(matched){save(true);render()}
+    let message="翻译导入完成 · 匹配 "+matched+" 个 Model ID，更新 "+updated+" 个中文字段";
+    if(matched===0)message+="；请确认 Model ID 与当前看板为同一批数据（已自动清理空格、逗号和 .0 格式）";else if(updated===0)message+="；中文字段内容没有变化";
+    $("translationState").textContent=message;toast(message);
+  }catch(error){if(!stillCurrent())return;console.error(error);$("translationState").textContent="翻译导入失败";toast("翻译导入失败："+(error?.message||"请检查翻译表标题行和列名"))}
+}
+async function exportLarge(list,format){
+  if(exportLarge.running){toast('正在导出，请稍候');return}
+  exportLarge.running=true;const started=Date.now(),button=$(format==='csv'?'exportCsv':'export'),label=button.textContent;
+  $('export').disabled=$('exportCsv').disabled=true;
+  try{
+    const snapshot=list.map(r=>({...r,raw:{...r.raw},userEditedFields:[...(r.userEditedFields||[])]}));
+    let table={headers:[],data:[]};
+    for(let i=0;i<snapshot.length;i+=250){const part=exportRows(snapshot.slice(i,i+250));table.headers=part.headers;table.data.push(...part.data);button.textContent='整理 '+Math.min(i+250,snapshot.length)+' / '+snapshot.length;await new Promise(resolve=>setTimeout(resolve,0))}
+    const result=await WorkbenchExport.exportInWorker(table,{format,onProgress:p=>{button.textContent='生成 '+p.percent+'%'}});
+    download(result.blob,'寻品工作看板_筛选结果.'+format);toast((format==='csv'?'CSV':'Excel')+' 已开始导出：'+list.length+' 个 Model ID');
+    reportQa('export',{rows:list.length,format,workerUsed:result.workerUsed,milliseconds:Date.now()-started});
+  }catch(error){console.error(error);toast('导出失败：'+(error.message||'请重试'))}
+  finally{exportLarge.running=false;button.textContent=label;$('export').disabled=$('exportCsv').disabled=false}
+}
 function download(blob,name){if(!(blob instanceof Blob))throw Error("导出文件生成失败");let u=URL.createObjectURL(blob),a=document.createElement("a");a.href=u;a.download=name;a.style.display="none";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),5000)}
-$("import").onclick=()=>$("file").click();$("file").onchange=()=>{let f=$("file").files[0];if(f)importFile(f);$("file").value=""};$("importTranslations").onclick=()=>$("translationFile").click();$("translationFile").onchange=()=>{let f=$("translationFile").files[0];if(f)importTranslations(f);$("translationFile").value=""};$("importInvitations").onclick=()=>$("invitationFile").click();$("invitationFile").onchange=()=>{let f=$("invitationFile").files[0];if(f)importInvitations(f);$("invitationFile").value=""};$("export").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}download(exportXlsx(a),"寻品工作看板_筛选结果.xlsx");toast("Excel 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("Excel 导出失败："+(e?.message||"请重试"))}};$("exportCsv").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}download(exportCsv(a),"寻品工作看板_筛选结果.csv");toast("CSV 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("CSV 导出失败："+(e?.message||"请重试"))}};$("search").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,140)};$("sort").onchange=()=>{clearTimeout(searchTimer);render()};$("clear").onclick=()=>{clearTimeout(searchTimer);filters={};$("search").value="";render()};$("schemaBtn").onclick=()=>drawer("schema");$("allFilters").onclick=()=>drawer("filter");$("bulkEdit").onclick=batch;$("bulkPreApply").onclick=()=>{let state=$("bulkPreValue").value,date=$("bulkPreDate").value,targets=rows.filter(x=>selected.has(x.uid));if(!targets.length){toast("请先勾选 Model ID");return}if(!state&&!date){toast("请选择 Y/N 或核价日期");return}for(let r of targets){if(state)r.preValue=state;if(date)r.preDate=date;r.preTouched=true;markDirty(r)}save();render();toast("已批量更新 "+targets.length+" 个 Model ID 的前置核价信息")};$("merge").onclick=()=>merge(true);$("splitGroup").onclick=splitSelectedFromGroups;$("unmerge").onclick=()=>merge(false);$("shareSelected").onclick=()=>{let list=sorted(rows.filter(r=>selected.has(r.uid)));if(list.length)showShareLinkDialog(list);else toast("请先勾选要分享的 Model ID")};$("unselect").onclick=()=>{selected.clear();render()};
-$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=translateAllChinese;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;await regroup();save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
-let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layoutResizeTimer);layoutResizeTimer=setTimeout(()=>render(),180)});async function start(){refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem("pool-workbench-v2")||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);if(i&&i%400===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false}
+function showBlankWorkbenchLink(){
+  const link=location.protocol==='https:'&&!/^(?:localhost|127\.)/.test(location.hostname)?workspace.blankShareUrl():'https://joewu1024.github.io/---2/?new=1';
+  $('overlay').innerHTML='<div class="modalbg"><section class="modal"><h3>分享空白工作台</h3><p>同事打开此入口会新建自己的空白工作区。每人数据保存在自己的浏览器；请收藏打开后的工作区地址，下次继续使用。</p><input class="cellinput" id="blankWorkbenchLink" readonly value="'+esc(link)+'"><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px"><button class="btn" id="closeBlankWorkbench">关闭</button><button class="btn primary" id="copyBlankWorkbench">复制空白链接</button></div></section></div>';
+  $('closeBlankWorkbench').onclick=()=>$('overlay').innerHTML='';
+  $('copyBlankWorkbench').onclick=async()=>{const ok=await copyShareText(link);toast(ok?'空白工作台链接已复制':'请选中上方链接复制')};
+}
+$('shareBlank').onclick=showBlankWorkbenchLink;$('cancelImport').onclick=()=>importFile.activeController?.abort();
+$("import").onclick=()=>$("file").click();$("file").onchange=()=>{let f=$("file").files[0];if(f)importFile(f);$("file").value=""};$("importTranslations").onclick=()=>$("translationFile").click();$("translationFile").onchange=()=>{let f=$("translationFile").files[0];if(f)importTranslations(f);$("translationFile").value=""};$("importInvitations").onclick=()=>$("invitationFile").click();$("invitationFile").onchange=()=>{let f=$("invitationFile").files[0];if(f)importInvitations(f);$("invitationFile").value=""};$("export").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'xlsx');return}download(exportXlsx(a),"寻品工作看板_筛选结果.xlsx");toast("Excel 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("Excel 导出失败："+(e?.message||"请重试"))}};$("exportCsv").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'csv');return}download(exportCsv(a),"寻品工作看板_筛选结果.csv");toast("CSV 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("CSV 导出失败："+(e?.message||"请重试"))}};$("search").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,140)};$("sort").onchange=()=>{clearTimeout(searchTimer);render()};$("clear").onclick=()=>{clearTimeout(searchTimer);filters={};$("search").value="";render()};$("schemaBtn").onclick=()=>drawer("schema");$("allFilters").onclick=()=>drawer("filter");$("bulkEdit").onclick=batch;$("bulkPreApply").onclick=()=>{if(!canEditWorkspace()||historyMode)return;let state=$("bulkPreValue").value,date=$("bulkPreDate").value,targets=rows.filter(x=>selected.has(x.uid));if(!targets.length){toast("请先勾选 Model ID");return}if(!state&&!date){toast("请选择 Y/N 或核价日期");return}for(let r of targets){if(state)r.preValue=state;if(date)r.preDate=date;r.preTouched=true;markDirty(r)}save();render();toast("已批量更新 "+targets.length+" 个 Model ID 的前置核价信息")};$("merge").onclick=()=>merge(true);$("splitGroup").onclick=splitSelectedFromGroups;$("unmerge").onclick=()=>merge(false);$("shareSelected").onclick=()=>{let list=sorted(rows.filter(r=>selected.has(r.uid)));if(list.length)showShareLinkDialog(list);else toast("请先勾选要分享的 Model ID")};$("unselect").onclick=()=>{selected.clear();render()};
+$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=translateAllChinese;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
+let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layoutResizeTimer);layoutResizeTimer=setTimeout(()=>render(),180)});async function start(){
+  $('import').disabled=true;
+  $('workspaceInfo').textContent=workspace.workspaceLabel()+' · 数据保存在当前浏览器。请收藏当前网址，下次继续本工作区。';
+  workspaceWriter=await BuyerWorkspace.acquireWriter(workspace);workspaceWritable=workspaceWriter.owner;
+  if(!canEditWorkspace()){
+    const notice=$('workspaceNotice');notice.hidden=false;
+    notice.innerHTML='<b>'+ (workspaceWriter.status==='busy'?'此工作区正在另一个标签页编辑':'当前浏览器未能取得工作区编辑权限')+'</b><span>为避免互相覆盖，当前页面未载入数据。请关闭旧标签后刷新，或使用新的独立工作区。</span><a href="'+esc(workspace.blankShareUrl())+'">新建空白工作区</a><button class="btn" id="retryWorkspace">刷新后重试</button>';
+    $('retryWorkspace').onclick=()=>location.reload();document.querySelector('main').inert=true;
+    $('export').disabled=true;$('exportCsv').disabled=true;return;
+  }
+  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false}
 start().catch(e=>{console.error(e);$("import").disabled=false;$("saveState").textContent="本机数据读取失败";toast("恢复本机工作台失败："+(e?.message||"请刷新页面"))});})();</script></body></html>
 
 

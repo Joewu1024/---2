@@ -1,0 +1,184 @@
+{
+  "testedAt": "2026-11-17T03:29:21.000Z",
+  "synthetic": true,
+  "environment": "Codex in-app browser on Windows; local HTTP preview",
+  "fixtures": {
+    "csvRows": 20000,
+    "csvBytes": 14452108,
+    "xlsxRows": 20000,
+    "xlsxBytes": 3410599,
+    "fields": 34
+  },
+  "measurements": {
+    "csvImportToFirstDisplayMs": 1931,
+    "xlsxImportToFirstDisplayMs": 4984,
+    "xlsxExportAll20000Ms": 6100
+  },
+  "verified": [
+    "20k CSV Worker import",
+    "20k Excel Worker import",
+    "20k IndexedDB reload",
+    "price edit 10 to 3 recalculates target immediately",
+    "Y and 2026-11-17 batch date survive reload",
+    "20k historical V1 snapshot",
+    "independent blank workspaces and same-workspace writer protection",
+    "empty 1688 link filter exactly 4000, all 4000 exported links blank",
+    "20k exported XLSX strict CRC and openpyxl readback: all 21-digit text IDs, leading-zero invites and buyer notes intact",
+    "manual Chinese two-column import and invitation import matched",
+    "cancelled XLSX import and header-only CSV preserve existing 60 records",
+    "manual 50-model group expands 49 yellow children; child checkbox accessible after sticky scroll-padding fix; one moved out raises group count from 11 to 12",
+    "image zoom opens/closes; C8 and attribute folds; filter X/outside dismiss and footer in viewport",
+    "20k explicit 90% grouping completes; synthetic eight image families only, not a semantic image-quality benchmark"
+  ],
+  "translationLiveProbe": {
+    "rows": 3,
+    "status": "Google HTTP 429 rate-limited; fresh translations not validated end-to-end in this run",
+    "handling": "preserve originals and prior translations, throttle queue, classify limitation, manual imported translations remain usable"
+  },
+  "limits": [
+    "timings exclude background translation/image retrieval and will vary by device/network",
+    "the 20k Excel fixture uses image URLs/dataURI cells, not embedded image drawings; image-heavy Excel remains the compatibility path",
+    "no browser FPS benchmark; page rendering uses bounded pagination",
+    "data is local per browser/workspace, not cloud/account synchronization"
+  ],
+  "consoleMeasurements": [
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":100,\"milliseconds\":492}",
+      "timestamp": "2026-11-17T03:14:55.501Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":100,\"milliseconds\":294}",
+      "timestamp": "2026-11-17T03:15:02.384Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":100,\"milliseconds\":432}",
+      "timestamp": "2026-11-17T03:15:11.206Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"import\",\"rows\":20000,\"milliseconds\":1931,\"reader\":\"CSV Worker\"}",
+      "timestamp": "2026-11-17T03:15:11.209Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":100,\"milliseconds\":370}",
+      "timestamp": "2026-11-17T03:15:21.954Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":1,\"milliseconds\":147}",
+      "timestamp": "2026-11-17T03:15:51.489Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":378}",
+      "timestamp": "2026-11-17T03:15:57.518Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":140}",
+      "timestamp": "2026-11-17T03:16:04.818Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":382}",
+      "timestamp": "2026-11-17T03:16:10.652Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"import\",\"rows\":20000,\"milliseconds\":4984,\"reader\":\"Excel Worker\"}",
+      "timestamp": "2026-11-17T03:16:10.652Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":452}",
+      "timestamp": "2026-11-17T03:16:23.577Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":633}",
+      "timestamp": "2026-11-17T03:16:34.483Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":424}",
+      "timestamp": "2026-11-17T03:19:19.321Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":1,\"milliseconds\":152}",
+      "timestamp": "2026-11-17T03:19:19.879Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":1,\"milliseconds\":34}",
+      "timestamp": "2026-11-17T03:20:45.018Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":1,\"milliseconds\":31}",
+      "timestamp": "2026-11-17T03:20:52.773Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":320}",
+      "timestamp": "2026-11-17T03:21:54.789Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":249}",
+      "timestamp": "2026-11-17T03:21:56.904Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"export\",\"rows\":20000,\"format\":\"xlsx\",\"workerUsed\":true,\"milliseconds\":6100}",
+      "timestamp": "2026-11-17T03:22:34.086Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":320}",
+      "timestamp": "2026-11-17T03:21:54.789Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":50,\"milliseconds\":249}",
+      "timestamp": "2026-11-17T03:21:56.904Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"export\",\"rows\":20000,\"format\":\"xlsx\",\"workerUsed\":true,\"milliseconds\":6100}",
+      "timestamp": "2026-11-17T03:22:34.086Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    },
+    {
+      "level": "info",
+      "message": "[BuyerQA] {\"event\":\"render\",\"rows\":20000,\"visible\":8,\"milliseconds\":249}",
+      "timestamp": "2026-11-17T03:26:45.631Z",
+      "url": "http://127.0.0.1:60011/?workspace=53e0f33f-9d51-428f-a702-f8ce48eb42e4&qa=1"
+    }
+  ]
+}

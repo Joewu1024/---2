@@ -10,7 +10,8 @@ const { test, afterEach, mock } = require('node:test');
 const BuyerTranslation = require('../translation-engine.js');
 const BuyerGoogleTranslation = require('../translation-google-provider.js');
 const root = path.join(__dirname, '..');
-const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+const html = Array.from(documentHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)).at(-1)[1];
 const lines = html.split(/\r?\n/);
 const instances = new Set();
 const TRANSLATION_VERSION = 'google-v4-20261116';
@@ -56,7 +57,7 @@ async function waitFor(condition, message, timeout = 3000) {
 
 function harness(options = {}) {
   const timers = new Set(), elements = new Map();
-  const controls = { editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, shareSnapshots: [], parse: null };
+  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, shareSnapshots: [], parse: null };
   const cacheGate = options.cacheGate || { promise: Promise.resolve() };
   const setTimer = (callback, delay, ...args) => {
     const timer = setTimeout(() => { timers.delete(timer); callback(...args); }, delay);
@@ -96,6 +97,7 @@ function harness(options = {}) {
   const transport = options.transport || mock.fn(async texts => texts.map(chineseFor));
   const context = vm.createContext({
     BuyerTranslation, BuyerGoogleTranslation, controls, document, console,
+    workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
     referenceTranslationCache: new Map(options.bakedCache || []),
     setTimeout: setTimer, clearTimeout: clearTimer, queueMicrotask,
     localStorage: { getItem: key => key === 'sourcing-cn-cache-v2' && options.localCache ? JSON.stringify(options.localCache) : null },
@@ -111,9 +113,9 @@ function harness(options = {}) {
     lineStarting('const H='),
     lineStarting('const rawLookupCache='),
     lineStarting('const keyMap='),
-    ...['key', 'getRaw', 'invalidateRaw', 'value', 'aliasFor', 'deriveRecord', 'bindTable', 'markDirty', 'save', 'mergeBuyerEdits'].map(name => lineStarting('function ' + name + '(')),
-    lineStarting('async function importFile('),
-    lines.find(line => line.includes('async function importTranslations(')),
+    ...['key', 'getRaw', 'invalidateRaw', 'value', 'aliasFor', 'deriveRecord', 'bindTable', 'markDirty', 'save', 'writeRecordBatches', 'mergeBuyerEdits'].map(name => lineStarting('function ' + name + '(')),
+    between('async function importFile(', 'async function importInvitations('),
+    between('async function importTranslations(', 'function download('),
     block('translation-state-v3'), block('translation-integration-v3'),
     between('async function ensureProductTranslations(', 'async function ensureCategoryTranslations('),
     between('async function buildOnlineShareLink(', 'async function copyShareText(')
@@ -123,6 +125,7 @@ function harness(options = {}) {
     let hasUnsavedChanges=false, saveAllPending=false, saveTimer=null;
     let headers=[], sourceFileName='', groupingEnabled=false, activeHashRun=0;
     let opened=new Set(), selected=new Set(), filters={}, pageIndex=0;
+    function canEditWorkspace(){return controls.writable}
     function extractBrand(){return ''} function extractStyle(){return ''} function extractQty(){return ''}
     function idFor(r){return String(getRaw(r,['Model ID'])||r.uid)}
     function normalizeModelId(value){return String(value||'')}
@@ -138,6 +141,7 @@ function harness(options = {}) {
     function render(){controls.renders++;queueVisibleTranslation()}
     async function flushSave(){
       if(historyMode)return true;
+      if(!canEditWorkspace())return false;
       controls.flushes++;controls.persisted=rows.map(r=>({uid:r.uid,raw:{...r.raw}}));
       dirtyRows.clear();saveAllPending=false;hasUnsavedChanges=false;return true;
     }
@@ -199,7 +203,7 @@ test('a main-file buyer-supplied Chinese field without automatic provenance is r
 });
 
 test('embedded engine is identical to the separately tested engine', () => {
-  const embedded = html.match(/<script data-buyer-translation-engine="v[34]">([\s\S]*?)<\/script>/);
+  const embedded = documentHtml.match(/<script data-buyer-translation-engine="v[34]">([\s\S]*?)<\/script>/);
   assert.ok(embedded);
   assert.equal(embedded[1].trim(), fs.readFileSync(path.join(root, 'translation-engine.js'), 'utf8').trim());
 });
@@ -617,3 +621,25 @@ for (const outcome of ['success', 'failure']) {
     assert.strictEqual(h.api.rows[0], wanted);
   });
 }
+
+test('a yielding readiness scan counts edits before and after their scan position exactly once',async()=>{
+  const h=harness();await h.api.ready;
+  const records=Array.from({length:1000},(_,i)=>{
+    const source='Wireless speaker FICT'+(2000+i),r=record(h,'readiness-'+i,source,chineseFor(source));
+    Object.assign(r,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:TRANSLATION_VERSION});return r;
+  });
+  h.api.setRows(records);assert.ok(h.api.readyCount<1000,'initial scan must yield');
+  const early=editor(h,records[0]),late=editor(h,records[750]);h.api.bindTable();
+  early.value='';early.oninput();late.value='';late.oninput();
+  await waitFor(()=>h.api.readyCount===998,'readiness scan after two manual blanks');
+  early.value=chineseFor(records[0].raw[h.api.H[9]]);early.oninput();late.value=chineseFor(records[750].raw[h.api.H[9]]);late.oninput();
+  assert.equal(h.api.readyCount,1000);h.api.updateTranslationStatus();assert.doesNotMatch(h.document.getElementById('translationState').textContent,/后台统计中/);
+});
+
+test('replacing a dataset cancels its old readiness scan without leaking counts into the new dataset',async()=>{
+  const h=harness();await h.api.ready;
+  h.api.setRows(Array.from({length:1000},(_,i)=>record(h,'old-readiness-'+i,'')));
+  h.api.setRows(Array.from({length:600},(_,i)=>record(h,'new-readiness-'+i,'')));
+  await waitFor(()=>h.api.readyCount===600,'new dataset readiness');await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(h.api.readyCount,600);assert.equal(h.api.rows.length,600);
+});
