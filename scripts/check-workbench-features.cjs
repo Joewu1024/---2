@@ -10,6 +10,7 @@ const vm = require('node:vm');
 const { test } = require('node:test');
 const BuyerTranslation = require('../translation-engine.js');
 const WorkbenchImport = require('../workbench-import.js');
+const XLSX = require('../vendor/xlsx.full.min.js');
 const documentHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
 const html = Array.from(documentHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)).at(-1)[1];
 const lines = html.split(/\r?\n/);
@@ -132,7 +133,7 @@ function harness(options={}) {
     function showShareLinkDialog(){} function filterPopup(){} function drawer(){}
     return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,
       batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,
-      updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,importFile,importInvitations,importTranslations,
+      updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,mapImportedMatrix,selectImportHeader,importFile,importInvitations,importTranslations,
       writeRecordBatches,saveVersion,listVersions,refreshVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,renameVersion,renameSelectedVersion,flushSave,save,
       get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},
       setRows(next){rows=next;headers=H.slice();sourceFileName='fabricated.csv'},setFilters(next){filters=next},
@@ -148,6 +149,15 @@ function record(h, id, raw = {}) {
 }
 function ids(rows) { return Array.from(rows, r => r.uid); }
 function csvFile(text, name = 'fabricated.csv') { const b = new Blob([text], { type: 'text/csv' }); b.name = name; return b; }
+const EXPECTED_STATUS_KEYS = ['pool_type','is_top_1k','cspu_group_type_for_testing','grass_region','asp_tag_by_l1','source_type_new','sourcing_status_daily_refresh'];
+async function readExportedXlsx(blob) {
+  const workbook = XLSX.read(Buffer.from(await blob.arrayBuffer()), { type: 'buffer' });
+  return { workbook, matrix: XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '', raw: true }) };
+}
+async function reimportExportedXlsx(h, blob) {
+  const { matrix } = await readExportedXlsx(blob);
+  return h.api.mapImportedMatrix(matrix, h.api.selectImportHeader(matrix, 3));
+}
 
 test('1688 blank filtering keeps only matching models and never leaks hidden group siblings', () => {
   const h = harness(), a = record(h,'blank',{final_1688_link:''}), b = record(h,'filled',{final_1688_link:'https://detail.1688.com/offer/fabricated.html'});
@@ -277,9 +287,64 @@ test('history inspection is read-only and returning/restoring uses the intended 
 });
 
 test('CSV export quotes commas, quotes and line breaks and reimports long Model IDs exactly',async()=>{
-  const h=harness(),id='12345678901234567890',note='第一行,"引号"\n第二行',r=record(h,id,{[h.api.H[24]]:note});
+  const h=harness(),id='12345678901234567890',itemId='00987654321098765432109876543210',note='第一行,"引号"\n第二行',r=record(h,id,{item_id:itemId,[h.api.H[24]]:note});
   const out=h.api.exportCsv([r]);assert.equal((await out.arrayBuffer()).byteLength>0,true);
-  const parsed=await h.api.parseCsv(out);assert.equal(h.api.idFor(parsed.rows[0]),id);assert.equal(h.api.value(parsed.rows[0],h.api.H[24]),note);
+  const parsed=await h.api.parseCsv(out);assert.equal(h.api.idFor(parsed.rows[0]),id);assert.equal(parsed.rows[0].raw.item_id,itemId);assert.equal(h.api.value(parsed.rows[0],h.api.H[24]),note);
+  assert.equal((await out.text()).includes(itemId),true);assert.equal((await out.text()).includes('9,876,543'),false);
+});
+
+test('export schema places exact item_id after Model ID and replaces only the aggregate status column',()=>{
+  const h=harness(),longItemId='00123456789012345678901234567890';
+  const a=record(h,'1001',{shop_item_id:'WRONG-SHOP-ID',item_id:longItemId}),b=record(h,'1002',{shop_item_id:'MUST-STAY-EMPTY'}),c=record(h,'1003',{'ITEM ID':'009876543210987654321'});
+  const {headers,data}=h.api.exportRows([a,b,c]);
+  assert.equal(headers.length,34);assert.deepEqual(Array.from(headers.slice(0,2)),['Model ID','item_id']);
+  assert.deepEqual(Array.from(headers.slice(7,14)),EXPECTED_STATUS_KEYS);
+  assert.equal(headers.includes('model状态'),false);assert.equal(headers.includes(h.api.H[5]),false);
+  assert.deepEqual(Array.from(data,row=>row[1]),[longItemId,'','009876543210987654321']);
+  assert.ok(data.every(row=>row.length===34));assert.equal(typeof data[0][1],'string');
+  const board=h.api.displayColumns();assert.equal(board.filter(column=>column.h===h.api.H[5]).length,1);
+  assert.equal(board.some(column=>column.h==='item_id'||EXPECTED_STATUS_KEYS.includes(column.h)),false);
+});
+
+for(const encoding of ['independent fields','independent fields overriding aggregate','JSON aggregate','labelled aggregate','seven-line aggregate'])test('CSV and XLSX roundtrip seven separate statuses with empty positions: '+encoding,async()=>{
+  const h=harness(),expected=[encoding==='labelled aggregate'?'候选池':'候选,池','','C','TH','','SRC',''],values=Object.fromEntries(EXPECTED_STATUS_KEYS.map((key,index)=>[key,expected[index]]));
+  const aggregate=encoding==='JSON aggregate'?JSON.stringify(values):encoding==='labelled aggregate'?EXPECTED_STATUS_KEYS.map((key,index)=>key+': '+expected[index]).join('\n'):expected.join('\n');
+  const raw=encoding==='independent fields'?values:encoding==='independent fields overriding aggregate'?{...values,[h.api.H[5]]:JSON.stringify(Object.fromEntries(EXPECTED_STATUS_KEYS.map(key=>[key,'STALE-AGGREGATE-VALUE'])))}:{[h.api.H[5]]:aggregate};
+  const r=record(h,'12345678901234567890',raw);
+  const exported=h.api.exportRows([r]);assert.deepEqual(Array.from(exported.data[0].slice(7,14)),expected);
+  const csv=h.api.exportCsv([r]),xlsx=h.api.exportXlsx([r]),{matrix}=await readExportedXlsx(xlsx);
+  assert.deepEqual(matrix[0],Array.from(exported.headers));assert.deepEqual(matrix[1].slice(7,14),expected);
+  for(const parsed of [await h.api.parseCsv(csv),await reimportExportedXlsx(h,xlsx)]){
+    assert.equal(parsed.rows.length,1);assert.equal(h.api.idFor(parsed.rows[0]),'12345678901234567890');
+    assert.equal(Object.hasOwn(parsed.rows[0].raw,'model状态'),false);
+    assert.deepEqual(EXPECTED_STATUS_KEYS.map(key=>h.api.statusValue(parsed.rows[0],key)),expected);
+    assert.deepEqual(EXPECTED_STATUS_KEYS.map(key=>parsed.rows[0].raw[key]),expected);
+  }
+});
+
+test('legacy fully populated seven-line statuses retain all seven positions during export',()=>{
+  const h=harness(),expected=['A','Y','C','VN','ASP','SRC','S'];
+  const out=h.api.exportRows([record(h,'legacy',{[h.api.H[5]]:expected.join('\n')})]);
+  assert.deepEqual(Array.from(out.data[0].slice(7,14)),expected);
+});
+
+test('filtered exportRows and both file formats exclude other models in the same source group',async()=>{
+  const h=harness(),visible=record(h,'1001',{item_id:'0012345678901234567890',grass_region:''}),hidden=record(h,'1002',{item_id:'HIDDEN-ITEM-ID',grass_region:'VN',[h.api.H[24]]:'HIDDEN-BUYER-NOTE'});
+  h.api.setRows([visible,hidden]);h.api.setFilters({'status:grass_region':{values:['']}});h.api.setOpened(['shared-group']);
+  const list=h.api.filtered();assert.deepEqual(ids(list),['1001']);
+  assert.deepEqual(Array.from(h.api.exportRows(list).data,row=>row[0]),['1001']);
+  const csv=h.api.exportCsv(list),xlsx=h.api.exportXlsx(list);
+  assert.doesNotMatch(await csv.text(),/HIDDEN-/);
+  for(const parsed of [await h.api.parseCsv(csv),await reimportExportedXlsx(h,xlsx)])assert.deepEqual(Array.from(parsed.rows,row=>h.api.idFor(row)),['1001']);
+});
+
+test('new export columns preserve buyer notes, Y/N-date, manual Chinese and invitation IDs in both formats',async()=>{
+  const h=harness(),note='买手备注,"保留"\n下一行',r=Object.assign(record(h,'12345',{item_id:'98765432109876543210',[h.api.H[10]]:'买手人工商品中文',[h.api.H[12]]:'买手人工型号中文',[h.api.H[24]]:note,[h.api.H[25]]:'INV-FABRICATED'}),{preValue:'N',preDate:'2026-11-17',preNote:'核价备注 | 保留分隔符'});
+  for(const parsed of [await h.api.parseCsv(h.api.exportCsv([r])),await reimportExportedXlsx(h,h.api.exportXlsx([r]))]){
+    const actual=parsed.rows[0];assert.equal(actual.raw.item_id,'98765432109876543210');
+    for(const field of [10,12,24,25])assert.equal(h.api.value(actual,h.api.H[field]),h.api.value(r,h.api.H[field]));
+    for(const field of ['preValue','preDate','preNote'])assert.equal(actual[field],r[field]);
+  }
 });
 
 for(const pre of [
@@ -293,10 +358,14 @@ for(const pre of [
 });
 
 test('XLSX export is an actual ZIP workbook with text IDs and escaped safe XML',async()=>{
-  const h=harness(),r=record(h,'12345678901234567890',{[h.api.H[24]]:'A&B <tag>\u0001'}),buf=Buffer.from(await h.api.exportXlsx([r]).arrayBuffer());
+  const h=harness(),itemId='00123456789012345678901234567890',r=record(h,'12345678901234567890',{item_id:itemId,[h.api.H[24]]:'A&B <tag>\u0001'}),blob=h.api.exportXlsx([r]),buf=Buffer.from(await blob.arrayBuffer());
   assert.equal(buf.readUInt32LE(0),0x04034b50);assert.equal(buf.readUInt32LE(buf.length-22),0x06054b50);
   const files=new Map();let at=0;while(buf.readUInt32LE(at)===0x04034b50){const size=buf.readUInt32LE(at+18),nameLength=buf.readUInt16LE(at+26),extraLength=buf.readUInt16LE(at+28),start=at+30+nameLength+extraLength;files.set(buf.toString('utf8',at+30,at+30+nameLength),buf.toString('utf8',start,start+size));at=start+size;}
   const xml=files.get('xl/worksheets/sheet1.xml');assert.ok(xml);assert.match(xml,/t="inlineStr"/);assert.match(xml,/12345678901234567890/);assert.match(xml,/A&amp;B &lt;tag&gt;/);assert.doesNotMatch(xml,/\u0001/);
+  const {workbook,matrix}=await readExportedXlsx(blob),sheet=workbook.Sheets[workbook.SheetNames[0]];
+  assert.deepEqual(matrix[0].slice(0,2),['Model ID','item_id']);assert.deepEqual(matrix[0].slice(7,14),EXPECTED_STATUS_KEYS);
+  assert.equal(sheet.A2.t,'s');assert.equal(sheet.B2.t,'s');assert.equal(sheet.B2.v,itemId);assert.equal(sheet.B2.w,itemId);
+  assert.equal(matrix[0].includes('model状态'),false);assert.equal(matrix[0].length,34);
 });
 
 test('invitation CSV imports match normalized Model IDs and preserve unmatched models',async()=>{

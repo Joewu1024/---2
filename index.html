@@ -2647,7 +2647,7 @@ function rememberBuyerOption(field, value) {
   }
 }
 
-function statusValue(r,k){let v=getRaw(r,[k]);if(String(v??"").trim()!=="")return String(v).trim();let direct=String(getRaw(r,["model状态"])||"").trim();if(!direct)return "";try{let parsed=JSON.parse(direct);if(parsed&&typeof parsed==="object"){for(let key in parsed)if(norm(key)===norm(k))return String(parsed[key]??"").trim()}}catch(e){}let re=new RegExp("(?:^|[\\r\\n;,|])\\s*"+k+"\\s*[:：=]\\s*([^\\r\\n;,|]*)","i"),m=direct.match(re);if(m)return m[1].trim().replace(/^["']|["']$/g,"");let lines=direct.split(/\r?\n/).map(x=>x.trim()).filter(Boolean),at=lines.findIndex(x=>norm(x.replace(/[:：=].*$/,""))===norm(k));if(at>=0){let same=lines[at].match(/[:：=]\s*(.*)$/);return (same?same[1]:lines[at+1]||"").trim().replace(/^["']|["']$/g,"")}let ix=statusFilterKeys.indexOf(k);if(lines.length===statusFilterKeys.length&&ix>=0)return lines[ix].replace(/^.*?[:：=]\s*/,"").trim();if(lines.length===statusFilterKeys.length*2&&ix>=0)return lines[ix*2+1].replace(/^.*?[:：=]\s*/,"").trim();return ""}
+function statusValue(r,k){let v=getRaw(r,[k]);const raw=r?.raw||{},exact=rawLookupCache.get(raw)?.exact.get(norm(k));if(exact!=null)return String(raw[exact]??'').trim();if(String(v??'').trim()!=='')return String(v).trim();let direct=String(getRaw(r,['model状态'])||'');if(!direct.trim())return '';try{let parsed=JSON.parse(direct);if(parsed&&typeof parsed==='object'){for(let name in parsed)if(norm(name)===norm(k))return String(parsed[name]??'').trim()}}catch(e){}let re=new RegExp('(?:^|[\\r\\n;,|])[ \\t]*'+k+'[ \\t]*[:：=][ \\t]*([^\\r\\n;,|]*)','i'),m=direct.match(re);if(m)return m[1].trim().replace(/^["']|["']$/g,'');let lines=direct.split(/\r\n|\n|\r/).map(x=>x.trim()),at=lines.findIndex(x=>norm(x.replace(/[:：=].*$/,''))===norm(k));if(at>=0){let same=lines[at].match(/[:：=][ \t]*(.*)$/);return (same?same[1]:lines[at+1]||'').trim().replace(/^["']|["']$/g,'')}if((lines.length===8||lines.length===15)&&lines.at(-1)==='')lines.pop();let ix=statusFilterKeys.indexOf(k);if(lines.length===statusFilterKeys.length&&ix>=0)return lines[ix];if(lines.length===statusFilterKeys.length*2&&ix>=0)return lines[ix*2+1];return ''}
 function statusLines(r){return statusFilterKeys.map(k=>[k,statusValue(r,k)]).filter(x=>x[1]!=="")}
 function groupIsOpen(g){return g==="c8"?showC8:showAttrs}
 function visibleFields(){return FIELD.filter(f=>f.foldGroup!==""&&groupIsOpen(f.foldGroup)||!f.foldGroup)}
@@ -3806,7 +3806,20 @@ function xmlEsc(s){
   if(clean.length>32767)clean=clean.slice(0,32767).replace(/[\uD800-\uDBFF]$/,"");
   return clean.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }function colName(n){let s="";for(n++;n;n=Math.floor((n-1)/26))s=String.fromCharCode(65+(n-1)%26)+s;return s}
-function exportRows(list){let headers=["Model ID"].concat(FIELD.map(f=>f.display));let data=list.map(r=>[idFor(r)].concat(FIELD.map(f=>{let v=key(f.h)==="pre"?[r.preValue||"",r.preDate||"",r.preNote||""].join(" | "):value(r,f.h);return typeof v==="string"&&v.startsWith("data:image")?"[图片已用于工作台分组]":v??""})));return{headers,data}}
+function exportRows(list){
+  const columns=FIELD.flatMap(field=>key(field.h)==="status"?statusFilterKeys.map(status=>({header:status,status})): [{header:field.display,field}]);
+  const headers=["Model ID","item_id",...columns.map(column=>column.header)];
+  const data=list.map(record=>{
+    const itemHeader=Object.keys(record.raw||{}).find(header=>norm(header)==="itemid");
+    const itemId=normalizeModelId(itemHeader==null?"":record.raw[itemHeader]);
+    return [idFor(record),itemId,...columns.map(column=>{
+      if(column.status)return statusValue(record,column.status);
+      const field=column.field,v=key(field.h)==="pre"?[record.preValue||"",record.preDate||"",record.preNote||""].join(" | "):value(record,field.h);
+      return typeof v==="string"&&v.startsWith("data:image")?"[图片已用于工作台分组]":v??"";
+    })];
+  });
+  return {headers,data};
+}
 function exportCsv(list){let x=exportRows(list),cell=v=>{let t=String(v??"");return /[",\r\n]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t},text="\uFEFF"+[x.headers,...x.data].map(r=>r.map(cell).join(",")).join("\r\n");return new Blob([text],{type:"text/csv;charset=utf-8"})}
 function zip(files){
   const encoder=new TextEncoder(),parts=[],central=[];let offset=0;
