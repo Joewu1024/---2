@@ -3,6 +3,18 @@
   const normalize = value => String(value == null ? '' : value).normalize('NFC').replace(/\s+/g, ' ').trim();
   const chinese = value => /[\u3400-\u9fff]/.test(value);
   const codes = new Set(['USB', 'USB-C', 'AUX', 'RCA', 'HDMI', 'XLR', 'FM', 'AM', 'AC', 'DC', 'WIFI', 'WI-FI', 'BLUETOOTH']);
+  function identity(value) {
+    const text=normalize(value);
+    if(!/^[A-Z0-9][A-Z0-9+().,*/#_\s-]{0,79}$/.test(text))return false;
+    const words=text.match(/[A-Z]+/g)||[];
+    return !words.some(word=>genericWords.has(word.toLowerCase())||['SALE','HOT','BEST','MODEL','COLOR','SIZE','SET','PIECES','ORIGINAL'].includes(word));
+  }
+  function sourceIssue(value) {
+    const text=normalize(value);
+    if(/[\uFFFD]/.test(text)||/(?:Ã[\u0080-\u00bf]|á»|áº|Æ°)/.test(text))return '原文疑似编码损坏，请核对';
+    if(/[\p{L}][?？][\p{L}]/u.test(text)||(text.match(/[A-Za-zÀ-ỹ][?？](?=\s|$)/g)||[]).length>=2)return '原文字符缺失，请核对';
+    return '';
+  }
   function refine(source, result) {
     let chinese=normalize(result);
     if(/\bcontrole\s+remoto\b/i.test(source))chinese=chinese.replace(/远程控制(?:器)?/g,'遥控器').replace(/遥控器套件/g,'遥控器套装');
@@ -11,6 +23,7 @@
   }
   function passthrough(value) {
     const text = normalize(value);
+    if(identity(text))return true;
     if(chinese(text)) {
       const remainder=text
         .replace(/\b[A-Z0-9][A-Z0-9+*/#.-]{0,39}\b/g,token=>genericWords.has(token.toLowerCase())?token:'')
@@ -18,7 +31,7 @@
       if(/^[\u3400-\u9fff\d\s\p{P}\p{S}]+$/u.test(remainder))return true;
     }
     return !text || /^[\u3400-\u9fff\d\s.,，。!！?？:：;；()（）【】\-]+$/.test(text) ||
-      /^(?=.*\d)[A-Z0-9+().,*/#\s-]{1,40}$/.test(text) || codes.has(text.toUpperCase());
+      (/^(?=.*\d)[A-Z0-9+().,*/#\s-]{1,40}$/.test(text)&&!(text.match(/[A-Z]+/g)||[]).some(word=>genericWords.has(word.toLowerCase()))) || codes.has(text.toUpperCase());
   }
   function simple(value) {
     const text=normalize(value),lower=text.toLowerCase();
@@ -40,10 +53,13 @@
   const genericWords = new Set(('kit controle remoto com para fonte cabos cabo sem fio branco branca preto preta original modelo completo completa ' +
     'wireless earphones headphones speaker microphone charger charging case black white blue red cable remote control with without pack pieces ' +
     'bluetooth headset portable battery rechargeable television tv smart universal replacement new ' +
-    'untuk dengan tanpa wayar hitam putih biru merah pembesar suara pengecas fon telinga').split(' '));
+    'untuk dengan tanpa wayar hitam putih biru merah pembesar suara pengecas fon telinga ' +
+    'for and the of self service system call pager buzzer keyboard mouse camera television headset tablet phone electric digital sensor receiver transmitter').split(' '));
   function usable(source, result) {
     source = normalize(source); result = normalize(result);
     if (!result || /\uFFFD|ZXQ\s*\d{3,}\s*QXZ/i.test(result)) return false;
+    if(identity(source))return source===result;
+    if(sourceIssue(source)&&/[A-Za-zÀ-ỹ][?？]|[?？][A-Za-zÀ-ỹ]/.test(result))return false;
     const direct=passthrough(source);
     if(direct&&source===result)return true;
     if (!chinese(result) || (!direct&&source.toLowerCase() === result.toLowerCase())) return false;
@@ -52,6 +68,8 @@
     const leftovers = (result.toLowerCase().match(/[a-zÀ-ỹ]+/g) || []).filter(w => genericWords.has(w) && sourceWords.has(w));
     if (leftovers.length >= 3) return false;
     const packed = result.toUpperCase().replace(/[\s_.\-]/g, '');
+    const names=source.match(/\b[A-Z][A-Z0-9&_.+-]{1,29}\b/g)||[];
+    if(names.some(name=>identity(name)&&/[A-Z]{2}/.test(name)&&!packed.includes(name.toUpperCase().replace(/[\s_.-]/g,''))))return false;
     const models = source.match(/\b[A-Z]{1,8}[-]?\d+[A-Z0-9-]*\b/g) || [];
     if (models.some(model => !/^(?:USB|BT|WIFI|HDMI)\d/.test(model) && !packed.includes(model.replace(/-/g, '')))) return false;
     const numericValue = token => {
@@ -116,6 +134,7 @@
     request(value, options = {}) {
       const text = normalize(value);
       if (!text) return Promise.resolve('');
+      if(identity(text)){if(this.cache.has(text)&&this.cache.get(text)!==text)this.remember(text,text);return Promise.resolve(text)}
       const cached = this.cached(text);
       if (cached) { this.stats.cacheHits++; return Promise.resolve(cached); }
       const direct = [this.options.simple?.(text), simple(text), passthrough(text) ? text : ''].find(value=>value&&usable(text,value));
@@ -129,7 +148,7 @@
       }
       let resolve;
       const promise = new Promise(done => { resolve = done; });
-      const job = {key, text, lang, priority, resolve, promise, order: ++this.order, attempts: 0, single: lang === 'ms', readyAt: 0};
+      const job = {key, text, lang, priority, resolve, promise, context:options.context||{}, order: ++this.order, attempts: 0, single: lang === 'ms', readyAt: 0};
       this.jobs.set(key, job); this.queue.push(job);
       this.schedule();
       return promise;
@@ -174,7 +193,7 @@
     async run(batch) {
       try {
         this.stats.requests++;
-        const result = await this.options.requestBatch(batch.map(job => job.text), batch[0].lang);
+        const result = await this.options.requestBatch(batch.map(job => job.text), batch[0].lang, batch.map(job=>job.context));
         if (!Array.isArray(result) || result.length !== batch.length) throw Object.assign(new Error('翻译返回条数不一致'), {split:true});
         for (let i=0; i<batch.length; i++) {
           if (usable(batch[i].text, result[i])) this.finish(batch[i], refine(batch[i].text,result[i]));
@@ -189,6 +208,7 @@
       }
     }
     retry(job, error) {
+      if(error.permanent){this.options.onError?.(error);this.finish(job,'');this.failedUntil.set(job.key,Infinity);return}
       job.attempts++;
       if (error.split && !job.single) { job.single = true; job.readyAt = 0; this.queue.push(job); return; }
       if (job.attempts <= 2) {
@@ -199,7 +219,7 @@
       }
     }
   }
-  const api = {normalize, passthrough, simple, usable, language, refine, Queue};
+  const api = {normalize, identity, sourceIssue, passthrough, simple, usable, language, refine, Queue};
   root.BuyerTranslation = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

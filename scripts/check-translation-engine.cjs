@@ -4,9 +4,18 @@
 // Every response is fabricated. An accidental fetch fails immediately.
 const assert = require('node:assert/strict');
 const { test, after, afterEach, mock } = require('node:test');
-const { Queue, normalize, passthrough, usable } = require('../translation-engine.js');
+const { Queue, normalize, sourceIssue, passthrough, usable } = require('../translation-engine.js');
 
 const engines = new Set();
+test('source damage checks distinguish missing characters from valid Vietnamese and Portuguese accents',()=>{
+  assert.equal(sourceIssue('T?i ng?e kh?ng d?y'),'原文字符缺失，请核对');
+  assert.equal(sourceIssue('FICTBRAND M?u M?i'),'原文字符缺失，请核对');
+  assert.equal(sourceIssue('Bộ gọi không dây 16 thẻ'),'');
+  assert.equal(sourceIssue('MAÇÃ VERDE E TELEVISÃO'),'');
+  assert.equal(sourceIssue('Fone com distorÃ§Ã£o'),'原文疑似编码损坏，请核对');
+  assert.equal(usable('T?i ng?e kh?ng d?y','错误？ng？译文？'),false);
+  assert.equal(passthrough('SELF SERVICE CALL SYSTEM'),false);
+});
 mock.method(globalThis, 'fetch', () => {
   throw new Error('Network access is forbidden in translation-engine checks');
 });
@@ -248,6 +257,20 @@ test('preserves legitimate SKU/numeric passthrough and requires models and numbe
   assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和双电缆'), true, 'dual cables preserve a quantity of two');
   assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和两根电缆'), true, 'a Chinese quantity preserves a quantity of two');
   assert.equal(usable(portuguese, 'Aurora ZX 901远程控制套件，带12 V电源和电缆'), false, 'the cable quantity must not disappear');
+});
+
+test('pure brand and model identities override translated cache values without using a provider', { timeout: 5000 }, async () => {
+  const transport = mock.fn(async () => assert.fail('pure brands and model codes must remain local'));
+  const cache = new Map([['FICTBRAND', '错误品牌译名'], ['AB-1200', '错误型号中文 1200']]);
+  const queue = engine({ cache, requestBatch: transport });
+  assert.equal(passthrough('FICTBRAND'), true);
+  assert.equal(usable('FICTBRAND', '错误品牌译名'), false, 'automatic Chinese transliteration must not replace a pure brand');
+  for (const source of ['FICTBRAND', 'AB-1200']) {
+    assert.equal(await queue.request(source), source);
+  }
+  assert.equal(transport.mock.callCount(), 0);
+  assert.equal(passthrough('WIRELESS SPEAKER'), false, 'ordinary uppercase product descriptions still need translation');
+  assert.equal(passthrough('BLACK'), false, 'color variants still need translation');
 });
 
 test('color plus SKU translates locally without truncating a SKU that begins with a color word', { timeout: 5000 }, async () => {
