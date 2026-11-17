@@ -149,7 +149,7 @@ function harness(options = {}) {
     function extractBrand(){return ''} function extractStyle(){return ''} function extractQty(){return ''}
     function idFor(r){return String(getRaw(r,['Model ID'])||r.uid)}
     function normalizeModelId(value){return String(value||'')}
-    function updateCalculatedCells(){} function rememberBuyerOption(){}
+    function updateCalculatedCells(){} function rememberBuyerOption(){} function bindBuyerChoices(){}
     function refreshBuyerDatalists(){}async function refreshVersions(){}
     function filtered(){}filtered.searchText=()=>'';
     async function loadWorkbenchState(){if(controls.loadGate)await controls.loadGate;return controls.savedState}
