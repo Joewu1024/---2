@@ -52,6 +52,7 @@ function harness() {
   element('sort').value = 'desc';
   const document = { body, documentElement: { clientWidth: 1280, clientHeight: 800 }, createElement: tag => new Element(tag), getElementById: id => body.querySelector('#' + id) || element(id), querySelector: selector => body.querySelector(selector), querySelectorAll: selector => body.querySelectorAll(selector) };
   const extracted = [line('const H='), line('const S='), line('const FIELD='), line('let rows='), line('const rawLookupCache='), line('const keyMap='),
+    between('// batch-model-search:start', '// batch-model-search:end'),
     ...['key','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor','statusValue','statusLines','matchesState','filtered','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups'].map(fn),
     between('// filter-conditions:start', '// filter-conditions:end'), between('function filterPopupFrame(', 'function drawer('), fn('drawer'),
     between('function exportRows(', 'function exportCsv('), fn('exportCsv')].join('\n');

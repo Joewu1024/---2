@@ -66,7 +66,7 @@ function fakeDatabase() {
 }
 
 function harness(options={}) {
-  const elements = new Map(), controls = { writable: true, nodesBySelector: {}, batch: [], editors: [], checks: [], versionLabels: [], versionRenames: [], versionTitles: [], calculations: [], downloads: [], renders: 0, parse: null, dbGate: null, promptValue: null }, db = options.db||fakeDatabase();
+  const elements = new Map(), controls = { writable: true, nodesBySelector: {}, batch: [], editors: [], checks: [], versionLabels: [], versionRenames: [], versionTitles: [], calculations: [], downloads: [], renders: 0, parse: null, dbGate: null, promptValue: null, setLookups: 0 }, db = options.db||fakeDatabase();
   const selectAll = selector => {
     if (Object.hasOwn(controls.nodesBySelector, selector)) return controls.nodesBySelector[selector];
     if (selector === '[data-batch]') return controls.batch;
@@ -81,7 +81,8 @@ function harness(options={}) {
   };
   function element(id) {
     if (!elements.has(id)) elements.set(id, {
-      id, textContent: '', innerHTML: '', value: '', hidden: false, disabled: false, style: { setProperty() {} },
+      id, textContent: '', innerHTML: '', value: '', hidden: false, disabled: false, attributes: {}, style: { setProperty() {} },
+      setAttribute(name,value){this.attributes[name]=String(value)},getAttribute(name){return this.attributes[name]??null},removeAttribute(name){delete this.attributes[name]},setCustomValidity(message){this.validationMessage=String(message)},
       querySelector: selector => selector.startsWith('#') ? element(selector.slice(1)) : null,
       querySelectorAll: selectAll
     });
@@ -95,6 +96,7 @@ function harness(options={}) {
     ...['key','safeHttpUrl','safeImageUrl','headerScore','isMetaRow','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor','translationWarningField'].map(n=>line('function '+n+'(')),
     between('// buyer-choice:start', 'function statusValue('),
     between('// filter-conditions:start', '// filter-conditions:end'),
+    between('// batch-model-search:start', '// batch-model-search:end'),
     between('// buyer-chinese-priority:start', '// buyer-chinese-priority:end'),
     between('// group-selection:start', '// group-selection:end'),
     ...['statusValue','statusLines','groupIsOpen','visibleFields','displayColumns','colSize','updateStats','matchesState','updateSelectionUI','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups','renderPager','render'].map(n=>line('function '+n+'(')),
@@ -122,6 +124,7 @@ function harness(options={}) {
     setTimeout(callback,delay) { return delay===0?setTimeout(callback,0):null; }, clearTimeout(timer) { if(timer!==null)clearTimeout(timer); }, confirm: () => true, prompt:()=>controls.promptValue,
     IDBKeyRange: { only: value => value }, fetch() { throw Error('Network forbidden'); }
   });
+  if(options.trackSet)context.Set=class extends Set{has(value){controls.setLookups++;return super.has(value)}};
   const api = vm.runInContext(`(function(){
     let automaticChineseEnabled=true,automaticChineseRun=0,translationBackgroundRun=0;
     const translationQueue={cancelQueued(){}};function launchAutomaticChinese(){automaticChineseEnabled=true}
@@ -135,7 +138,7 @@ function harness(options={}) {
     function runDeferredProcessing(){} async function parseXlsx(){throw Error('XLSX parser not under test')}
     function download(blob,name){controls.downloads.push({blob,name})}
     function showShareLinkDialog(){} function filterPopup(){} function drawer(){}
-    return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,
+    return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,parseWorkbenchSearch,renderFilterSummary,activeFilterItems,bindWorkbenchSearchPaste,
       batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,updateSelectionUI,
       updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,mapImportedMatrix,selectImportHeader,importFile,importInvitations,importTranslations,
       writeRecordBatches,saveVersion,listVersions,refreshVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,renameVersion,renameSelectedVersion,flushSave,save,
@@ -199,6 +202,79 @@ test('contains plus value selection are AND and an empty selection matches no re
   const h=harness();assert.equal(h.api.matchesState({values:['ABC'],query:'bc'},'ABC'),true);
   assert.equal(h.api.matchesState({values:['ABC'],query:'other'},'ABC'),false);
   assert.equal(h.api.matchesState({values:[]},''),false);
+});
+
+test('batch Model ID parsing accepts space, tab, newline and full-width whitespace separators',()=>{
+  const h=harness();for(const separator of [' ','\t','\n','\r\n','\u3000',' \t\n\u3000 ']){
+    const parsed=h.api.parseWorkbenchSearch(' 12345'+separator+'67890'+separator+'00123 ');
+    assert.equal(parsed.mode,'ids');assert.deepEqual(Array.from(parsed.ids),['12345','67890','00123']);assert.equal(parsed.count,3);assert.equal(parsed.overflow,false);
+    assert.equal(parsed.idSet.has('12345'),true);assert.equal(parsed.idSet.has('00123'),true);assert.equal(parsed.idSet.has('123'),false);
+  }
+});
+
+test('batch Model ID parsing normalizes textual formatting without rounding long IDs or leading zeros',()=>{
+  const h=harness(),long='900719925474099312345',parsed=h.api.parseWorkbenchSearch('12,345.0 000123 '+long+' 1e3');
+  assert.equal(parsed.mode,'ids');assert.deepEqual(Array.from(parsed.ids),['12345','000123',long,'1000']);assert.ok(parsed.ids.every(id=>typeof id==='string'));
+  h.api.setRows([record(h,'12,345.0'),record(h,'000123'),record(h,long),record(h,'1000'),record(h,'123')]);h.element('search').value='12345 000123 '+long+' 1e3';
+  assert.deepEqual(ids(h.api.filtered()),['12,345.0','000123',long,'1000']);
+  assert.equal(h.api.parseWorkbenchSearch('9.00719925474099312345e20 123').mode,'text','unsafe scientific notation is not rounded into a different numeric ID');
+});
+
+test('pasting a numeric ID column preserves separators and replaces only the selected search text',()=>{
+  const h=harness(),input=h.element('search');let inputs=0;input.oninput=()=>inputs++;h.api.bindWorkbenchSearchPaste();
+  for(const entry of [
+    {before:'',start:0,end:0,paste:'12345\r\n67890\t000123',expected:'12345 67890 000123'},
+    {before:'111 000 999',start:4,end:7,paste:'12345\r\n67890\t000123',expected:'111 12345 67890 000123 999'}
+  ]){
+    input.value=entry.before;input.selectionStart=entry.start;input.selectionEnd=entry.end;let prevented=false;
+    input.onpaste({clipboardData:{getData(type){assert.equal(type,'text/plain');return entry.paste}},preventDefault(){prevented=true}});
+    assert.equal(prevented,true);assert.equal(input.value,entry.expected);assert.deepEqual(Array.from(h.api.parseWorkbenchSearch(input.value).ids),entry.expected.split(' '));
+  }
+  assert.equal(inputs,2);input.value='ordinary search';let prevented=false;input.onpaste({clipboardData:{getData:()=> 'Wireless\nspeaker'},preventDefault(){prevented=true}});
+  assert.equal(prevented,false);assert.equal(input.value,'ordinary search');assert.equal(inputs,2,'normal text paste remains native');
+});
+
+test('batch search uses exact ID OR matching without leaking ID substrings, title numbers or grouped siblings',()=>{
+  const h=harness(),rows=[record(h,'12345'),record(h,'67890'),record(h,'123450'),record(h,'99999',{item_name:'12345 67890'}),record(h,'0012345')];
+  h.api.setRows(rows);h.element('search').value='12345 67890';const found=h.api.filtered();assert.deepEqual(ids(found),['12345','67890']);
+  h.api.renderFilterSummary(found,h.api.recordsGroups(found));assert.match(h.element('result').textContent,/2 个 Model ID/);assert.match(h.element('filterChips').innerHTML,/批量/);assert.doesNotMatch(h.element('filterChips').innerHTML,/全文搜索/);
+});
+
+test('ordinary multiword text, mixed text/numbers and a single numeric ID keep the original full-text behavior',()=>{
+  const h=harness();h.api.setRows([record(h,'9123456',{item_name:'Wireless speaker'}),record(h,'77777',{item_name:'Wireless separate speaker'}),record(h,'88888',{item_name:'12345 speaker'})]);
+  assert.equal(h.api.parseWorkbenchSearch('Wireless speaker').mode,'text');h.element('search').value='Wireless speaker';assert.deepEqual(ids(h.api.filtered()),['9123456']);
+  assert.equal(h.api.parseWorkbenchSearch('12345 speaker').mode,'text');h.element('search').value='12345 speaker';assert.deepEqual(ids(h.api.filtered()),['88888']);
+  assert.equal(h.api.parseWorkbenchSearch('12345').mode,'text');h.element('search').value='12345';assert.deepEqual(ids(h.api.filtered()),['9123456','88888']);
+});
+
+test('the unique-ID limit accepts 100 and duplicate-heavy input but fails closed for 101 without partial results',()=>{
+  const h=harness(),values=Array.from({length:101},(_,index)=>String(10000+index));h.api.setRows(values.map(id=>record(h,id)));
+  h.element('search').value=values.slice(0,100).join(' ');let parsed=h.api.parseWorkbenchSearch(h.element('search').value);assert.equal(parsed.count,100);assert.equal(parsed.overflow,false);assert.equal(h.api.filtered().length,100);
+  h.api.renderFilterSummary(h.api.filtered(),h.api.recordsGroups(h.api.filtered()));assert.match(h.element('searchHint').textContent,/100\s*\/\s*100/);assert.equal(h.element('search').getAttribute('aria-invalid'),'false');
+  h.element('search').value=values.slice(0,100).flatMap(id=>[id,id,id]).join(' ');parsed=h.api.parseWorkbenchSearch(h.element('search').value);assert.equal(parsed.count,100);assert.equal(parsed.overflow,false);assert.equal(h.api.filtered().length,100);
+  h.element('search').value=values.join(' ');parsed=h.api.parseWorkbenchSearch(h.element('search').value);assert.equal(parsed.mode,'ids');assert.equal(parsed.count,101);assert.equal(parsed.overflow,true);assert.notEqual(parsed.ids.length,100,'overflow must not expose a silently truncated 100-ID query');
+  assert.deepEqual(ids(h.api.filtered()),[]);h.api.renderFilterSummary([],[]);assert.match(h.element('filterChips').innerHTML,/100/);assert.match(h.element('filterChips').innerHTML,/超|最多|限制/);
+  assert.equal(h.element('searchHint').hidden,false);assert.match(h.element('searchHint').textContent,/最多 100/);assert.match(h.element('searchHint').textContent,/101/);assert.equal(h.element('search').getAttribute('aria-invalid'),'true');
+  h.api.render();assert.match(h.element('table').innerHTML,/批量检索最多 100/);assert.doesNotMatch(h.element('table').innerHTML,/data-share=/);
+  h.element('clear').onclick();assert.equal(h.element('searchHint').hidden,true);assert.equal(h.element('searchHint').textContent,'');assert.equal(h.element('search').getAttribute('aria-invalid'),'false');
+  h.element('search').value=Array(101).fill(values[0]).join(' ');parsed=h.api.parseWorkbenchSearch(h.element('search').value);assert.equal(parsed.mode,'ids');assert.equal(parsed.count,1);assert.equal(parsed.overflow,false);assert.deepEqual(ids(h.api.filtered()),[values[0]]);
+});
+
+test('batch IDs are ANDed with header/status filters and removing the search chip preserves those filters',()=>{
+  const h=harness(),rows=[record(h,'12345',{[h.api.H[0]]:'是',grass_region:'TH'}),record(h,'67890',{[h.api.H[0]]:'否',grass_region:'TH'}),record(h,'22222',{[h.api.H[0]]:'是',grass_region:'VN'})];h.api.setRows(rows);h.element('search').value='12345 67890 22222';
+  h.api.setFilters({[h.api.H[0]]:{values:['是']},'status:grass_region':{values:['TH']}});assert.deepEqual(ids(h.api.filtered()),['12345']);
+  h.api.setFilters({[h.api.H[0]]:{values:['是']},'Model ID':{values:['67890']}});assert.deepEqual(ids(h.api.filtered()),[]);
+  h.api.setFilters({[h.api.H[0]]:{values:['是']}});const remove={dataset:{removeFilter:'__search'}};h.controls.nodesBySelector['[data-remove-filter]']=[remove];const found=h.api.filtered();h.api.renderFilterSummary(found,h.api.recordsGroups(found));remove.onclick();
+  assert.equal(h.element('search').value,'');assert.deepEqual(ids(h.api.filtered()),['12345','22222']);
+  h.element('search').value='12345 67890';h.element('clear').onclick();assert.equal(h.api.parseWorkbenchSearch(h.element('search').value).mode,'text');assert.deepEqual(ids(h.api.filtered()),ids(rows));assert.equal(h.element('filterBadge').textContent,'未添加筛选条件');
+});
+
+test('20,000-row batch search uses bounded ID reads and Set membership without full-text scanning or table DOM',()=>{
+  const h=harness({trackSet:true}),base=900719925474099312345n;let idReads=0,tableWrites=0;
+  const rows=Array.from({length:20000},(_,index)=>{const id=String(base+BigInt(index)),r=record(h,id);Object.defineProperty(r.raw,'Model ID',{enumerable:true,get(){idReads++;return id}});Object.defineProperty(r.raw,'item_name',{enumerable:true,get(){assert.fail('numeric batch search must not scan product title text')}});return r});
+  h.api.setRows(rows);const expected=Array.from({length:100},(_,index)=>String(base+BigInt(index*199)));h.element('search').value=expected.join(' ');
+  const table=h.element('table');Object.defineProperty(table,'innerHTML',{get(){return ''},set(){tableWrites++}});h.controls.setLookups=0;
+  assert.deepEqual(ids(h.api.filtered()),expected);assert.ok(idReads>=20000&&idReads<=200000,'bounded per-row ID work');assert.ok(h.controls.setLookups>=20000&&h.controls.setLookups<=21000,'one Set lookup per row rather than rescanning the request list');assert.equal(tableWrites,0);assert.equal(h.db.transactions.length,0);
 });
 
 test('price calculations update min targets/check with numeric zero and missing values',()=>{
