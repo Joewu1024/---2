@@ -38,7 +38,7 @@ class BrowserWorkerShim {
 afterEach(async () => { for (const worker of workers.splice(0)) { if (!worker.stopped) worker.terminate();await worker.termination; } });
 
 function harness() {
-  const elements = new Map(), controls = { writable: true, saves: [], renders: 0, yields: 0, beforeYield: null, beforeDedup: null, reports: [], errors: [] };
+  const elements = new Map(), controls = { writable: true, saves: [], renders: 0, yields: 0, beforeYield: null, beforeDedup: null, reports: [], errors: [], delayed: [], derived: [], automaticCalls: [], queueCancels: 0 };
   const element = id => { if (!elements.has(id)) elements.set(id, { textContent: '', hidden: false, value: '', disabled: false });return elements.get(id); };
   const context = vm.createContext({
     BuyerTranslation, controls, Blob, TextEncoder, TextDecoder, Uint8Array, DataView, AbortController,
@@ -46,7 +46,7 @@ function harness() {
     document: { getElementById: element, baseURI: 'https://offline.example.test/index.html' },
     console: { ...console, error: error => controls.errors.push(error), warn: error => controls.errors.push(error) },
     fetch() { throw Error('Network forbidden'); },
-    setTimeout(callback, delay) { if (delay !== 0) return null;controls.yields++;return setTimeout(() => { controls.beforeYield?.();callback(); }, 0); },clearTimeout
+    setTimeout(callback, delay) { if (delay !== 0) { controls.delayed.push({callback,delay});return null; }controls.yields++;return setTimeout(() => { controls.beforeYield?.();callback(); }, 0); },clearTimeout
   });
   for (const file of ['workbench-import.js','workbench-xlsx.js']) vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context);
   const source = [
@@ -56,14 +56,16 @@ function harness() {
     between('// import-deduplication:start', '// import-deduplication:end'),
     between('// buyer-chinese-priority:start','// buyer-chinese-priority:end'),
     between('function mergeBuyerEdits(', '// import-deduplication:start'),
+    between('async function runDeferredProcessing(', 'async function importFile('),
     between('async function importFile(', 'function download(')
   ].join('\n');
   const api = vm.runInContext(`(function(){
     let automaticChineseEnabled=true,automaticChineseRun=0,translationBackgroundRun=0;
-    const translationQueue={cancelQueued(){}};
+    const translationQueue={cancelQueued(){controls.queueCancels++}};
     function canEditWorkspace(){return controls.writable}function returnToCurrent(){historyMode=false}
     function save(){controls.saves.push(rows.slice())}function render(){controls.renders++}
-    function launchAutomaticChinese(){}function runDeferredProcessing(){}function deriveRecord(){}
+    function launchAutomaticChinese(...args){controls.automaticCalls.push(args)}function deriveRecord(record){controls.derived.push(record)}
+    function filtered(){}filtered.searchText=()=>'';
     function translationSource(r,index){return value(r,H[index])}function markDirty(){}
     function refreshTranslationReadiness(){}function scheduleTranslationStatus(){}
     function reportQa(type,detail){controls.reports.push({type,...detail})}
@@ -72,15 +74,33 @@ function harness() {
     const actualDeduplicate=deduplicateImportedRows;
     deduplicateImportedRows=async function(records,options){controls.beforeDedup?.(records,options);return actualDeduplicate(records,options)};
     return {H,idFor,normalizeModelId,value,parseCsv,parseXlsx,importFile,importTranslations,importInvitations,deduplicateImportedRows,mergeBuyerEdits,
-      get rows(){return rows},setRows(next){rows=next},cancelImport(){importFile.activeController?.abort()}};
+      get rows(){return rows},setRows(next){rows=next},cancelImport(){importFile.activeController?.abort()},
+      get state(){return {headers,sourceFileName,groupingEnabled,filters,selected,opened,pageIndex,search:$('search').value}},
+      setState(next){if('headers'in next)headers=next.headers;if('sourceFileName'in next)sourceFileName=next.sourceFileName;if('groupingEnabled'in next)groupingEnabled=next.groupingEnabled;if('filters'in next)filters=next.filters;if('selected'in next)selected=new Set(next.selected);if('opened'in next)opened=new Set(next.opened);if('pageIndex'in next)pageIndex=next.pageIndex;if('search'in next)$('search').value=next.search}};
   })()`, context, { filename: 'actual-import-deduplication-functions.js' });
-  return { api, controls, element };
+  return { api, controls, element, async flushDelayed(delay=30){const pending=controls.delayed.filter(timer=>timer.delay===delay);controls.delayed=controls.delayed.filter(timer=>timer.delay!==delay);for(const timer of pending)await timer.callback()} };
 }
 function record(h,id,nb,extra={}) { return { uid: extra.uid || 'row-' + id, excelRow: extra.excelRow || 2, raw: { 'Model ID': id, backcal_cogs_non_brand: nb, ...extra.raw }, ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== 'raw')) }; }
 function fileFor(format,matrix) {
   if(format==='csv') { const cell=value=>/[",\r\n]/.test(String(value??''))?'"'+String(value).replace(/"/g,'""')+'"':String(value??'');const file=new Blob([matrix.map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv'});file.name='fabricated-duplicates.csv';return file; }
   const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(matrix),'Synthetic products');
   const file=new Blob([XLSX.write(book,{type:'buffer',bookType:'xlsx',compression:true})]);file.name='fabricated-duplicates.xlsx';return file;
+}
+function existingAppendFixture(h,format='csv') {
+  const rows=[
+    record(h,' 12,345.0 ','1',{uid:format+'2',raw:{item_name:'Existing first',[h.api.H[10]]:'Buyer title',[h.api.H[12]]:'5pcs',[h.api.H[24]]:'First buyer note'},userEditedFields:[h.api.H[10],h.api.H[12],h.api.H[24]],manualGroup:'manual-kept',group:'manual-kept',preTouched:true,preValue:'N',preDate:'2026-11-23',preNote:'Keep tuple',buyerAudit:{revision:7}}),
+    record(h,'12345','99',{uid:format+'3',raw:{item_name:'Existing historical duplicate',[h.api.H[24]]:'Second historical note'},group:'automatic-kept',hash:'old-image-hash'}),
+    record(h,'77777','2',{uid:format+'4',raw:{item_name:'Existing unrelated'},group:'automatic-kept'})
+  ];
+  h.api.setRows(rows);h.api.setState({headers:['Model ID','old-only-column'],sourceFileName:'existing-workbook.xlsx',groupingEnabled:true,filters:{'Model ID':{values:['12345']}},selected:[rows[0].uid,rows[2].uid],opened:['manual-kept','automatic-kept'],pageIndex:0,search:'existing query'});
+  const state=h.api.state;return {rows:rows.slice(),dataset:rows,before:plain(rows),state,stateValues:{filters:plain(state.filters),selected:Array.from(state.selected),opened:Array.from(state.opened)}};
+}
+function assertExistingAppendState(h,fixture) {
+  const {rows,before,state}=fixture,current=h.api.state;
+  rows.forEach((row,index)=>assert.equal(h.api.rows[index],row,'old record identity '+index));assert.deepEqual(plain(rows),before,'all original raw data and metadata remain unchanged');
+  for(const field of ['filters','selected','opened'])assert.equal(current[field],state[field],field+' reference is retained');
+  assert.deepEqual(plain(current.filters),fixture.stateValues.filters);assert.deepEqual(Array.from(current.selected),fixture.stateValues.selected);assert.deepEqual(Array.from(current.opened),fixture.stateValues.opened);
+  for(const field of ['sourceFileName','groupingEnabled','pageIndex','search'])assert.equal(current[field],state[field],field+' is retained');
 }
 
 test('deduplication compares full-precision Non Brand rather than target price and retains the whole winning row',async()=>{
@@ -174,4 +194,77 @@ test('cancelling during main-import deduplication preserves the existing workben
   const matrix=[['Model ID','item_name','backcal_cogs_non_brand'],...Array.from({length:1200},(_,index)=>[String(index%100),'Fabricated '+index,'10'])];
   await h.api.importFile(fileFor('csv',matrix));assert.equal(h.api.rows.length,1);assert.equal(h.api.rows[0],old);assert.equal(h.controls.saves.length,0);
   assert.match(h.element('toast').textContent,/已取消/);
+});
+
+for(const format of ['csv','xlsx'])test(format+' append skips overlapping IDs entirely, deduplicates the new file and retains existing UI and buyer state',async()=>{
+  const h=harness(),fixture=existingAppendFixture(h,format),matrix=[
+    ['Model ID','item_name','model_name','backcal_cogs_non_brand','final_1688_price_moq_3','item_id','new-only-column'],
+    ['12345','MUST NOT OVERWRITE','Changed model','9999','1','OVERLAP','new'],
+    ['88888','Losing appended source','Losing model','20.001','100','LOW','new'],
+    ['88888','Winning appended source','Winning model','20.004','1','WIN','new'],
+    ['','Missing source ID','Missing model','999','1','MISSING','new']
+  ];
+  const file=fileFor(format,matrix);await h.api.importFile(file,{mode:'append'});assert.equal(h.api.rows.length,4);assertExistingAppendState(h,fixture);
+  const added=h.api.rows[3];assert.equal(h.api.idFor(added),'88888');assert.equal(added.raw.item_name,'Winning appended source');assert.equal(added.raw.item_id,'WIN');assert.equal(added.raw.backcal_cogs_non_brand,'20.004');
+  assert.equal(new Set(Array.from(h.api.rows,row=>row.uid)).size,4,'new parsed row UID cannot collide with an old csv/xlsx row UID');
+  assert.equal(added.group,'UNGROUPED-'+added.uid);assert.equal(added.manualGroup||'','');
+  assert.deepEqual(Array.from(h.api.state.headers).slice(0,2),['Model ID','old-only-column']);assert.ok(h.api.state.headers.includes('new-only-column'));
+  assert.equal(h.controls.saves.length,1);assert.equal(h.controls.saves[0].length,4);assert.equal(h.controls.queueCancels,0);
+  const report=h.controls.reports.find(item=>item.type==='import'&&item.mode==='append');assert.ok(report);
+  for(const [key,value]of Object.entries({rows:4,sourceRows:4,addedRows:1,existingRows:1,missingIdRows:1,duplicateRows:1}))assert.equal(report[key],value,key);
+  await new Promise(resolve=>setTimeout(resolve,0));assert.equal(h.controls.automaticCalls.length,1);assert.equal(h.controls.automaticCalls[0][0],h.api.rows);assert.deepEqual(Array.from(h.controls.automaticCalls[0][1].records),[added]);
+  await h.flushDelayed();assert.deepEqual(h.controls.derived,[added]);assertExistingAppendState(h,fixture);
+  const beforeRepeat=h.api.rows,saves=h.controls.saves.length,launches=h.controls.automaticCalls.length;await h.api.importFile(file,{mode:'append'});
+  assert.equal(h.api.rows,beforeRepeat);assert.equal(h.api.rows.length,4);assert.equal(h.controls.saves.length,saves);assert.equal(h.controls.automaticCalls.length,launches);assertExistingAppendState(h,fixture);
+});
+
+for(const format of ['csv','xlsx'])test(format+' append of only existing IDs is a complete no-op even when the incoming prices are higher',async()=>{
+  const h=harness(),fixture=existingAppendFixture(h,format);
+  await h.api.importFile(fileFor(format,[['Model ID','item_name','backcal_cogs_non_brand'],['12345','Must not replace existing duplicate rows','99999'],['77777','Must not replace existing unrelated row','99999']]),{mode:'append'});
+  assert.equal(h.api.rows,fixture.dataset);assertExistingAppendState(h,fixture);assert.equal(h.controls.saves.length,0);assert.equal(h.controls.automaticCalls.length,0);assert.equal(h.controls.queueCancels,0);
+  const report=h.controls.reports.find(item=>item.type==='import'&&item.mode==='append');assert.ok(report);assert.equal(report.addedRows,0);assert.equal(report.existingRows,2);
+});
+
+test('append refuses a file with only shop_model_id and generated AUTO IDs instead of a real source Model ID',async()=>{
+  const h=harness(),fixture=existingAppendFixture(h);
+  await h.api.importFile(fileFor('csv',[['shop_model_id','item_name','model_name','backcal_cogs_non_brand'],['12345','Missing real source ID','A model','50']]),{mode:'append'});
+  assert.equal(h.api.rows,fixture.dataset);assertExistingAppendState(h,fixture);assert.equal(h.controls.saves.length,0);assert.equal(h.controls.automaticCalls.length,0);
+  const report=h.controls.reports.find(item=>item.type==='import'&&item.mode==='append');assert.ok(report);assert.equal(report.missingIdRows,1);assert.equal(report.addedRows,0);assert.match(h.element('toast').textContent,/Model ID/);
+});
+
+test('existing generated IDs and shop_model_id values do not block new genuine source IDs',async()=>{
+  const h=harness(),old=record(h,'','10',{uid:'csv2',raw:{_modelId:'AUTO-00002',shop_model_id:'999',item_name:'Existing without a source ID'}}),before=plain(old);h.api.setRows([old]);
+  await h.api.importFile(fileFor('csv',[['Model ID','item_name','backcal_cogs_non_brand'],['AUTO-00002','Genuine source AUTO ID','20'],['999','Genuine source numeric ID','30']]),{mode:'append'});
+  assert.equal(h.api.rows.length,3);assert.equal(h.api.rows[0],old);assert.deepEqual(plain(old),before);assert.deepEqual(Array.from(h.api.rows.slice(1),row=>h.api.idFor(row)),['AUTO-00002','999']);assert.equal(new Set(Array.from(h.api.rows,row=>row.uid)).size,3);
+});
+
+for(const format of ['csv','xlsx'])test(format+' append failure keeps the dataset, selections and metadata intact without saving',async()=>{
+  const h=harness(),fixture=existingAppendFixture(h,format);
+  await h.api.importFile(fileFor(format,[['unrecognized','not a product header'],['fabricated','invalid']]),{mode:'append'});
+  assert.equal(h.api.rows,fixture.dataset);assertExistingAppendState(h,fixture);assert.equal(h.api.state.headers,fixture.state.headers);assert.equal(h.controls.saves.length,0);assert.equal(h.controls.automaticCalls.length,0);assert.equal(h.controls.queueCancels,0);assert.match(h.element('toast').textContent,/失败/);
+});
+
+for(const format of ['csv','xlsx'])test(format+' append cancellation during a yielding batch commits no records or state changes',async()=>{
+  const h=harness(),fixture=existingAppendFixture(h,format);h.controls.beforeDedup=()=>{h.controls.beforeYield=()=>h.api.cancelImport()};
+  await h.api.importFile(fileFor(format,[['Model ID','item_name','backcal_cogs_non_brand'],...Array.from({length:1200},(_,index)=>['NEW-'+index,'Fabricated new product '+index,'10'])]),{mode:'append'});
+  assert.equal(h.api.rows,fixture.dataset);assertExistingAppendState(h,fixture);assert.equal(h.api.state.headers,fixture.state.headers);assert.equal(h.controls.saves.length,0);assert.equal(h.controls.automaticCalls.length,0);assert.equal(h.controls.queueCancels,0);assert.match(h.element('toast').textContent,/已取消/);
+});
+
+test('the original import call still replaces the table rather than appending',async()=>{
+  const h=harness(),old=record(h,'OLD-ONLY','1');h.api.setRows([old]);
+  await h.api.importFile(fileFor('csv',[['Model ID','item_name','backcal_cogs_non_brand'],['NEW-ONLY','Replacement product','10']]));
+  assert.equal(h.api.rows.length,1);assert.equal(h.api.idFor(h.api.rows[0]),'NEW-ONLY');assert.equal(h.api.rows.includes(old),false);
+});
+
+for(const format of ['csv','xlsx'])test('20,000 real '+format+' append rows retain 10,000 originals and add only 5,000 new winners',async()=>{
+  const h=harness(),started=performance.now(),base=900719925474099312345n,old=Array.from({length:10000},(_,index)=>record(h,String(base+BigInt(index)),'1',{uid:format+(index+2),raw:{item_name:'Existing '+index},group:'old-group-'+Math.floor(index/3),manualGroup:index%3===0?'old-manual-'+index:'',preTouched:true,preValue:index%2?'N':'Y',preNote:'Keep '+index})),before=plain(old);h.api.setRows(old);
+  const matrix=[['Model ID','item_name','model_name','backcal_cogs_non_brand','final_1688_price_moq_3','item_id'],...Array.from({length:20000},(_,index)=>{const id=String(base+BigInt(5000+Math.floor(index/2))),winner=index%2===1;return [id,(winner?'Winning ':'Losing ')+id,(winner?'Winner model ':'Loser model ')+id,winner?'20.004':'20.001',winner?'1':'100',(winner?'WIN-':'LOSE-')+id]})];
+  const file=fileFor(format,matrix),prepared=performance.now();await h.api.importFile(file,{mode:'append'});const imported=performance.now();
+  assert.equal(h.api.rows.length,15000);for(let index=0;index<10000;index++)assert.equal(h.api.rows[index],old[index]);assert.deepEqual(plain(old),before);
+  assert.equal(new Set(Array.from(h.api.rows,row=>row.uid)).size,15000);assert.equal(new Set(Array.from(h.api.rows,row=>h.api.idFor(row))).size,15000);
+  for(const row of h.api.rows.slice(10000)){const id=h.api.idFor(row);assert.equal(row.raw.item_name,'Winning '+id);assert.equal(row.raw.model_name,'Winner model '+id);assert.equal(row.raw.item_id,'WIN-'+id);assert.equal(row.raw.backcal_cogs_non_brand,'20.004');assert.equal(row.raw.final_1688_price_moq_3,'1')}
+  assert.equal(h.controls.saves.length,1);assert.equal(h.controls.saves[0].length,15000);const report=h.controls.reports.find(item=>item.type==='import'&&item.mode==='append');assert.ok(report);
+  for(const [key,value]of Object.entries({rows:15000,sourceRows:20000,addedRows:5000,existingRows:5000,missingIdRows:0,duplicateRows:10000}))assert.equal(report[key],value,key);
+  assert.equal(report.reader,format==='csv'?'CSV Worker':'Excel Worker');assert.equal(h.controls.errors.length,0);assert.equal(h.controls.queueCancels,0);
+  console.log('Node '+format.toUpperCase()+' append 20,000 → +5,000 / 15,000 total: fixture '+(prepared-started).toFixed(1)+' ms; parse/map/deduplicate/append '+(imported-prepared).toFixed(1)+' ms (offline Worker + fake DOM/save).');
 });

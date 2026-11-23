@@ -179,7 +179,10 @@ function harness(options = {}) {
       refreshTranslationEditors, updateTranslationStatus, bindTable, importFile, importTranslations,
       ensureProductTranslations, shareChineseFieldReady, rowChineseReady, buildOnlineShareLink,shareLinkMessage,
       retranslateAutomaticChinese, enableChromeTranslation,
-      start,launchAutomaticChinese,oneClickChinese,categoryLabel,categoryPath,categoryTranslationCache,
+      start,launchAutomaticChinese,oneClickChinese,toggleTranslationPause,categoryLabel,categoryPath,categoryTranslationCache,
+      get scoped(){return translationScopeDataset===rows&&translationScopeRecords!==null},
+      get scopedRecords(){return Array.from(automaticTranslationRecords(rows))},
+      get userPaused(){return translationUserPaused},
       setAutomaticEnabled(value){automaticChineseEnabled=value},
       get chromeMode(){return chromeTranslationMode},
       get chromeLanguages(){return Array.from(chromeTranslationLanguages)},
@@ -857,6 +860,67 @@ test('one-click protects imported buyer Chinese even before deferred field deriv
   const h=harness();await h.api.ready;const r=record(h,'not-yet-derived','Wireless speaker FICT1823','导入文件中的买手中文');h.api.setRows([r]);
   await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
   assert.equal(r.raw[h.api.H[10]],'导入文件中的买手中文');assert.equal(r.autoItemChinese,false);assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('a scoped automatic launch prepares and translates only added records while readiness still counts all rows',async()=>{
+  const available=mock.fn(async()=> 'unavailable'),chrome={available,prepareLanguages:mock.fn(async()=>[]),destroy(){}};
+  const h=harness({chromeProvider:chrome}),old=record(h,'APPEND-OLD','Caixa de som FICT2201','旧自动中文 FICT2201');
+  Object.assign(old,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:old.raw[h.api.H[9]],translationItemVersion:'older-provider',translationItemWarning:'旧提示',translationItemProvider:'old-provider'});
+  old.raw.level1_global_be_category='Synthetic Old Category FICT2202';
+  const english=record(h,'APPEND-NEW-EN','Wireless appended speaker FICT2203'),vietnamese=record(h,'APPEND-NEW-VI','Bộ gọi không dây FICT2204');
+  english.raw[h.api.H[11]]='Black appended variant FICT2205';english.raw.level1_global_be_category='Synthetic Added Category FICT2206';
+  const dataset=[old,english,vietnamese],snapshot=JSON.stringify(old);h.api.setRows(dataset,{visible:[old]});
+  h.api.launchAutomaticChinese(dataset,{records:[english,vietnamese]});
+  await waitFor(()=>h.api.rowChineseReady(english)&&h.api.rowChineseReady(vietnamese)&&h.api.categoryLabel(english.raw.level1_global_be_category)&&h.api.queue.active===0,'added fields and category finish');
+  assert.deepEqual(new Set(h.transport.mock.calls.flatMap(call=>call.arguments[0])),new Set([english.raw[h.api.H[9]],english.raw[h.api.H[11]],vietnamese.raw[h.api.H[9]],english.raw.level1_global_be_category]));
+  assert.ok(available.mock.calls.length);assert.ok(available.mock.calls.every(call=>['en','vi'].includes(call.arguments[0])),'the old Portuguese record never enters model preparation');
+  assert.equal(JSON.stringify(old),snapshot);assert.equal(h.api.readyCount,2);assert.equal(h.api.rows.length,3);assert.equal(h.api.scoped,true);
+  assert.deepEqual(Array.from(h.api.scopedRecords,r=>r.uid),[english.uid,vietnamese.uid]);
+  h.api.queueVisibleTranslation();await h.api.startBackgroundTranslation(true);await h.api.translateVisible(dataset);await new Promise(resolve=>setTimeout(resolve,90));
+  assert.equal(JSON.stringify(old),snapshot,'later renders/visible and background passes keep the same scope');
+  assert.ok(h.transport.mock.calls.flatMap(call=>call.arguments[0]).every(text=>text!==old.raw[h.api.H[9]]&&text!==old.raw.level1_global_be_category));
+  h.api.updateTranslationStatus();assert.match(h.document.getElementById('translationState').textContent,/2 \/ 3/);
+});
+
+test('a scoped launch preserves a user pause and resumes only the added fields and categories',async()=>{
+  const h=harness(),old=record(h,'SCOPED-PAUSE-OLD','Wireless existing source FICT2210'),added=record(h,'SCOPED-PAUSE-NEW','Wireless appended source FICT2211');
+  old.raw.level1_global_be_category='Synthetic Paused Old Category FICT2212';added.raw.level1_global_be_category='Synthetic Paused Added Category FICT2213';
+  const dataset=[old,added],snapshot=JSON.stringify(old);h.api.setRows(dataset);h.api.setPaused(true);
+  h.api.launchAutomaticChinese(dataset,{records:[added]});await new Promise(resolve=>setTimeout(resolve,100));
+  assert.equal(h.api.userPaused,true);assert.equal(h.api.queue.paused,true);assert.equal(h.transport.mock.callCount(),0);assert.equal(JSON.stringify(old),snapshot);
+  h.api.toggleTranslationPause();
+  await waitFor(()=>added.localTranslatedItem&&h.api.categoryLabel(added.raw.level1_global_be_category)&&h.api.queue.active===0,'resume added fields and category');
+  assert.equal(h.api.userPaused,false);assert.deepEqual(new Set(h.transport.mock.calls.flatMap(call=>call.arguments[0])),new Set([added.raw[h.api.H[9]],added.raw.level1_global_be_category]));assert.equal(JSON.stringify(old),snapshot);
+});
+
+test('an explicit unscoped launch restores normal whole-table fields and categories',async()=>{
+  const h=harness(),old=record(h,'SCOPE-RESET-OLD','Wireless previous source FICT2220'),added=record(h,'SCOPE-RESET-NEW','Wireless appended source FICT2221');
+  old.raw.level1_global_be_category='Synthetic Reset Old Category FICT2222';const dataset=[old,added];h.api.setRows(dataset);
+  h.api.launchAutomaticChinese(dataset,{records:[added]});await waitFor(()=>added.localTranslatedItem&&h.api.queue.active===0,'scoped appended translation');assert.equal(old.raw[h.api.H[10]],undefined);
+  h.api.launchAutomaticChinese(dataset);await waitFor(()=>old.localTranslatedItem&&h.api.categoryLabel(old.raw.level1_global_be_category)&&h.api.queue.active===0,'normal whole-table restart');
+  assert.equal(h.api.scoped,false);assert.equal(h.api.readyCount,2);assert.ok(h.transport.mock.calls.flatMap(call=>call.arguments[0]).includes(old.raw[h.api.H[9]]));assert.ok(h.transport.mock.calls.flatMap(call=>call.arguments[0]).includes(old.raw.level1_global_be_category));
+});
+
+test('one-click after a scoped append can refresh trusted automatic fields from the entire table',async()=>{
+  const h=harness(),old=record(h,'SCOPE-ONECLICK-OLD','Wireless old automatic FICT2230','旧自动中文 FICT2230'),added=record(h,'SCOPE-ONECLICK-NEW','Wireless added automatic FICT2231');
+  Object.assign(old,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:old.raw[h.api.H[9]],translationItemVersion:TRANSLATION_VERSION});const dataset=[old,added];h.api.setRows(dataset);
+  h.api.launchAutomaticChinese(dataset,{records:[added]});await waitFor(()=>added.localTranslatedItem&&h.api.queue.active===0,'scoped append before whole-table click');assert.equal(old.raw[h.api.H[10]],'旧自动中文 FICT2230');
+  await h.api.oneClickChinese();await waitFor(()=>old.raw[h.api.H[10]]===chineseFor(old.raw[h.api.H[9]])&&h.api.queue.active===0,'whole-table one-click leaves scoped mode');assert.equal(h.api.scoped,false);
+});
+
+test('an empty or foreign-object scope never queues old rows even when UIDs match',async()=>{
+  const h=harness(),old=record(h,'SCOPE-FOREIGN-ID','Wireless current source FICT2240'),other=record(h,'SCOPE-FOREIGN-ID','Wireless other dataset source FICT2241'),dataset=[old],snapshot=JSON.stringify(old);h.api.setRows(dataset);
+  h.api.launchAutomaticChinese(dataset,{records:[]});await h.api.startBackgroundTranslation(true);await h.api.translateVisible(dataset);
+  h.api.launchAutomaticChinese(dataset,{records:[other]});h.api.queueVisibleTranslation();await new Promise(resolve=>setTimeout(resolve,100));
+  assert.equal(h.api.scoped,true);assert.equal(h.api.scopedRecords.length,0);assert.equal(h.transport.mock.callCount(),0);assert.equal(JSON.stringify(old),snapshot);
+});
+
+test('an old pending response cannot mutate a retained old record after append replaces the dataset array',async()=>{
+  const gate=deferred(),oldSource='Wireless in-flight old source FICT2250';
+  const transport=mock.fn(async texts=>{if(texts.includes(oldSource))await gate.promise;return texts.map(chineseFor)}),h=harness({transport}),old=record(h,'APPEND-RETAINED-OLD',oldSource),added=record(h,'APPEND-ACTUAL-NEW','Wireless appended source FICT2251');
+  h.api.setRows([old]);const pending=h.api.translateVisible([old]);await waitFor(()=>transport.mock.callCount()===1,'old request already in flight');const snapshot=JSON.stringify(old);
+  const dataset=[old,added];h.api.setRows(dataset);h.api.launchAutomaticChinese(dataset,{records:[added]});await waitFor(()=>added.localTranslatedItem,'added request finishes while the old response is pending');
+  gate.resolve();await pending;await waitFor(()=>h.api.queue.active===0,'old response has settled');h.api.queueVisibleTranslation();await new Promise(resolve=>setTimeout(resolve,90));assert.equal(JSON.stringify(old),snapshot);assert.equal(added.raw[h.api.H[10]],chineseFor(added.raw[h.api.H[9]]));
 });
 
 test('a late primary response from an imported dataset cannot update a replacement with the same UID',async()=>{

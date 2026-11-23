@@ -104,7 +104,7 @@ input.buyer-choice{padding-right:24px!important;background-image:url("data:image
 .filter-condition input:disabled{background:#f1f5f2;color:#738277}.filter-condition-error{grid-column:1/-1;color:#b42318;font-size:11px}.filter-condition-error:empty{display:none}
 .filter-legacy-query{display:block;margin-top:7px;font-size:11px;color:#655b37}.filter-legacy-query input{display:block;margin-top:4px}
 .filter-condition-popup .status-filter-group{padding:8px 0;border-bottom:1px solid #e3ece6}.filter-condition-popup .status-filter-group summary{cursor:pointer;font-weight:650;overflow-wrap:anywhere}.filter-condition-popup .status-filter-values{max-height:160px;overflow:auto}.filter-condition-popup .status-candidate-actions{display:flex;gap:6px;margin:7px 0}
-</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" disabled>导入 Excel / CSV</button><span class="translation-status" id="translationState">导入后自动生成中文</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
+</style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="appendFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" title="载入表格并更新当前数据" disabled>导入 Excel / CSV</button><button class="btn" id="addData" title="只追加新 Model ID；已有商品和买手编辑保持不变" disabled>新增数据</button><span class="translation-status" id="translationState">导入后自动生成中文</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
 <main class="page"><section class="title"><div><span class="muted">源表字段结构 · 买手筛选与核价</span><h1>寻品工作看板</h1><p>严格按源表标题、顺序和第二行字段说明展示；无筛选时显示全部导入记录。</p></div><span class="tag" id="state">等待导入商品数据</span></section>
 <div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="跨字段搜索 Model ID、标题、类目、价格等"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn primary" id="translateAll">一键翻译</button><button class="btn" id="importTranslations">导入翻译</button><div id="advancedTranslationControls" hidden style="display:none!important"><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="googleDocumentTools">Google 官方整表翻译</button><input type="file" id="googleDocumentFile" hidden accept=".xlsx,.xlsm,.xls,.csv"><button class="btn" id="retranslateAutomatic">重译全部自动中文</button><button class="btn" id="enableChromeTranslation" disabled>启用 Chrome 本地翻译</button><span id="chromeTranslationState" class="muted"></span><button class="btn" id="pauseTranslation">暂停翻译</button></div><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="renameVersion">改名</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
 <div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并所选组 / 型号</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <button class="btn" id="unselect">清除勾选</button></div>
@@ -3539,6 +3539,7 @@ const TRANSLATION_VERSION='reference-v7-20261117';
 const translationCache = new Map();
 let translationStatusTimer=0, visibleTranslationTimer=0, translationLastError='', translationBackgroundRun=0;
 let translationDataset=null, translationRecordSet=new Set(), translationBackgroundDataset=null;
+let translationScopeDataset=null, translationScopeRecords=null;
 let translationEditors=new Map(), translationReadiness=new WeakMap(), translationReadyCount=0;
 let translationCacheDb=null, translationCacheTimer=0, translationCacheDirty=new Map();
 let translationUserPaused=false;
@@ -3651,6 +3652,8 @@ function persistTranslationRow(r){
 }
 function translationVersionField(targetIndex){return targetIndex===10?'translationItemVersion':'translationModelVersion'}
 function translationWarningField(targetIndex){return targetIndex===10?'translationItemWarning':'translationModelWarning'}
+function automaticTranslationIncludes(record,dataset=rows){return translationScopeDataset!==dataset||translationScopeRecords===null||translationScopeRecords.has(record)}
+function automaticTranslationRecords(dataset=rows){return translationScopeDataset===dataset&&translationScopeRecords!==null?[...translationScopeRecords]:dataset}
 function deriveChineseField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag){
   if(buyerChineseProvided(r,targetIndex)){const changed=claimBuyerChinese(r,targetIndex);refreshTranslationReadiness(r);if(changed)persistTranslationRow(r);return}
   const source=translationSource(r,sourceIndex),current=String(value(r,H[targetIndex])||'').trim();
@@ -3701,8 +3704,8 @@ function syncTranslationDataset(){
 function scheduleTranslationStatus(){if(!translationStatusTimer)translationStatusTimer=setTimeout(()=>{translationStatusTimer=0;updateTranslationStatus()},300)}
 function updateTranslationStatus(){
   const el=$('translationState');if(!el)return;syncTranslationDataset();
-  const queued=translationQueue.jobs.size,pending=Math.max(0,rows.length-translationReadyCount);
-  el.textContent='中文字段已处理 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+(historyMode?' · 历史版本只读':queued?' · 正在自动翻译':pending&&translationLastError?' · 部分未完成，可点一键翻译重试':pending?' · 正在处理':'');
+  const queued=translationQueue.jobs.size,pending=Math.max(0,rows.length-translationReadyCount),limited=translationScopeDataset===rows&&translationScopeRecords!==null;
+  el.textContent='中文字段已处理 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+(historyMode?' · 历史版本只读':translationUserPaused?' · 已暂停':queued?' · 正在自动翻译':pending&&translationLastError?' · 部分未完成，可点一键翻译重试':pending&&limited?' · 本次仅处理新增记录':pending?' · 正在处理':'');
   el.title=translationLastError||'自动补齐空白字段；买手填写、导入及留空优先保留';
 }
 
@@ -3756,7 +3759,7 @@ function patchTranslationEditor(r,targetIndex,chinese){
   document.getElementById('productCard')?.refreshChinese?.(r);
 }
 async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag,priority){
-  if(historyMode||translationDataset!==rows||!translationRecordSet.has(r))return;
+  if(historyMode||translationDataset!==rows||!translationRecordSet.has(r)||!automaticTranslationIncludes(r))return;
   deriveChineseField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag);invalidateRaw(r);
   if(!r[autoFlag]||manualChinese(r,targetIndex))return;
   const source=translationSource(r,sourceIndex);if(!source)return;
@@ -3767,7 +3770,7 @@ async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,
   }
   const dataset=rows,targetValue=chineseFieldValue(r,targetIndex);
   const chinese=await translateCn(source,{language:translationLanguage(source,translationRegionHint(r)),priority,context:{kind:targetIndex===10?'item':'model',brand:String(getRaw(r,['mall_brand_name'])||extractBrand(translationSource(r,9)+' '+translationSource(r,11))||'')}});
-  if(!chinese||historyMode||!canEditWorkspace()||rows!==dataset||!translationRecordSet.has(r)||!r[autoFlag]||translationSource(r,sourceIndex)!==source)return;
+  if(!chinese||historyMode||!canEditWorkspace()||rows!==dataset||!translationRecordSet.has(r)||!automaticTranslationIncludes(r,dataset)||!r[autoFlag]||translationSource(r,sourceIndex)!==source)return;
   if(buyerChineseProvided(r,targetIndex)){if(claimBuyerChinese(r,targetIndex)){markDirty(r);save()}return}
   if(chineseFieldValue(r,targetIndex)!==targetValue)return;
   if(r.raw[H[targetIndex]]!==chinese||!r[doneFlag]||r[sourceFlag]!==source){
@@ -3781,6 +3784,7 @@ async function translateVisible(list,priority=0){
   if(!canEditWorkspace()||historyMode)return;
   const jobs=[];
   for(const r of list||[]){
+    if(!automaticTranslationIncludes(r))continue;
     jobs.push(translateRecordField(r,9,10,'autoItemChinese','localTranslatedItem','translationItemSource',priority));
     jobs.push(translateRecordField(r,11,12,'autoModelChinese','localTranslatedModel','translationModelSource',priority));
   }
@@ -3790,11 +3794,11 @@ async function startBackgroundTranslation(force=false){
   if(typeof automaticChineseEnabled!=='undefined'&&!automaticChineseEnabled)return;
   if(!canEditWorkspace()||historyMode||translationUserPaused||!rows.length)return;
   if(!force&&translationBackgroundDataset===rows)return;
-  const dataset=rows,run=++translationBackgroundRun;translationBackgroundDataset=dataset;
+  const dataset=rows,records=automaticTranslationRecords(dataset),run=++translationBackgroundRun;translationBackgroundDataset=dataset;
   try{
-    for(let start=0;start<dataset.length;start+=120){
+    for(let start=0;start<records.length;start+=120){
       if(run!==translationBackgroundRun||rows!==dataset||historyMode||translationUserPaused)return;
-      await translateVisible(dataset.slice(start,start+120),2);
+      await translateVisible(records.slice(start,start+120),2);
       await new Promise(resolve=>setTimeout(resolve,0));
     }
   }catch(error){translationLastError='部分译文待补齐，可点击全部中文继续';console.warn(error)}
@@ -3807,7 +3811,7 @@ function queueVisibleTranslation(){
   if(!rows.length||translationUserPaused){scheduleTranslationStatus();return}
   translationQueue.demoteQueued();
   visibleTranslationTimer=setTimeout(()=>{
-    translateVisible(visibleRows.slice(),0).catch(error=>{console.warn(error);translationLastError='当前页部分译文待重试'});
+    translateVisible(visibleRows.filter(record=>automaticTranslationIncludes(record)),0).catch(error=>{console.warn(error);translationLastError='当前页部分译文待重试'});
     startBackgroundTranslation();scheduleTranslationStatus();
   },60);
 }
@@ -3850,10 +3854,10 @@ function useAutomaticFallback(result){
   for(const language of result.bridges)chromeTranslationBridges.add(language);
   chromeTranslationMode=chromeTranslationLanguages.size>0;return true;
 }
-async function translateDatasetCategories(dataset,run){
-  const names=[...new Set(dataset.flatMap(categoryValues))].filter(name=>!categoryLabel(name));
+async function translateDatasetCategories(dataset,run,records=automaticTranslationRecords(dataset)){
+  const names=[...new Set(records.flatMap(categoryValues))].filter(name=>!categoryLabel(name));
   for(let start=0;start<names.length;start+=24){
-    if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
+    if(rows!==dataset||run!==automaticChineseRun||historyMode||translationUserPaused||!automaticChineseEnabled||!canEditWorkspace())return;
     const result=await Promise.all(names.slice(start,start+24).map(async name=>[name,await translateCn(name,{priority:1,language:translationLanguage(name,'en')})]));
     if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
     for(const [name,chinese]of result)if(chinese&&hasChinese(chinese))categoryTranslationCache.set(categoryKey(name),chinese);
@@ -3864,14 +3868,19 @@ async function translateDatasetCategories(dataset,run){
 }
 function launchAutomaticChinese(dataset,options={}){
   if(rows!==dataset||historyMode||!canEditWorkspace())return;
-  const run=++automaticChineseRun,languages=automaticChineseLanguages(dataset);
+  syncTranslationDataset();
+  const scoped=Array.isArray(options.records);
+  if(scoped||translationScopeRecords!==null)translationQueue.cancelQueued();
+  translationScopeDataset=dataset;translationScopeRecords=scoped?new Set(options.records.filter(record=>translationRecordSet.has(record))):null;
+  translationBackgroundRun++;
+  const run=++automaticChineseRun,records=automaticTranslationRecords(dataset),languages=automaticChineseLanguages(records);
   let preparing;
   try{preparing=prepareAutomaticFallback(languages,!!options.interactive)}catch(error){preparing=Promise.resolve({ready:[],bridges:[]})}
-  automaticChineseEnabled=true;translationUserPaused=false;translationQueue.setPaused(false);translationQueue.failedUntil.clear();translationLastError='';translationBackgroundDataset=null;
-  queueVisibleTranslation();startBackgroundTranslation(true);translateDatasetCategories(dataset,run).catch(()=>{});scheduleTranslationStatus();
+  automaticChineseEnabled=true;if(!scoped)translationUserPaused=false;translationQueue.setPaused(translationUserPaused);translationQueue.failedUntil.clear();translationLastError='';translationBackgroundDataset=null;
+  queueVisibleTranslation();startBackgroundTranslation(true);translateDatasetCategories(dataset,run,records).catch(()=>{});scheduleTranslationStatus();
   Promise.resolve(preparing).then(result=>{
     if(rows!==dataset||run!==automaticChineseRun||historyMode||!canEditWorkspace())return;
-    if(useAutomaticFallback(result)&&translationReadyCount<dataset.length){translationQueue.failedUntil.clear();translationBackgroundDataset=null;startBackgroundTranslation(true);queueVisibleTranslation()}
+    if(useAutomaticFallback(result)&&records.some(record=>!rowChineseReady(record))){translationQueue.failedUntil.clear();translationBackgroundDataset=null;startBackgroundTranslation(true);queueVisibleTranslation()}
   }).catch(()=>{});
 }
 async function oneClickChinese(){
@@ -3952,7 +3961,7 @@ window.addEventListener('pagehide',()=>chromeTranslationProvider?.destroy());
 function toggleTranslationPause(){
   translationUserPaused=!translationUserPaused;translationQueue.setPaused(translationUserPaused);
   if(translationUserPaused){translationBackgroundRun++;translationBackgroundDataset=null;translationQueue.cancelQueued()}
-  else queueVisibleTranslation();
+  else{queueVisibleTranslation();translateDatasetCategories(rows,automaticChineseRun,automaticTranslationRecords(rows)).catch(()=>{})}
   scheduleTranslationStatus();
 }
 
@@ -4342,6 +4351,10 @@ function mergeBuyerEdits(incoming,previous){
   return incoming;
 }
 // import-deduplication:start
+function sourceImportModelId(record){
+  const raw=record.raw||{},header=Object.keys(raw).find(name=>name!=='_modelId'&&['modelid','模型id'].includes(norm(name)));
+  return normalizeModelId(header===undefined?'':raw[header]);
+}
 async function deduplicateImportedRows(sourceRows,options={}){
   const unique=[],byId=new Map(),duplicateIds=new Set(),total=sourceRows.length;
   let removedCount=0;
@@ -4351,8 +4364,7 @@ async function deduplicateImportedRows(sourceRows,options={}){
     checkCancelled();
     const record=sourceRows[i],raw=record.raw||{};
     // Only a real source Model ID identifies a duplicate; generated fallback IDs do not.
-    const idHeader=Object.keys(raw).find(header=>header!=='_modelId'&&['modelid','模型id'].includes(norm(header)));
-    const id=normalizeModelId(idHeader===undefined?'':raw[idHeader]);
+    const id=sourceImportModelId(record);
     if(!id)unique.push(record);
     else{
       const price=number(Object.prototype.hasOwnProperty.call(raw,H[13])?raw[H[13]]:getRaw(record,aliasFor('nb')));
@@ -4373,33 +4385,73 @@ async function deduplicateImportedRows(sourceRows,options={}){
   options.onProgress?.({processed:total,total,removedCount});checkCancelled();
   return {rows:unique,sourceCount:total,removedCount,duplicateIdCount:duplicateIds.size};
 }
-// import-deduplication:end
-async function runDeferredProcessing(token){
-  const dataset=rows;
-  try{
-    for(let i=0;i<dataset.length;i++){
-      if(rows!==dataset||historyMode||!canEditWorkspace())return;
-      deriveRecord(dataset[i]);filtered.searchText?.(dataset[i]);
-      if(i&&i%100===0){if(!importFile.running)$('state').textContent=(sourceFileName?sourceFileName+' · ':'')+'后台整理字段 '+i+' / '+dataset.length;await new Promise(resolve=>setTimeout(resolve,0))}
+async function appendImportedRows(sourceRows,existingRows,options={}){
+  const ids=new Set(),usedUids=new Set(),added=[],prefix='append-'+Date.now().toString(36)+'-'+(options.run||0)+'-';
+  let existingCount=0,missingIdCount=0,serial=0;
+  const checkCancelled=()=>{if(options.signal?.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'})};
+  for(let i=0;i<existingRows.length;i++){
+    checkCancelled();const record=existingRows[i],id=sourceImportModelId(record);if(id)ids.add(id);usedUids.add(record.uid);
+    if((i+1)%500===0){await new Promise(resolve=>setTimeout(resolve,0));checkCancelled()}
+  }
+  for(let i=0;i<sourceRows.length;i++){
+    checkCancelled();const record=sourceRows[i],id=sourceImportModelId(record);
+    if(!id)missingIdCount++;
+    else if(ids.has(id))existingCount++;
+    else{
+      let uid;do{uid=prefix+(++serial)}while(usedUids.has(uid));
+      record.uid=uid;record.manualGroup='';record.group='UNGROUPED-'+uid;usedUids.add(uid);ids.add(id);added.push(record);
     }
-    if(rows!==dataset||historyMode||!canEditWorkspace())return;
-    if(!groupingEnabled)for(const r of dataset)r.group=r.manualGroup||'UNGROUPED-'+r.uid;
+    if((i+1)%500===0){options.onProgress?.({processed:i+1,total:sourceRows.length});await new Promise(resolve=>setTimeout(resolve,0));checkCancelled()}
+  }
+  checkCancelled();return {rows:added,existingCount,missingIdCount};
+}
+// import-deduplication:end
+async function runDeferredProcessing(token,options={}){
+  const dataset=rows,targets=options.records||dataset;
+  try{
+    for(let i=0;i<targets.length;i++){
+      if(token!==activeHashRun||rows!==dataset||historyMode||!canEditWorkspace())return;
+      deriveRecord(targets[i]);filtered.searchText?.(targets[i]);
+      if(i&&i%100===0){if(!importFile.running)$('state').textContent=(sourceFileName?sourceFileName+' · ':'')+'后台整理字段 '+i+' / '+targets.length;await new Promise(resolve=>setTimeout(resolve,0))}
+    }
+    if(token!==activeHashRun||rows!==dataset||historyMode||!canEditWorkspace())return;
+    if(!groupingEnabled)for(const r of targets)r.group=r.manualGroup||'UNGROUPED-'+r.uid;
     save(true);render();
-    if(!groupingEnabled&&token===activeHashRun)$('groupState').textContent='字段已整理 · 默认平铺；点击按阈值分组时再处理图片';
+    if(!options.records&&!groupingEnabled)$('groupState').textContent='字段已整理 · 默认平铺；点击按阈值分组时再处理图片';
   }catch(error){console.error(error);if(rows===dataset){$('groupState').textContent='后台字段处理失败，可重试';toast('后台字段处理失败：'+(error.message||'请重试'))}}
 }
-async function importFile(f){
-  if(!canEditWorkspace()){toast('当前工作区不可写，请关闭其他编辑标签后刷新');return}if(!f)return;if(historyMode)returnToCurrent();
-  automaticChineseEnabled=false;automaticChineseRun++;translationBackgroundRun++;translationQueue.cancelQueued();
+async function importFile(f,options={}){
+  if(!canEditWorkspace()){toast('当前工作区不可写，请关闭其他编辑标签后刷新');return}if(!f)return;
+  const append=options.mode==='append';
+  if(historyMode){if(append){toast('请先返回当前数据后再新增数据');return}returnToCurrent()}
+  if(!append){automaticChineseEnabled=false;automaticChineseRun++;translationBackgroundRun++;translationQueue.cancelQueued()}
   importFile.activeController?.abort();const controller=new AbortController();importFile.activeController=controller;importFile.running=true;
   const hashToken=++activeHashRun,oldRows=rows,oldHeaders=headers,oldSource=sourceFileName,oldGrouping=groupingEnabled,started=Date.now();
-  $('cancelImport').hidden=false;$('state').textContent=f.name+' · 正在读取';
+  $('cancelImport').hidden=false;$('import').disabled=true;$('addData').disabled=true;$('state').textContent=f.name+' · 正在读取';
+  const namespace=typeof workspace==='undefined'?null:workspace;
+  const current=()=>rows===oldRows&&(typeof workspace==='undefined'||workspace===namespace)&&!historyMode&&canEditWorkspace();
   const onProgress=pct=>{if(hashToken===activeHashRun)$('state').textContent=f.name+' · 正在导入 '+pct+'%'};
   try{
     const parsed=/\.(csv|txt)$/i.test(f.name)||f.type==='text/csv'?await parseCsv(f,onProgress,3,{signal:controller.signal}):await parseXlsx(f,3,{signal:controller.signal,onProgress});
     if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;if(!parsed.rows.length)throw new Error('文件没有商品数据行，已保留原工作台数据');
     const deduplicated=await deduplicateImportedRows(parsed.rows,{signal:controller.signal,onProgress:progress=>{if(hashToken===activeHashRun)$('state').textContent=f.name+' · 正在按 Model ID 去重 '+progress.processed.toLocaleString()+' / '+progress.total.toLocaleString()}});
     if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;
+    if(!current())throw new Error('工作数据或编辑权限已切换，已取消本次导入');
+    if(append){
+      const added=await appendImportedRows(deduplicated.rows,oldRows,{signal:controller.signal,run:hashToken,onProgress:progress=>{if(hashToken===activeHashRun)$('state').textContent=f.name+' · 正在比对现有 Model ID '+progress.processed.toLocaleString()+' / '+progress.total.toLocaleString()}});
+      if(controller.signal.aborted)throw Object.assign(new Error('导入已取消'),{name:'AbortError'});if(hashToken!==activeHashRun)return;
+      if(!current())throw new Error('工作数据或编辑权限已切换，已取消本次新增');
+      const summary='新增 '+added.rows.length.toLocaleString()+' 条 · 已存在跳过 '+added.existingCount.toLocaleString()+' 条 · 文件内重复剔除 '+deduplicated.removedCount.toLocaleString()+' 条'+(added.missingIdCount?' · 缺少 Model ID 跳过 '+added.missingIdCount.toLocaleString()+' 条':'');
+      if(typeof reportQa==='function')reportQa('import',{mode:'append',rows:oldRows.length+added.rows.length,addedRows:added.rows.length,existingRows:added.existingCount,missingIdRows:added.missingIdCount,sourceRows:deduplicated.sourceCount,duplicateRows:deduplicated.removedCount,duplicateIds:deduplicated.duplicateIdCount,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
+      if(!added.rows.length){$('saveState').textContent=summary;render();toast(summary+(added.missingIdCount?'；新增数据需要有效的 Model ID':'；原工作台保持不变'));return}
+      const incoming=mergeBuyerEdits(added.rows,[]);
+      headers=Array.from(new Set([...oldHeaders,...parsed.headers]));rows=oldRows.concat(incoming);sourceFileName=oldSource||f.name;render.dataset=rows;
+      $('groupState').textContent='已新增 '+incoming.length.toLocaleString()+' 条 · 原分组与编辑已保留；新增商品单独展示';
+      save(true);render();$('saveState').textContent=summary;
+      const dataset=rows;setTimeout(()=>{if(hashToken===activeHashRun&&rows===dataset)launchAutomaticChinese(dataset,{records:incoming})},0);
+      setTimeout(()=>{if(hashToken===activeHashRun&&rows===dataset)runDeferredProcessing(hashToken,{records:incoming})},30);
+      toast(summary+'；仅整理新增商品，原有记录保持不变');return;
+    }
     headers=parsed.headers;rows=mergeBuyerEdits(deduplicated.rows,oldRows);sourceFileName=f.name;groupingEnabled=false;
     for(const r of rows){r.manualGroup='';r.group='UNGROUPED-'+r.uid}opened.clear();selected.clear();filters={};pageIndex=0;
     $('groupState').textContent='数据已载入 · 默认平铺；识图归类按需执行';save(true);render();setTimeout(()=>{if(hashToken===activeHashRun)launchAutomaticChinese(rows)},0);
@@ -4407,8 +4459,8 @@ async function importFile(f){
     $('saveState').textContent=summary;
     if(typeof reportQa==='function')reportQa('import',{rows:rows.length,sourceRows:deduplicated.sourceCount,duplicateRows:deduplicated.removedCount,duplicateIds:deduplicated.duplicateIdCount,milliseconds:Date.now()-started,reader:parsed.reader||'兼容解析'});
     toast(summary+'；正在后台整理字段');setTimeout(()=>runDeferredProcessing(hashToken),30);
-  }catch(error){if(hashToken!==activeHashRun)return;rows=oldRows;headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;automaticChineseEnabled=true;render();launchAutomaticChinese(rows);if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast('导入失败：'+(error.message||'请检查文件格式'))}}
-  finally{if(hashToken===activeHashRun){importFile.running=false;importFile.activeController=null;$('cancelImport').hidden=true}}
+  }catch(error){if(hashToken!==activeHashRun)return;if(!append&&rows===oldRows){headers=oldHeaders;sourceFileName=oldSource;groupingEnabled=oldGrouping;automaticChineseEnabled=true;render();launchAutomaticChinese(rows)}else render();if(error.name==='AbortError')toast('已取消导入，原工作数据已保留');else{console.error(error);toast((append?'新增数据失败：':'导入失败：')+(error.message||'请检查文件格式'))}}
+  finally{if(hashToken===activeHashRun){importFile.running=false;importFile.activeController=null;$('cancelImport').hidden=true;$('import').disabled=!canEditWorkspace();$('addData').disabled=!canEditWorkspace()}}
 }
 
 async function importInvitations(file){
@@ -4489,11 +4541,12 @@ function showBlankWorkbenchLink(){
   $('copyBlankWorkbench').onclick=async()=>{const ok=await copyShareText(link);toast(ok?'空白工作台链接已复制':'请选中上方链接复制')};
 }
 $('shareBlank').onclick=showBlankWorkbenchLink;$('cancelImport').onclick=()=>importFile.activeController?.abort();
+$("addData").onclick=()=>$("appendFile").click();$("appendFile").onchange=()=>{const f=$("appendFile").files[0];if(f)importFile(f,{mode:"append"});$("appendFile").value=""};
 $("import").onclick=()=>$("file").click();$("file").onchange=()=>{let f=$("file").files[0];if(f)importFile(f);$("file").value=""};$("importTranslations").onclick=()=>$("translationFile").click();$("translationFile").onchange=()=>{let f=$("translationFile").files[0];if(f)importTranslations(f);$("translationFile").value=""};$("importInvitations").onclick=()=>$("invitationFile").click();$("invitationFile").onchange=()=>{let f=$("invitationFile").files[0];if(f)importInvitations(f);$("invitationFile").value=""};$("export").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'xlsx');return}download(exportXlsx(a),"寻品工作看板_筛选结果.xlsx");toast("Excel 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("Excel 导出失败："+(e?.message||"请重试"))}};$("exportCsv").onclick=()=>{try{let a=sorted(filtered());if(!a.length){toast("当前没有可导出记录");return}if(a.length>500){exportLarge(a,'csv');return}download(exportCsv(a),"寻品工作看板_筛选结果.csv");toast("CSV 已开始导出："+a.length+" 个 Model ID")}catch(e){console.error(e);toast("CSV 导出失败："+(e?.message||"请重试"))}};$("search").oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(render,140)};$("sort").onchange=()=>{clearTimeout(searchTimer);render()};$("clear").onclick=()=>{clearTimeout(searchTimer);filters={};$("search").value="";render()};$("schemaBtn").onclick=()=>drawer("schema");$("allFilters").onclick=()=>drawer("filter");$("bulkEdit").onclick=batch;$("bulkPreApply").onclick=()=>{if(!canEditWorkspace()||historyMode)return;let state=$("bulkPreValue").value,date=$("bulkPreDate").value,targets=rows.filter(x=>selected.has(x.uid));if(!targets.length){toast("请先勾选 Model ID");return}if(!state&&!date){toast("请选择 Y/N 或核价日期");return}for(let r of targets){if(state)r.preValue=state;if(date)r.preDate=date;r.preTouched=true;markDirty(r)}save();render();toast("已批量更新 "+targets.length+" 个 Model ID 的前置核价信息")};$("merge").onclick=()=>merge(true);$("splitGroup").onclick=splitSelectedFromGroups;$("unmerge").onclick=()=>merge(false);$("shareSelected").onclick=()=>{let list=sorted(rows.filter(r=>selected.has(r.uid)));if(list.length)showShareLinkDialog(list);else toast("请先勾选要分享的 Model ID")};$("unselect").onclick=()=>{selected.clear();render()};
 $("googleDocumentTools").onclick=()=>openGoogleDocumentTools().catch(error=>toast(error.message));$("googleDocumentFile").onchange=()=>{const input=$("googleDocumentFile"),file=input.files[0],id=input.dataset.taskId;if(file&&id)importGoogleDocumentResult(file,id);input.value=""};$("retranslateAutomatic").onclick=retranslateAutomaticChinese;$("enableChromeTranslation").onclick=enableChromeTranslation;if(typeof globalThis.Translator==="undefined"){$("enableChromeTranslation").disabled=true;$("chromeTranslationState").textContent="本浏览器不支持本地模型"}$("onlineTranslate").onclick=retryVisibleTranslation;$("translateAll").onclick=()=>oneClickChinese().catch(error=>toast(error.message));$("renameVersion").onclick=renameSelectedVersion;$("pauseTranslation").onclick=toggleTranslationPause;$("thresholdPreset").onchange=()=>{if($("thresholdPreset").value!=="custom")$("thresholdInput").value=$("thresholdPreset").value};$("rebuildGroups").onclick=async()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;threshold=Math.max(1,Math.min(100,Number($("thresholdInput").value)||90));$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";groupingEnabled=true;let token=++activeHashRun;$("groupState").textContent="正在准备图片并按 "+threshold+"% 相似度归类…";$("rebuildGroups").disabled=true;try{await prepareImageHashes(rows.slice(),token);if(token!==activeHashRun)return;if(await regroup()===false||token!==activeHashRun)return;save(true);render();$("groupState").textContent="归类完成 · 当前阈值 "+threshold+"%"}catch(e){console.error(e);toast("分组失败："+(e?.message||"请重试"))}finally{$("rebuildGroups").disabled=false}};$("clearGroups").onclick=()=>{if(importFile.running){toast("请先完成或取消当前导入");return}if(!canEditWorkspace()||historyMode)return;activeHashRun++;groupingEnabled=false;for(let r of rows){r.manualGroup="";r.group="UNGROUPED-"+r.uid}opened.clear();save(true);render();$("groupState").textContent="已取消归类 · 当前按平铺列表显示"};$("saveVersion").onclick=async()=>{try{await saveVersion()}catch(e){console.error(e);toast("保存历史版本失败："+(e?.message||"本机存储异常"))}};$("manageVersions").onclick=()=>openVersionManager().catch(e=>{console.error(e);toast("无法读取历史版本："+(e?.message||"本机存储异常"))});$("openVersion").onclick=async()=>{try{await showVersion($("versionSelect").value)}catch(e){toast(e?.message||"无法打开历史版本")}};$("restoreVersion").onclick=async()=>{try{await restoreVersionAsCurrent($("versionSelect").value)}catch(e){console.error(e);toast(e?.message||"恢复历史版本失败")}};$("returnCurrent").onclick=returnToCurrent;$("saveClose").onclick=()=>$("closeDialog").hidden=false;$("cancelClose").onclick=()=>$("closeDialog").hidden=true;$("confirmSaveClose").onclick=async()=>{if(historyMode){toast("历史版本只读，请返回当前数据再保存");return}let b=$("confirmSaveClose");b.disabled=true;save(true);clearTimeout(saveTimer);let ok=await flushSave();b.disabled=false;if(ok){$("closeDialog").hidden=true;toast("数据已保存到本机，现在可以关闭此标签页")}};document.addEventListener("pointerdown",e=>{let target=e.target,popup=document.querySelector(".filterpop");if(popup&&!popup.contains(target)&&!(target.closest&&target.closest("[data-filter]")))popup.remove();let panel=$("overlay").querySelector(".panel");if(panel&&target===panel)$("overlay").innerHTML="";let card=$("productCard");if(card&&!card.contains(target)&&!(target.closest&&target.closest("[data-share]")))closeProductCard();let zoom=$("imageZoom");if(zoom&&!zoom.contains(target)&&!(target.closest&&target.closest("[data-zoom]")))closeImageZoom()});document.addEventListener("keydown",e=>{if(e.key==="Escape"){if($("buyerChoicePopup")){e.preventDefault();closeBuyerChoice();return}document.querySelector(".filterpop")?.remove();if($("overlay").innerHTML)$("overlay").innerHTML="";$("versionManager").innerHTML="";$("shareLinkDialog").hidden=true;closeProductCard();closeImageZoom()}});window.addEventListener("beforeunload",e=>{if(hasUnsavedChanges||saveAllPending||dirtyRows.size||saveInProgress){e.preventDefault();e.returnValue=""}});
 let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layoutResizeTimer);layoutResizeTimer=setTimeout(()=>render(),180)});async function start(){
   automaticChineseEnabled=false;
-  $('import').disabled=true;
+  $('import').disabled=true;$('addData').disabled=true;
   $('workspaceInfo').textContent=workspace.workspaceLabel()+' · 数据保存在当前浏览器。请收藏当前网址，下次继续本工作区。';
   workspaceWriter=await BuyerWorkspace.acquireWriter(workspace);workspaceWritable=workspaceWriter.owner;
   if(!canEditWorkspace()){
@@ -4502,8 +4555,8 @@ let layoutResizeTimer=0;window.addEventListener("resize",()=>{clearTimeout(layou
     $('retryWorkspace').onclick=()=>location.reload();document.querySelector('main').inert=true;
     $('export').disabled=true;$('exportCsv').disabled=true;return;
   }
-  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false;$("enableChromeTranslation").disabled=typeof globalThis.Translator==="undefined";launchAutomaticChinese(rows)}
-start().catch(e=>{console.error(e);$("import").disabled=false;$("saveState").textContent="本机数据读取失败";toast("恢复本机工作台失败："+(e?.message||"请刷新页面"))});})();</script></body></html>
+  refreshBuyerDatalists();headers=H.slice();rows=[];sourceFileName="";$("import").disabled=true;render();$("state").textContent="正在恢复本机工作台…";let saved=null,fromDB=false;try{let data=await loadWorkbenchState();if(data.meta){saved={rows:data.rows,headers:data.meta.headers||H,sourceFileName:data.meta.sourceFileName||"",threshold:data.meta.threshold,meta:data.meta};fromDB=true}}catch(e){console.error("IndexedDB读取失败",e)}if(!saved){try{saved=JSON.parse(localStorage.getItem(workspace.storageKey("pool-workbench-v2"))||"null")}catch(e){console.warn("旧版本地数据读取失败",e)}}if(saved?.rows){rows=saved.rows;headers=saved.headers||H;sourceFileName=saved.sourceFileName||"";threshold=Number(saved.threshold)||90;groupingEnabled=!!(saved.meta?.groupingEnabled??saved.groupingEnabled);for(let r of rows)r.group=groupingEnabled?(r.manualGroup||r.group||"UNGROUPED-"+r.uid):"UNGROUPED-"+r.uid;$("thresholdInput").value=threshold;$("thresholdPreset").value=[10,30,50,70,90].includes(threshold)?String(threshold):"custom";render();for(let i=0;i<rows.length;i++){deriveRecord(rows[i]);filtered.searchText?.(rows[i]);if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0))}if(!groupingEnabled)for(let r of rows)r.group="UNGROUPED-"+r.uid;if(!fromDB)save(true);else $("saveState").textContent="本机数据已恢复";render()}else{headers=H.slice();rows=[];sourceFileName="";render();$("state").textContent="等待导入商品数据"}try{await refreshVersions()}catch(e){console.warn("历史版本读取失败",e)}$("import").disabled=false;$("addData").disabled=!canEditWorkspace();$("enableChromeTranslation").disabled=typeof globalThis.Translator==="undefined";launchAutomaticChinese(rows)}
+start().catch(e=>{console.error(e);$("import").disabled=false;$("addData").disabled=!canEditWorkspace();$("saveState").textContent="本机数据读取失败";toast("恢复本机工作台失败："+(e?.message||"请刷新页面"))});})();</script></body></html>
 
 
 
