@@ -125,6 +125,7 @@ function harness(options = {}) {
     transport
   });
   const extracted = [
+    between('// product-group-names:start','// product-group-names:end'),
     lineStarting('const H='),
     lineStarting('const S='),lineStarting('const FIELD='),html.match(/const statusFilterKeys=\[[^\]]*\];/)[0],
     lineStarting('const rawLookupCache='),

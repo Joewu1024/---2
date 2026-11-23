@@ -55,6 +55,7 @@ function harness() {
     between('function selectImportHeader(', 'function xmlEsc('),
     between('// import-deduplication:start', '// import-deduplication:end'),
     between('// buyer-chinese-priority:start','// buyer-chinese-priority:end'),
+    between('// product-group-names:start','// product-group-names:end'),
     between('function mergeBuyerEdits(', '// import-deduplication:start'),
     between('async function runDeferredProcessing(', 'async function importFile('),
     between('async function importFile(', 'function download(')

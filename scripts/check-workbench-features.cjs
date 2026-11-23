@@ -80,6 +80,7 @@ function harness(options={}) {
     return [];
   };
   function element(id) {
+    if(options.document)return options.document.getElementById(id);
     if (!elements.has(id)) elements.set(id, {
       id, textContent: '', innerHTML: '', value: '', hidden: false, disabled: false, attributes: {}, style: { setProperty() {} },
       setAttribute(name,value){this.attributes[name]=String(value)},getAttribute(name){return this.attributes[name]??null},removeAttribute(name){delete this.attributes[name]},setCustomValidity(message){this.validationMessage=String(message)},
@@ -89,7 +90,7 @@ function harness(options={}) {
     return elements.get(id);
   }
   element('sort').value = 'desc';
-  const document = { getElementById: element, querySelectorAll: selectAll, querySelector: () => null, documentElement: { clientWidth: 1400 } };
+  const document = options.document||{ getElementById: element, querySelectorAll: selectAll, querySelector: () => null, documentElement: { clientWidth: 1400 } };
   const extracted = [
     line('const H='), line('const S='), line('const FIELD='), line('let rows='), line('let buyerCustomOptions='),
     line('const rawLookupCache='), line('const keyMap='),
@@ -99,8 +100,10 @@ function harness(options={}) {
     between('// batch-model-search:start', '// batch-model-search:end'),
     between('// buyer-chinese-priority:start', '// buyer-chinese-priority:end'),
     between('// group-selection:start', '// group-selection:end'),
+    ...(html.includes('// product-group-names:start')?[between('// product-group-names:start','// product-group-names:end')]:[]),
     ...['statusValue','statusLines','groupIsOpen','visibleFields','displayColumns','colSize','updateStats','matchesState','updateSelectionUI','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups','renderPager','render'].map(n=>line('function '+n+'(')),
     between('function rowHtml(', 'function closeProductCard('),
+    ...(options.realFilters?[between('function filterPopupFrame(', 'function batch()')]:[]),
     line('function bindTable('), between('function batch()', 'function openWorkbenchDB('),
     ...['dbRequest','localDateKey','writeRecordBatches'].map(n=>line('function '+n+'(')),
     ...['listVersions','readVersion','showVersion'].map(n=>line('async function '+n+'(')),
@@ -119,7 +122,7 @@ function harness(options={}) {
   const context = vm.createContext({
     document, console, controls, db, BuyerTranslation, WorkbenchImport, Blob, TextEncoder, TextDecoder, Uint8Array, Uint32Array, DataView, URL, URLSearchParams, AbortController,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base },
-    innerWidth: 1400, location: { href: 'https://offline.example.test/index.html' },
+    innerWidth: 1400, innerHeight:900, Event:options.Event||Event, requestAnimationFrame:callback=>callback(),cancelAnimationFrame(){},window:options.window||{addEventListener(){}}, location: { href: 'https://offline.example.test/index.html' },
     localStorage: { getItem() { return null; }, setItem() {} },
     setTimeout(callback,delay) { return delay===0?setTimeout(callback,0):null; }, clearTimeout(timer) { if(timer!==null)clearTimeout(timer); }, confirm: () => true, prompt:()=>controls.promptValue,
     IDBKeyRange: { only: value => value }, fetch() { throw Error('Network forbidden'); }
@@ -129,6 +132,7 @@ function harness(options={}) {
     let automaticChineseEnabled=true,automaticChineseRun=0,translationBackgroundRun=0;
     const translationQueue={cancelQueued(){}};function launchAutomaticChinese(){automaticChineseEnabled=true}
     ${extracted}
+    ${options.stubRender?'function render(){controls.renders++}':''}
     function canEditWorkspace(){return controls.writable}
     async function openWorkbenchDB(){if(controls.dbGate)await controls.dbGate;return db}
     function refreshTranslationReadiness(){} function scheduleTranslationStatus(){}
@@ -137,11 +141,14 @@ function harness(options={}) {
     function editTranslationSource(){} function toggleProductCard(){} function showImageZoom(){} function scheduleImageZoomClose(){}
     function runDeferredProcessing(){} async function parseXlsx(){throw Error('XLSX parser not under test')}
     function download(blob,name){controls.downloads.push({blob,name})}
-    function showShareLinkDialog(){} function filterPopup(){} function drawer(){}
+    function showShareLinkDialog(){} ${options.realFilters?'':'function filterPopup(){} function drawer(){}'}
     return {H,FIELD,controls,filtered,recordsGroups,matchesState,statusValue,filterValue,value,calc,normalizeModelId,idFor,parseWorkbenchSearch,renderFilterSummary,activeFilterItems,bindWorkbenchSearchPaste,
-      batch,drawOptions,bindTable,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,updateSelectionUI,
+      batch,drawOptions,bindTable,rowHtml,deriveRecord,regroup,merge,splitSelectedFromGroups,visibleFields,displayColumns,render,updateSelectionUI,
       updateStats,exportRows,exportCsv,exportXlsx,parseCsv,parseDelimited,mapImportedMatrix,selectImportHeader,importFile,importInvitations,importTranslations,
       writeRecordBatches,saveVersion,listVersions,refreshVersions,readVersion,showVersion,returnToCurrent,restoreVersionAsCurrent,openVersionManager,renameVersion,renameSelectedVersion,flushSave,save,
+      openMergePreview:typeof openMergePreview==='function'?openMergePreview:undefined,
+      openRenameGroupDialog:typeof openRenameGroupDialog==='function'?openRenameGroupDialog:undefined,filterPopup,drawer,
+      getGroupName:typeof getGroupName==='function'?getGroupName:undefined,groupDisplayName:typeof groupDisplayName==='function'?groupDisplayName:undefined,renameProductGroup:typeof renameProductGroup==='function'?renameProductGroup:undefined,
       get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},
       setRows(next){rows=next;headers=H.slice();sourceFileName='fabricated.csv'},setFilters(next){filters=next},
       setSelected(ids){selected=new Set(ids)},setGrouping(value){groupingEnabled=value},setOpened(ids){opened=new Set(ids)},
@@ -175,6 +182,9 @@ function bindGroupCheckboxes(h, groups) {
   h.controls.nodesBySelector['[data-select-group]'] = nodes;
   h.api.bindTable();h.api.updateSelectionUI();return nodes;
 }
+
+module.exports={harness,record,ids,plain,groupedRecords,bindGroupCheckboxes};
+if(require.main===module){
 
 test('1688 blank filtering keeps only matching models and never leaks hidden group siblings', () => {
   const h = harness(), a = record(h,'blank',{final_1688_link:''}), b = record(h,'filled',{final_1688_link:'https://detail.1688.com/offer/fabricated.html'});
@@ -376,7 +386,7 @@ test('three whole-group choices merge every hidden member and persist the highes
   assert.deepEqual(Array.from(h.api.recordsGroups(h.api.rows),entry=>entry[1][0].uid),[a[2].uid,b[74].uid,c[3].uid]);
   h.api.setFilters({'status:grass_region':{values:['TH']}});h.api.render();assert.equal(h.api.visibleRows.length,3);
   for(const group of bindGroupCheckboxes(h,['merge-A','merge-B','merge-C'])){group.checked=true;group.onchange()}
-  assert.equal(h.api.selected.size,82);h.element('merge').onclick();assert.equal(h.api.selected.size,0);
+  assert.equal(h.api.selected.size,82);h.api.merge(true);assert.equal(h.api.selected.size,0);
   assert.equal(new Set(all.map(row=>row.manualGroup)).size,1);assert.ok(all[0].manualGroup);assert.equal(h.api.rows.length,82);
   h.api.setFilters({});h.api.setOpened([]);h.api.render();assert.deepEqual(ids(h.api.visibleRows),[c[3].uid]);
   assert.equal(await h.api.flushSave(),true);assert.equal(h.db.stores.records.size,82);
@@ -713,3 +723,4 @@ test('the selected-version rename action opens and focuses its editor without re
   h.element('closeVersionManager').onclick();assert.equal(h.db.stores.versions.get(version.id).label,version.label);
   await h.api.renameSelectedVersion();input.value='  下拉选中版本的新名称  ';await button.onclick();assert.equal(h.db.stores.versions.get(version.id).label,'下拉选中版本的新名称');assert.equal(h.element('versionSelect').value,version.id);
 });
+}

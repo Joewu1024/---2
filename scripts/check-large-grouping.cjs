@@ -14,6 +14,7 @@ assert.ok(functionStart >= 0 && functionEnd > functionStart, 'Find the actual re
 assert.ok(helperStart >= 0 && helperEnd > helperStart, 'Find the actual similarity helpers in index.html');
 const implementation = html.slice(functionStart, functionEnd);
 const helpers = html.slice(helperStart, helperEnd);
+const nameHelpers = html.slice(html.indexOf('// product-group-names:start'), html.indexOf('// product-group-names:end'));
 // Fabricated local records only. This evaluates the shipped index.html function,
 // not a parallel implementation. No browser, network, images or account data.
 globalThis.fetch = () => { throw new Error('Network access is forbidden in grouping checks'); };
@@ -28,7 +29,7 @@ function make(records, overrides = {}) {
     setTimeout, ...overrides
   };
   vm.createContext(context);
-  vm.runInContext(helpers + '\n' + implementation, context);
+  vm.runInContext(helpers + '\n' + nameHelpers + '\n' + implementation, context);
   if (overrides.similarProduct) context.similarProduct = overrides.similarProduct;
   return context;
 }
