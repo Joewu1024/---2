@@ -54,7 +54,8 @@ function harness() {
     ...['key','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','aliasFor','headerScore','isMetaRow','statusValue','statusLines'].map(name => line('function ' + name + '(')),
     between('function selectImportHeader(', 'function xmlEsc('),
     between('// import-deduplication:start', '// import-deduplication:end'),
-    line('function mergeBuyerEdits('),
+    between('// buyer-chinese-priority:start','// buyer-chinese-priority:end'),
+    between('function mergeBuyerEdits(', '// import-deduplication:start'),
     between('async function importFile(', 'function download(')
   ].join('\n');
   const api = vm.runInContext(`(function(){

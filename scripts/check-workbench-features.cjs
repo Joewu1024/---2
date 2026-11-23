@@ -95,6 +95,7 @@ function harness(options={}) {
     ...['key','safeHttpUrl','safeImageUrl','headerScore','isMetaRow','getRaw','invalidateRaw','normalizeModelId','round2','format2','calc','value','filterValue','aliasFor','translationWarningField'].map(n=>line('function '+n+'(')),
     between('// buyer-choice:start', 'function statusValue('),
     between('// filter-conditions:start', '// filter-conditions:end'),
+    between('// buyer-chinese-priority:start', '// buyer-chinese-priority:end'),
     between('// group-selection:start', '// group-selection:end'),
     ...['statusValue','statusLines','groupIsOpen','visibleFields','displayColumns','colSize','updateStats','matchesState','updateSelectionUI','selectedSummary','activeFilterItems','renderFilterSummary','sorted','recordsGroups','renderPager','render'].map(n=>line('function '+n+'(')),
     between('function rowHtml(', 'function closeProductCard('),

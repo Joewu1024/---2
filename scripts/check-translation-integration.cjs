@@ -156,7 +156,7 @@ function harness(options = {}) {
     async function regroup(){}
     async function ensureCategoryTranslations(){controls.categoryCalls++;if(controls.categoryGate)await controls.categoryGate}
     function productDetail(r){
-      const detail={id:r.uid,model:'',itemChinese:r.raw[H[10]],modelChinese:r.raw[H[12]],category:'测试类目'};
+      const detail={id:r.uid,model:'',itemChinese:String(value(r,H[10])??''),modelChinese:String(value(r,H[12])??''),category:'测试类目'};
       controls.shareSnapshots.push(detail);return detail;
     }
     async function compactShareImage(value){if(controls.shareImageGate)await controls.shareImageGate;return value}
@@ -311,7 +311,7 @@ test('derive leaves missing translation empty and respects manual text and inten
   assert.equal(blank.autoItemChinese, false);
 });
 
-test('main-file rows repair unusable foreign text and corrupt markers while retaining supplied mixed Chinese', { timeout: 5000 }, async () => {
+test('unprovenanced filled fields remain buyer text regardless of language or marker-like characters', { timeout: 5000 }, async () => {
   const h = harness();
   const records = [
     record(h, 'old-foreign', 'Wireless speaker FICT1401', 'Wireless speaker, FICT1401'),
@@ -319,15 +319,11 @@ test('main-file rows repair unusable foreign text and corrupt markers while reta
     record(h, 'old-marker', 'Microphone FICT1403', '异常 ZXQ0001QXZ FICT1403')
   ];
   h.api.setRows(records);
-  for (const r of [records[0],records[2]]) {
-    h.api.deriveRecord(r);
-    assert.equal(r.autoItemChinese, true);
-    assert.equal(r.raw[h.api.H[10]], '');
-  }
-  const mixed=records[1].raw[h.api.H[10]];h.api.deriveRecord(records[1]);assert.equal(records[1].autoItemChinese,false);assert.equal(records[1].raw[h.api.H[10]],mixed);
+  const expected=records.map(r=>r.raw[h.api.H[10]]);
+  for (const r of records) {h.api.deriveRecord(r);assert.equal(r.autoItemChinese,false);assert.ok(r.userEditedFields.includes(h.api.H[10]));}
   await h.api.translateVisible(records);
-  for (const r of [records[0],records[2]]) assert.equal(r.raw[h.api.H[10]], chineseFor(r.raw[h.api.H[9]]));
-  assert.equal(records[1].raw[h.api.H[10]],mixed);
+  await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.deepEqual(records.map(r=>r.raw[h.api.H[10]]),expected);assert.equal(h.transport.mock.callCount(),0);
 });
 
 test('obsolete automatic item and model translations are not ready and receive the current provider version', { timeout: 5000 }, async () => {
@@ -491,42 +487,27 @@ test('importing the same nonempty Chinese text marks an automatic field as a buy
   assert.equal(h.transport.mock.callCount(), 0);
 });
 
-test('sharing waits for the selected titles before reading categories and freezing the share payload', { timeout: 5000 }, async () => {
-  const gate = deferred();
-  const transport = mock.fn(async texts => { await gate.promise; return texts.map(chineseFor); });
-  const h = harness({ transport });
+test('sharing freezes only selected current fields without requesting or waiting for translation', { timeout: 5000 }, async () => {
+  const h = harness();
   const selected = record(h, 'share-selected', 'Wireless speaker FICT1610');
   selected.raw[h.api.H[11]]='Black FICT1613';
   const unselected = record(h, 'share-unselected', 'Microphone FICT1611');
   h.api.setRows([selected, unselected]);
-  const pending = h.api.buildOnlineShareLink([selected]);
-  await waitFor(() => transport.mock.callCount() > 0, 'selected title translation before sharing');
-  assert.equal(h.controls.categoryCalls, 0);
-  assert.equal(h.controls.shareSnapshots.length, 0);
-  gate.resolve();
-  const url = await pending;
+  const before=JSON.parse(JSON.stringify(selected.raw)),url=await h.api.buildOnlineShareLink([selected]);
   assert.equal(new URL(url).pathname, '/share.html');
-  assert.equal(h.controls.categoryCalls, 1);
+  assert.equal(h.controls.categoryCalls, 0);
   assert.ok(h.controls.shareSnapshots.length>0);
-  assert.ok(h.controls.shareSnapshots.every(detail=>detail.id===selected.uid&&detail.itemChinese===chineseFor(selected.raw[h.api.H[9]])&&detail.modelChinese===chineseFor(selected.raw[h.api.H[11]])));
   const shared=decodeFabricatedShareUrl(url).products;assert.equal(shared.length,1);
-  assert.equal(shared[0].id,selected.uid);assert.equal(shared[0].itemChinese,chineseFor(selected.raw[h.api.H[9]]));assert.equal(shared[0].modelChinese,chineseFor(selected.raw[h.api.H[11]]));
-  const expectedSources=new Set([selected.raw[h.api.H[9]],selected.raw[h.api.H[11]]]);
-  assert.ok(transport.mock.calls.every(call => call.arguments[0].every(text => expectedSources.has(text))), 'unselected records do not delay sharing');
+  assert.equal(shared[0].id,selected.uid);assert.equal(shared[0].itemChinese,'');assert.equal(shared[0].modelChinese,'');
+  assert.deepEqual(selected.raw,before);assert.equal(h.transport.mock.callCount(),0);
 });
 
-test('sharing rejects unresolved titles and paused translation without freezing incomplete product data', { timeout: 5000 }, async () => {
-  const transport = mock.fn(async texts => texts.map(() => ''));
-  const h = harness({ transport });
-  const r = record(h, 'share-missing', 'Wireless speaker FICT1612');
-  h.api.setRows([r]);
-  h.api.setPaused(true);
-  await assert.rejects(h.api.buildOnlineShareLink([r]), /暂停/);
-  assert.equal(transport.mock.callCount(), 0);
-  h.api.setPaused(false);
-  await assert.rejects(h.api.buildOnlineShareLink([r]), /中文未完成|译文|中文/);
-  assert.equal(h.controls.categoryCalls, 0);
-  assert.equal(h.controls.shareSnapshots.length, 0);
+test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic values while translation is paused',async()=>{
+  const h=harness(),values=[['',''],['Buyer English title','5pcs'],['混合 English 标题','Blue 蓝色 / 5pcs'],['旧自动中文标题','  5pcs  ']];
+  const selected=values.map(([title,model],index)=>{const r=record(h,'SHARE-CURRENT-'+index,'Source title FICT2140',title);r.raw[h.api.H[11]]='Source model FICT2141';r.raw[h.api.H[12]]=model;if(index===3)Object.assign(r,{autoItemChinese:true,autoModelChinese:true,translationItemSource:r.raw[h.api.H[9]],translationModelSource:r.raw[h.api.H[11]],translationItemVersion:'old-provider',translationModelVersion:'old-provider'});return r});
+  h.api.setRows([...selected,completedShareRecord(h,'UNSELECTED-PRIVATE')]);h.api.setPaused(true);const before=selected.map(r=>({...r.raw})),url=await h.api.buildOnlineShareLink(selected),products=decodeFabricatedShareUrl(url).products;
+  assert.deepEqual(products.map(product=>[product.itemChinese,product.modelChinese]),values);assert.deepEqual(products.map(product=>product.id),selected.map(r=>r.uid));
+  assert.deepEqual(selected.map(r=>r.raw),before);assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
 test('the actual share builder submits only selected cards and reports a genuine short URL',async()=>{
@@ -549,14 +530,22 @@ for(const reason of ['请求超时','请求过于频繁，请稍后重试'])test
   assert.match(h.api.shareLinkMessage(result,1),/完整链接/);
 });
 
-for(const stage of ['category','image'])test('a dataset replacement during '+stage+' preparation prevents any shortener submission',async()=>{
-  const gate=deferred(),h=harness(),chosen=completedShareRecord(h,'old-share-'+stage);h.api.setRows([chosen]);
-  if(stage==='category')h.controls.categoryGate=gate.promise;else h.controls.shareImageGate=gate.promise;
+test('a dataset replacement during image preparation prevents any shortener submission',async()=>{
+  const gate=deferred(),h=harness(),chosen=completedShareRecord(h,'old-share-image');h.api.setRows([chosen]);
+  h.controls.shareImageGate=gate.promise;
   const pending=h.api.buildOnlineShareLink([chosen]);
   const rejected=assert.rejects(pending,/工作.*切换|数据.*切换|分享.*变更|重新选择/);
-  await waitFor(()=>stage==='category'?h.controls.categoryCalls===1:h.controls.shareSnapshots.length>0,stage+' preparation begins');
-  h.api.setRows([completedShareRecord(h,'new-share-'+stage)]);gate.resolve();await rejected;
+  await waitFor(()=>h.controls.shareSnapshots.length>0,'image preparation begins');
+  h.api.setRows([completedShareRecord(h,'new-share-image')]);gate.resolve();await rejected;
   assert.equal(h.controls.shortenerCalls.length,0,'old products never leave the workbench after the dataset changes');
+});
+
+test('background field changes during image preparation do not replace or reject the clicked share snapshot',async()=>{
+  const gate=deferred(),h=harness(),r=record(h,'FROZEN-SHARE','Source title','Clicked buyer title');r.raw[h.api.H[11]]='Source model';r.raw[h.api.H[12]]='5pcs';h.api.setRows([r]);h.controls.shareImageGate=gate.promise;
+  const pending=h.api.buildOnlineShareLink([r]);await waitFor(()=>h.controls.shareSnapshots.length>0,'clicked product snapshot');
+  r.raw[h.api.H[10]]='Later background title';r.raw[h.api.H[12]]='Later background model';gate.resolve();const products=decodeFabricatedShareUrl(await pending).products;
+  assert.equal(products[0].itemChinese,'Clicked buyer title');assert.equal(products[0].modelChinese,'5pcs');assert.equal(r.raw[h.api.H[10]],'Later background title');assert.equal(r.raw[h.api.H[12]],'Later background model');
+  assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
 test('a late response cannot overwrite a buyer edit', { timeout: 5000 }, async () => {
@@ -639,7 +628,7 @@ test('history mode rejects responses without altering historical data or its edi
   assert.equal(element.value, '历史中已保存的标题');
 });
 
-test('manual edits immediately update readiness counts in both directions', async () => {
+test('manual values remain settled when the buyer intentionally clears and then refills a field', async () => {
   const h = harness();
   await h.api.ready;
   const source = 'Wireless speaker FICT771';
@@ -651,10 +640,16 @@ test('manual edits immediately update readiness counts in both directions', asyn
   assert.equal(h.api.readyCount, 1);
   element.value = '';
   element.oninput();
-  assert.equal(h.api.readyCount, 0);
+  assert.equal(h.api.readyCount, 1);assert.equal(h.api.rowChineseReady(r),true);
   element.value = '买手确认无线音箱 FICT771';
   element.oninput();
   assert.equal(h.api.readyCount, 1);
+});
+
+test('an unmarked empty field is pending while an explicit buyer clear is settled without translation',async()=>{
+  const h=harness();await h.api.ready;const r=record(h,'MANUAL-CLEAR-SETTLED','Wireless source FICT2170');h.api.setRows([r]);assert.equal(h.api.readyCount,0);assert.equal(h.api.rowChineseReady(r),false);
+  const element=editor(h,r);h.api.bindTable();element.value='';element.oninput();assert.equal(h.api.rowChineseReady(r),true);assert.equal(h.api.readyCount,1);
+  await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));assert.equal(h.api.value(r,h.api.H[10]),'');assert.equal(h.api.readyCount,1);assert.equal(h.transport.mock.callCount(),0);
 });
 
 test('every visible row is promoted, including rows beyond the former 150-row cap', { timeout: 5000 }, async () => {
@@ -702,7 +697,7 @@ for (const outcome of ['success', 'failure']) {
   });
 }
 
-test('a yielding readiness scan counts edits before and after their scan position exactly once',async()=>{
+test('a yielding readiness scan counts manual clears before and after their scan position as settled exactly once',async()=>{
   const h=harness();await h.api.ready;
   const records=Array.from({length:1000},(_,i)=>{
     const source='Wireless speaker FICT'+(2000+i),r=record(h,'readiness-'+i,source,chineseFor(source));
@@ -711,7 +706,7 @@ test('a yielding readiness scan counts edits before and after their scan positio
   h.api.setRows(records);assert.ok(h.api.readyCount<1000,'initial scan must yield');
   const early=editor(h,records[0]),late=editor(h,records[750]);h.api.bindTable();
   early.value='';early.oninput();late.value='';late.oninput();
-  await waitFor(()=>h.api.readyCount===998,'readiness scan after two manual blanks');
+  await waitFor(()=>h.api.readyCount===1000,'readiness scan after two intentionally cleared buyer fields');
   early.value=chineseFor(records[0].raw[h.api.H[9]]);early.oninput();late.value=chineseFor(records[750].raw[h.api.H[9]]);late.oninput();
   assert.equal(h.api.readyCount,1000);h.api.updateTranslationStatus();assert.doesNotMatch(h.document.getElementById('translationState').textContent,/后台统计中/);
 });
@@ -756,12 +751,12 @@ test('retranslating all automatic fields invalidates their caches without cleari
   assert.ok(auto.every(r=>r.translationItemVersion===TRANSLATION_VERSION));
 });
 
-for(const missing of [10,12])test('sharing requires field '+missing+' even when both its source and Chinese are blank',async()=>{
+for(const missing of [10,12])test('sharing preserves an empty current field '+missing+' without filling it from source text',async()=>{
   const h=harness(),r=record(h,'required-'+missing,'');const supplied=missing===10?12:10;r.raw[h.api.H[supplied]]=supplied===10?'人工中文标题':'人工中文型号';r.userEditedFields=[h.api.H[supplied]];h.api.setRows([r]);
-  assert.equal(h.api.rowChineseReady(r),true,'general workbench readiness does not replace the stricter share preflight');
-  assert.equal(h.api.shareChineseFieldReady(r,missing===10?9:11,missing),false);
-  await assert.rejects(h.api.buildOnlineShareLink([r]),/缺少完整中文标题或型号/);
-  assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);assert.equal(h.controls.shareSnapshots.length,0);
+  r.raw[h.api.H[missing===10?9:11]]='Original source must never fill the current box';
+  const products=decodeFabricatedShareUrl(await h.api.buildOnlineShareLink([r])).products;
+  assert.equal(products[0][missing===10?'itemChinese':'modelChinese'],'');assert.equal(h.api.value(r,h.api.H[missing]),'');
+  assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
 test('buyer-completed Chinese title and model can be shared when original fields are absent',async()=>{
@@ -929,10 +924,60 @@ test('the Chinese import action accepts two-column _zh and _cn files with the ac
   assert.equal(h.api.value(r,h.api.H[10]),'标准列导入中文标题');assert.equal(h.api.value(r,h.api.H[12]),'标准列导入中文型号');assert.ok(r.userEditedFields.includes(h.api.H[10]));assert.ok(r.userEditedFields.includes(h.api.H[12]));await new Promise(resolve=>setTimeout(resolve,80));assert.equal(h.transport.mock.callCount(),0);
 });
 
-test('invalid incoming foreign text in Chinese columns does not displace a saved valid automatic translation',()=>{
+test('new main-file buyer text in a translation column outranks a saved automatic translation even without Chinese',()=>{
   const h=harness(),source='Wireless saved speaker FICT1950',old=record(h,'MERGE-INVALID',source,'已保存有效自动中文'),incoming=record(h,'MERGE-INVALID',source);incoming.raw.item_name_zh='Different English description';
   Object.assign(old,{autoItemChinese:true,localTranslatedItem:true,translationItemSource:source,translationItemVersion:TRANSLATION_VERSION});h.api.mergeBuyerEdits([incoming],[old]);
-  assert.equal(h.api.value(incoming,h.api.H[10]),'已保存有效自动中文');assert.equal(incoming.translationItemSource,source);assert.equal(incoming.raw[h.api.H[9]],source);
+  assert.equal(h.api.value(incoming,h.api.H[10]),'Different English description');assert.equal(incoming.raw[h.api.H[9]],source);
+});
+
+for(const suffix of ['zh','cn'])test('main-file _'+suffix+' columns preserve English buyer titles and 5pcs models through automatic and one-click work',async()=>{
+  const h=harness({realCsv:true}),text='Model ID,item_name,model_name,item_name_'+suffix+',model_name_'+suffix+'\r\nBUYER-ASCII-'+suffix+',Wireless source FICT2100,Black source FICT2101,Buyer English title,5pcs';
+  await h.api.importFile(csvFile(text));await waitFor(()=>h.api.rows[0]?.autoItemChinese===false&&h.api.rows[0]?.autoModelChinese===false,'provided ASCII fields become buyer-owned');
+  const r=h.api.rows[0];await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(h.api.value(r,h.api.H[10]),'Buyer English title');assert.equal(h.api.value(r,h.api.H[12]),'5pcs');assert.equal(h.transport.mock.callCount(),0);
+  assert.ok(r.userEditedFields.includes(h.api.H[10]));assert.ok(r.userEditedFields.includes(h.api.H[12]));
+});
+
+for(const value of ['5pcs','Buyer English model','蓝色 Blue / 5pcs'])test('a model imported through the translation attachment remains authoritative: '+value,async()=>{
+  const h=harness({realCsv:true}),r=record(h,'MODEL-ATTACHMENT','', 'Buyer title');r.raw[h.api.H[11]]='Original black model FICT2110';r.raw[h.api.H[12]]='旧自动中文型号';
+  Object.assign(r,{autoModelChinese:true,localTranslatedModel:true,translationModelSource:r.raw[h.api.H[11]],translationModelVersion:TRANSLATION_VERSION});h.api.setRows([r]);
+  await h.api.importTranslations(csvFile('Model ID,model_name_cn\r\nMODEL-ATTACHMENT,'+value));await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(h.api.value(r,h.api.H[12]),value);assert.equal(r.autoModelChinese,false);assert.ok(r.userEditedFields.includes(h.api.H[12]));assert.equal(h.transport.mock.callCount(),0);
+});
+
+for(const value of ['5pcs','English only model','蓝色 Blue / 5pcs',''])test('manual model edits survive one-click and an already pending automatic response: '+JSON.stringify(value),async()=>{
+  const gate=deferred(),transport=mock.fn(async texts=>{await gate.promise;return texts.map(chineseFor)}),h=harness({transport}),r=record(h,'MODEL-MANUAL-'+JSON.stringify(value),'','Buyer title');r.raw[h.api.H[11]]='Original black model FICT2120';h.api.setRows([r]);
+  const element=editor(h,r,h.api.H[12]);h.api.bindTable();const pending=h.api.translateVisible([r]);await waitFor(()=>transport.mock.callCount()===1,'automatic model request before the buyer edit');
+  element.value=value;element.oninput();await h.api.oneClickChinese();gate.resolve();await pending;await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(h.api.value(r,h.api.H[12]),value);assert.equal(element.value,value);assert.equal(r.autoModelChinese,false);assert.ok(r.userEditedFields.includes(h.api.H[12]));assert.equal(transport.mock.callCount(),1);
+});
+
+test('old filled model fields without trustworthy automatic source provenance are protected before derive',async()=>{
+  const h=harness(),values=['5pcs','English model text','混合 Blue','异常 ZXQ0001QXZ'];const rows=values.map((value,index)=>{const r=record(h,'OLD-PROVIDED-'+index,'','Buyer title');r.raw[h.api.H[11]]='Original model FICT213'+index;r.raw[h.api.H[12]]=value;if(index%2===1)r.autoModelChinese=true;return r});
+  h.api.setRows(rows);await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.deepEqual(rows.map(r=>h.api.value(r,h.api.H[12])),values);assert.ok(rows.every(r=>r.autoModelChinese===false&&r.userEditedFields.includes(h.api.H[12])));assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('a target filled without provenance while a request is pending cannot receive the stale automatic result',async()=>{
+  const gate=deferred(),transport=mock.fn(async texts=>{await gate.promise;return texts.map(chineseFor)}),h=harness({transport}),r=record(h,'MODEL-TARGET-SNAPSHOT','','Buyer title');r.raw[h.api.H[11]]='Original model FICT2150';h.api.setRows([r]);
+  const pending=h.api.translateVisible([r]);await waitFor(()=>transport.mock.callCount()===1,'model request before another editor fills its target');
+  h.api.setRaw(r,12,'5pcs');gate.resolve();await pending;await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  assert.equal(h.api.value(r,h.api.H[12]),'5pcs');assert.equal(transport.mock.callCount(),1);assert.equal(r.autoModelChinese,false);
+});
+
+test('an old unprovenanced buyer model survives a later main-file merge instead of being treated as automatic',()=>{
+  const h=harness(),old=record(h,'OLD-BUYER-MERGE','','Buyer title'),incoming=record(h,'OLD-BUYER-MERGE','','New file title');old.raw[h.api.H[11]]='Original model';old.raw[h.api.H[12]]='5pcs';old.autoModelChinese=true;
+  incoming.raw[h.api.H[11]]='Original model';incoming.raw.model_name_cn='New file model';h.api.mergeBuyerEdits([incoming],[old]);
+  assert.equal(h.api.value(incoming,h.api.H[12]),'5pcs');assert.equal(incoming.autoModelChinese,false);assert.ok(incoming.userEditedFields.includes(h.api.H[12]));
+});
+
+test('clearing an imported alias field remains empty through one-click and a later main-file import',async()=>{
+  const h=harness({realCsv:true}),headers='Model ID,item_name,model_name,item_name_zh,model_name_cn\r\n';
+  await h.api.importFile(csvFile(headers+'CLEAR-ALIAS,Source item FICT2160,Source model FICT2161,Buyer title,5pcs'));await waitFor(()=>h.api.rows[0]?.autoModelChinese===false,'imported model ownership');
+  const r=h.api.rows[0],element=editor(h,r,h.api.H[12]);h.api.bindTable();element.value='';element.oninput();await h.api.oneClickChinese();
+  assert.equal(h.api.value(r,h.api.H[12]),'');assert.equal(r.raw.model_name_cn,'5pcs','the stale source alias is not copied back over an intentional clear');
+  await h.api.importFile(csvFile(headers+'CLEAR-ALIAS,Source item FICT2160,Source model FICT2161,New file title,6pcs'));await h.api.oneClickChinese();await new Promise(resolve=>setTimeout(resolve,20));
+  const current=h.api.rows[0];assert.equal(h.api.value(current,h.api.H[12]),'');assert.ok(current.userEditedFields.includes(h.api.H[12]));assert.equal(current.autoModelChinese,false);assert.equal(h.transport.mock.callCount(),0);
 });
 
 test('a missing reference entry alone uses Google fallback while its successful neighbor stays untouched',async()=>{

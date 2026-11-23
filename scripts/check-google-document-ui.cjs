@@ -43,6 +43,7 @@ function harness(options={}){
   const actual=[line('const H='),line('const rawLookupCache='),line('const keyMap='),
     ...['key','getRaw','invalidateRaw','normalizeModelId','value','aliasFor','manualChinese','translationSource','translationLanguage','translationRegionHint','translationVersionField','translationWarningField','categoryKey','dbRequest'].map(name=>line('function '+name+'(')),
     line('const TRANSLATION_VERSION='),between('function categoryValues(', 'function categoryLabel('),
+    between('// buyer-chinese-priority:start','// buyer-chinese-priority:end'),
     between('// google-document-v1:start','// google-document-v1:end')].join('\n');
   const api=vm.runInContext(`(function(){let rows=[],historyMode=false,sourceFileName='fabricated-source.csv';const categoryTranslationCache=new Map();
     function canEditWorkspace(){return controls.writable}async function openWorkbenchDB(){return db}

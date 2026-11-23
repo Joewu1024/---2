@@ -3148,7 +3148,7 @@ function showImageZoom(img){let src=img.currentSrc||img.src;if(!src)return;if(ac
 function productDetail(r) {
   const get = h => { const v = value(r, h); return v == null ? "" : String(v).trim(); };
   const model = safeImageUrl(r.modelImage || getRaw(r, ["model 图片", "model_image"]) || r.main || getRaw(r, ["主图图片", "item_image"]));
-  return {id:idFor(r), model:model, itemChinese:get(H[10]), modelChinese:get(H[12]), category:categoryPath(r), invitation:get(H[25]), target:calc(r,"target") || "—", shopee:get("Shopee link"), shopeeUrl:safeHttpUrl(get("Shopee link")), badges:marketingBadges(r)};
+  return {id:idFor(r), model:model, itemChinese:sharePreviewChineseValue(r,10), modelChinese:sharePreviewChineseValue(r,12), category:sharePreviewCategoryValue(r), invitation:get(H[25]), target:calc(r,"target") || "—", shopee:get("Shopee link"), shopeeUrl:safeHttpUrl(get("Shopee link")), badges:marketingBadges(r)};
 }
 function productCardHTML(d, index) {
   const img = (src,label) => src ? "<img src=\"" + esc(src) + "\" alt=\"" + esc(label) + "\">" : "<div class=\"empty\">暂无图片</div>";
@@ -3197,21 +3197,19 @@ function base64Url(bytes) {
 }
 async function buildOnlineShareLink(records,options={}) {
   if (!records || !records.length) throw new Error('请至少选择一个 Model ID');
-  const dataset=rows,list=Array.from(records),members=new Set(dataset);
-  const assertCurrent=()=>{if(rows!==dataset||list.some(record=>!members.has(record))||(options.isCurrent&&!options.isCurrent()))throw new Error('分享内容或工作区已变更，请重新生成')};
+  const dataset=rows,list=Array.from(records),members=new Map(dataset.map((record,index)=>[record,index]));
+  const assertCurrent=()=>{if(rows!==dataset||list.some(record=>!members.has(record)||dataset[members.get(record)]!==record)||(options.isCurrent&&!options.isCurrent()))throw new Error('分享内容或工作区已变更，请重新生成')};
   assertCurrent();
   const host=location.hostname.toLowerCase(),privateIpv4=/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
   if(location.protocol!=='https:'||host==='localhost'||host.endsWith('.localhost')||host==='127.0.0.1'||host==='::1'||privateIpv4)throw new Error('请在已发布的公开 HTTPS 工作台生成分享链接');
-  await ensureProductTranslations(list);assertCurrent();
-  await ensureCategoryTranslations(list);assertCurrent();
-  const signature=JSON.stringify(list.map(productDetail)),products=list.map(productDetail);
-  const assertSnapshot=()=>{assertCurrent();if(JSON.stringify(list.map(productDetail))!==signature)throw new Error('分享内容已变更，请重新生成')};
-  for(const product of products){product.model=await compactShareImage(product.model);assertSnapshot()}
+  // Sharing records the current editors immediately and never starts or waits for translation.
+  const products=JSON.parse(JSON.stringify(list.map(productDetail)));
+  for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
   const bytes=new TextEncoder().encode(JSON.stringify({v:1,products}));let token;
-  if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertSnapshot();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
+  if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertCurrent();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
   if(token.length>1800000)throw new Error('图片数据过大，请减少分享产品数量后重试');
-  const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;assertSnapshot();
-  const result=await getShareShortener().shorten(full.href);assertSnapshot();
+  const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;assertCurrent();
+  const result=await getShareShortener().shorten(full.href);assertCurrent();
   const info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());info.set(result.url,result);while(info.size>100)info.delete(info.keys().next().value);
   return result.url;
 }
@@ -3254,15 +3252,12 @@ async function showShareLinkDialog(records) {
   }catch(error){if(current())dialog.querySelector('[data-share-status]').textContent='链接生成失败：'+(error?.message||'请稍后重试')}
 }
 function sharePreviewChineseValue(record,targetIndex) {
-  const text=String(value(record,H[targetIndex])||'').trim();
-  if(!text||/^(?:[—–-]+|待翻译|翻译中|未提供|待补全)$/.test(text))return '';
-  const source=translationSource(record,targetIndex===10?9:11);
-  return BuyerTranslation.usable(source,text)?text:'';
+  return String(value(record,H[targetIndex])??'');
 }
 function sharePreviewCategoryValue(record){
   const path=String(categoryPath(record)||'').trim();
-  if(!path||/(?:翻译中|待翻译|待补全|待生成)/.test(path))return '';
-  return path.split(/\s*>\s*/).every(part=>hasChinese(part))?path:'';
+  if(path&&!/(?:翻译中|待翻译|待补全|待生成)/.test(path))return path;
+  return categoryValues(record).map(name=>categoryLabel(name)||String(name)).join(' > ');
 }
 function toggleProductCard(uid, anchor) {
   if(activeProductCard===uid){closeProductCard();return}
@@ -3282,47 +3277,41 @@ function toggleProductCard(uid, anchor) {
   document.body.append(card);activeProductCard=uid;
   const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
   const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
-  let checking=true,generating=false,linkError='',linkNotice='',linkSignature='';
-  const snapshot=()=>[sharePreviewChineseValue(record,10),sharePreviewChineseValue(record,12),sharePreviewCategoryValue(record)];
-  const clearLink=()=>{result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;result.querySelector('[data-copy-single]').onclick=null;linkSignature='';linkNotice=''};
+  let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null;
+  const snapshot=()=>{const detail=sharedSnapshot||productDetail(record);return [detail.itemChinese,detail.modelChinese,detail.category]};
+  const clearLink=()=>{result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;result.querySelector('[data-copy-single]').onclick=null;linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
   const update=()=>{
     if(!current())return false;
-    const values=snapshot(),ready=values.every(Boolean),signature=shareRecordSignature(record);
+    const signature=shareRecordSignature(record);
+    if(linkBaselineSignature&&signature!==linkBaselineSignature)clearLink();
+    const values=snapshot();
     for(const [index,key] of ['10','12','category'].entries()){
       const field=card.querySelector('[data-preview-field="'+key+'"]');
-      field.hidden=!values[index];
-      card.querySelector(key==='category'?'[data-share-category]':'[data-preview-chinese="'+key+'"]').textContent=values[index];
+      field.hidden=false;
+      card.querySelector(key==='category'?'[data-share-category]':'[data-preview-chinese="'+key+'"]').textContent=String(values[index]??'').trim()?values[index]:'未填写';
     }
-    if(linkSignature&&signature!==linkSignature)clearLink()
-    generate.disabled=generating||!ready;
-    const message=!ready&&!checking?'中文尚未完成，请先点击上方“一键翻译”。':linkError||linkNotice;
+    generate.disabled=generating;
+    const message=linkError||linkNotice;
     status.textContent=message;status.hidden=!message;
-    return ready;
+    return true;
   };
   card.refreshChinese=changedRecord=>{if(!changedRecord||changedRecord===record)update()};
   card.refreshCategory=card.refreshChinese;
   card.querySelector('.product-card-close').onclick=closeProductCard;
   generate.onclick=async()=>{
     if(!current()||generating)return;
-    if(!update()){checking=false;update();return}
-    const generationSignature=shareRecordSignature(record);generating=true;linkError='';clearLink();update();
+    generating=true;linkError='';clearLink();sharedSnapshot=JSON.parse(JSON.stringify(productDetail(record)));update();
     try{
       const url=await buildOnlineShareLink([record],{isCurrent:current});
       if(!current())return;
-      if(!update()||shareRecordSignature(record)!==generationSignature)throw new Error('分享内容已变更，请重新生成');
-      const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkSignature=generationSignature;linkNotice=shareLinkMessage(url,1);
+      const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkBaselineSignature=shareRecordSignature(record);linkNotice=shareLinkMessage(url,1)+' · 已按点击时的内容生成';
       result.querySelector('[data-copy-single]').onclick=async event=>{const button=event.currentTarget;button.textContent=await copyShareText(url)?'已复制':'复制失败'};
     }catch(error){if(current()){clearLink();linkError=error?.message||'分享链接生成失败，请稍后重试。'}}
-    finally{if(current()){generating=false;checking=false;update()}}
+    finally{if(current()){generating=false;update()}}
   };
   update();
   const watch=()=>{if(!current())return;update();setTimeout(watch,400)};
   setTimeout(watch,400);
-  const productTask=Promise.resolve().then(()=>ensureProductTranslations([record]));
-  const categoryTask=Promise.resolve().then(()=>ensureCategoryTranslations([record]));
-  productTask.then(()=>card.refreshChinese(record),()=>card.refreshChinese(record));
-  categoryTask.then(()=>card.refreshCategory(record),()=>card.refreshCategory(record));
-  Promise.allSettled([productTask,categoryTask]).then(()=>{if(current()){checking=false;update()}});
 }
 
 async function uploadRowImage(input){
@@ -3642,7 +3631,19 @@ const SIMPLE_CHINESE={black:'黑色',white:'白色',blue:'蓝色',red:'红色',p
 function translationLanguage(text,hint=''){return BuyerTranslation.language(text,hint)}
 function translationPassthrough(text){return BuyerTranslation.passthrough(text)}
 function translationSource(r,index){return BuyerTranslation.normalize(value(r,H[index]))}
-function manualChinese(r,index){return (r.userEditedFields||[]).some(field=>key(field)===(index===10?'itemchinese':'modelchinese'))}
+// buyer-chinese-priority:start
+function manualChinese(r,index){return (Array.isArray(r?.userEditedFields)?r.userEditedFields:[]).some(field=>key(field)===(index===10?'itemchinese':'modelchinese'))}
+function chineseFieldValue(r,index){const raw=r?.raw||{},header=H[index];if(Object.prototype.hasOwnProperty.call(raw,header))return String(raw[header]??'');const kind=index===10?'itemchinese':'modelchinese',edited=(Array.isArray(r?.userEditedFields)?r.userEditedFields:[]).find(field=>key(field)===kind&&Object.prototype.hasOwnProperty.call(raw,field));return edited!==undefined?String(raw[edited]??''):String(value(r,header)??'')}
+function automaticChineseField(r,index){const auto=index===10?'autoItemChinese':'autoModelChinese',source=index===10?'translationItemSource':'translationModelSource';return r?.[auto]===true&&typeof r[source]==='string'&&r[source].trim()!==''}
+function buyerChineseProvided(r,index){return manualChinese(r,index)||(chineseFieldValue(r,index).trim()!==''&&!automaticChineseField(r,index))}
+function claimBuyerChinese(r,index){
+  const text=chineseFieldValue(r,index),header=H[index],auto=index===10?'autoItemChinese':'autoModelChinese',done=index===10?'localTranslatedItem':'localTranslatedModel',warning=index===10?'translationItemWarning':'translationModelWarning';
+  const changed=!r.raw||r.raw[header]!==text||!manualChinese(r,index)||r[auto]!==false||r[done]!==false||!!r[warning];
+  if(!r.raw)r.raw={};r.raw[header]=text;r.userEditedFields=[...new Set([...(Array.isArray(r.userEditedFields)?r.userEditedFields:[]),header])];r[auto]=false;r[done]=false;r[warning]='';
+  if(changed)invalidateRaw(r);return changed;
+}
+function claimImportedChinese(r){for(const index of [10,12]){if(manualChinese(r,index)){claimBuyerChinese(r,index);continue}const kind=index===10?'itemchinese':'modelchinese',supplied=Object.entries(r.raw||{}).filter(([header,text])=>key(header)===kind&&String(text??'').trim()!=='');if(supplied.length){const entry=supplied.find(([header])=>header===H[index])||supplied[0];r.raw[H[index]]=String(entry[1]);claimBuyerChinese(r,index)}}return r}
+// buyer-chinese-priority:end
 function persistTranslationRow(r){
   if(!canEditWorkspace()||historyMode||translationDataset!==rows||!translationRecordSet.has(r))return;
   if(!dirtyRows.has(r.uid))markDirty(r);
@@ -3651,11 +3652,9 @@ function persistTranslationRow(r){
 function translationVersionField(targetIndex){return targetIndex===10?'translationItemVersion':'translationModelVersion'}
 function translationWarningField(targetIndex){return targetIndex===10?'translationItemWarning':'translationModelWarning'}
 function deriveChineseField(r,sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag){
-  if(manualChinese(r,targetIndex)){r[autoFlag]=false;return}
+  if(buyerChineseProvided(r,targetIndex)){const changed=claimBuyerChinese(r,targetIndex);refreshTranslationReadiness(r);if(changed)persistTranslationRow(r);return}
   const source=translationSource(r,sourceIndex),current=String(value(r,H[targetIndex])||'').trim();
   const versionField=translationVersionField(targetIndex),warningField=translationWarningField(targetIndex);
-  const automatic=r[autoFlag]===true||!current||BuyerTranslation.normalize(current)===source||!BuyerTranslation.usable(source,current);
-  if(!automatic){const changed=r[autoFlag]!==false;r[autoFlag]=false;refreshTranslationReadiness(r);if(changed)persistTranslationRow(r);return}
   r[autoFlag]=true;
   const sourceMatches=!r[sourceFlag]||r[sourceFlag]===source,currentVersion=r[versionField]===TRANSLATION_VERSION;
   const cached=translateTitle(source),currentUsable=sourceMatches&&BuyerTranslation.usable(source,current);
@@ -3674,8 +3673,8 @@ function rowChineseReady(r){
   return [[9,10],[11,12]].every(([sourceIndex,targetIndex])=>{
     const source=translationSource(r,sourceIndex);
     if(!source)return true;
-    if(manualChinese(r,targetIndex))return BuyerTranslation.usable(source,value(r,H[targetIndex]));
-    if(r[targetIndex===10?'autoItemChinese':'autoModelChinese']===false)return BuyerTranslation.usable(source,value(r,H[targetIndex]));
+    // An explicit buyer blank is settled, so background progress never waits for a deliberately empty field.
+    if(buyerChineseProvided(r,targetIndex))return true;
     return r[translationVersionField(targetIndex)]===TRANSLATION_VERSION&&BuyerTranslation.usable(source,value(r,H[targetIndex]));
   });
 }
@@ -3703,8 +3702,8 @@ function scheduleTranslationStatus(){if(!translationStatusTimer)translationStatu
 function updateTranslationStatus(){
   const el=$('translationState');if(!el)return;syncTranslationDataset();
   const queued=translationQueue.jobs.size,pending=Math.max(0,rows.length-translationReadyCount);
-  el.textContent='中文已完成 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+(historyMode?' · 历史版本只读':queued?' · 正在自动翻译':pending&&translationLastError?' · 部分未完成，可点一键翻译重试':pending?' · 正在处理':'');
-  el.title=translationLastError||'导入后自动翻译，人工中文优先保留';
+  el.textContent='中文字段已处理 '+translationReadyCount.toLocaleString()+' / '+rows.length.toLocaleString()+' 款'+(historyMode?' · 历史版本只读':queued?' · 正在自动翻译':pending&&translationLastError?' · 部分未完成，可点一键翻译重试':pending?' · 正在处理':'');
+  el.title=translationLastError||'自动补齐空白字段；买手填写、导入及留空优先保留';
 }
 
 let chromeTranslationMode=false;let chromeTranslationLanguages=new Set(),chromeTranslationBridges=new Set(),chromeTranslationPending=new Set();
@@ -3766,9 +3765,11 @@ async function translateRecordField(r,sourceIndex,targetIndex,autoFlag,doneFlag,
     if(!translationQueue.cached(source))translationQueue.remember(source,r.raw[H[targetIndex]]);
     refreshTranslationReadiness(r);scheduleTranslationStatus();return;
   }
-  const dataset=rows;
+  const dataset=rows,targetValue=chineseFieldValue(r,targetIndex);
   const chinese=await translateCn(source,{language:translationLanguage(source,translationRegionHint(r)),priority,context:{kind:targetIndex===10?'item':'model',brand:String(getRaw(r,['mall_brand_name'])||extractBrand(translationSource(r,9)+' '+translationSource(r,11))||'')}});
-  if(!chinese||historyMode||rows!==dataset||!translationRecordSet.has(r)||!r[autoFlag]||manualChinese(r,targetIndex)||translationSource(r,sourceIndex)!==source)return;
+  if(!chinese||historyMode||!canEditWorkspace()||rows!==dataset||!translationRecordSet.has(r)||!r[autoFlag]||translationSource(r,sourceIndex)!==source)return;
+  if(buyerChineseProvided(r,targetIndex)){if(claimBuyerChinese(r,targetIndex)){markDirty(r);save()}return}
+  if(chineseFieldValue(r,targetIndex)!==targetValue)return;
   if(r.raw[H[targetIndex]]!==chinese||!r[doneFlag]||r[sourceFlag]!==source){
     r.raw[H[targetIndex]]=chinese;r[doneFlag]=true;r[sourceFlag]=source;r[translationVersionField(targetIndex)]=TRANSLATION_VERSION;r[targetIndex===10?'translationItemProvider':'translationModelProvider']=translationSourceProviders.get(source)||'identity';r[translationWarningField(targetIndex)]=(BuyerTranslation.reviewWarnings?.(source,chinese)||[]).join('；');invalidateRaw(r);markDirty(r);save();
   }
@@ -3820,9 +3821,8 @@ let automaticChineseEnabled=true,automaticChineseRun=0,automaticChinesePreparing
 function automaticChineseLanguages(dataset){
   const languages=new Set();
   for(const record of dataset)for(const [sourceIndex,targetIndex,flag]of [[9,10,'autoItemChinese'],[11,12,'autoModelChinese']]){
-    const source=translationSource(record,sourceIndex),current=String(value(record,H[targetIndex])||'').trim();
-    if(!source||manualChinese(record,targetIndex)||record[flag]===false||BuyerTranslation.passthrough(source))continue;
-    if(record[flag]!==true&&current&&BuyerTranslation.usable(source,current)&&current!==source)continue;
+    const source=translationSource(record,sourceIndex);
+    if(!source||buyerChineseProvided(record,targetIndex)||BuyerTranslation.passthrough(source))continue;
     languages.add(translationLanguage(source,translationRegionHint(record)));
   }
   if(dataset.some(record=>categoryValues(record).some(name=>!categoryLabel(name))))languages.add('en');
@@ -3885,16 +3885,14 @@ async function oneClickChinese(){
     for(let i=0;i<dataset.length;i++){
       if(rows!==dataset||historyMode||!canEditWorkspace())return;const record=dataset[i];
       for(const [sourceIndex,targetIndex,flag,done]of [[9,10,'autoItemChinese','localTranslatedItem'],[11,12,'autoModelChinese','localTranslatedModel']]){
-        if(manualChinese(record,targetIndex)||record[flag]===false)continue;
-        const source=translationSource(record,sourceIndex),existing=String(value(record,H[targetIndex])||'').trim();
-        if(record[flag]!==true&&existing&&existing!==source&&BuyerTranslation.usable(source,existing)){record[flag]=false;markDirty(record);continue}
+        if(buyerChineseProvided(record,targetIndex)){if(claimBuyerChinese(record,targetIndex))markDirty(record);continue}
         translationCache.delete(translationSource(record,sourceIndex));record[translationVersionField(targetIndex)]='';record[done]=false;record[flag]=true;markDirty(record);
       }
       if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0));
     }
     save(true);launchAutomaticChinese(dataset);
     preparing.then(result=>{if(rows!==dataset||historyMode||!canEditWorkspace())return;if(useAutomaticFallback(result)){translationQueue.failedUntil.clear();translationBackgroundDataset=null;startBackgroundTranslation(true);queueVisibleTranslation()}});
-    toast('已开始翻译整张工作表，已有中文和人工修改会保留');
+    toast('已开始自动翻译；买手填写、导入和留空字段保持不变');
   }finally{oneClickChinese.running=false;if(button?.isConnected)button.disabled=false}
 }
 // automatic-chinese-v7:end
@@ -3906,7 +3904,8 @@ function translateAllChinese(){
 async function retranslateOneField(uid,sourceIndex){
   if(historyMode||!canEditWorkspace())return;const r=rows.find(r=>r.uid===uid);if(!r)return;
   const targetIndex=sourceIndex===9?10:12,source=translationSource(r,sourceIndex);if(!source){toast('原文为空，请填写中文或修正原文');return}
-  translationCache.delete(source);translationQueue.failedUntil.clear();r.userEditedFields=(r.userEditedFields||[]).filter(field=>key(field)!==key(H[targetIndex]));
+  if(buyerChineseProvided(r,targetIndex)){if(claimBuyerChinese(r,targetIndex)){markDirty(r);save()}toast('已保留买手填写内容；自动翻译只处理空白或自动字段');return}
+  translationCache.delete(source);translationQueue.failedUntil.clear();
   r[sourceIndex===9?'autoItemChinese':'autoModelChinese']=true;r[sourceIndex===9?'localTranslatedItem':'localTranslatedModel']=false;r[translationVersionField(targetIndex)]='';markDirty(r);save();
   translationUserPaused=false;translationQueue.setPaused(false);const dataset=rows;render();await translateVisible([r],-1);
   if(rows!==dataset||!dataset.includes(r))return;render();if(!rowChineseReady(r))toast(translationLastError||'中文未生成，已有内容保留，可打开 Google 核对或补全中文');
@@ -3918,7 +3917,7 @@ async function retranslateAutomaticChinese(){
     for(let i=0;i<dataset.length;i++){
       if(rows!==dataset||historyMode||!canEditWorkspace())return;const r=dataset[i];
       for(const [sourceIndex,targetIndex,autoFlag,doneFlag]of [[9,10,'autoItemChinese','localTranslatedItem'],[11,12,'autoModelChinese','localTranslatedModel']]){
-        if(manualChinese(r,targetIndex)||r[autoFlag]===false)continue;
+        if(buyerChineseProvided(r,targetIndex)){if(claimBuyerChinese(r,targetIndex))markDirty(r);continue}
         translationCache.delete(translationSource(r,sourceIndex));r[translationVersionField(targetIndex)]='';r[doneFlag]=false;r[autoFlag]=true;markDirty(r);count++;
       }
       if(i&&i%100===0)await new Promise(resolve=>setTimeout(resolve,0));
@@ -4002,7 +4001,7 @@ async function createGoogleDocumentTasks(){
     const groups=new Map();function add(source,language,reference){if(!source||BuyerTranslation.passthrough(source))return;let map=groups.get(language);if(!map)groups.set(language,map=new Map());let entry=map.get(source);if(!entry)map.set(source,entry={source,language,references:[]});if(reference.field==='category'){if(entry.hasCategory)return;entry.hasCategory=true}entry.references.push(reference)}
     for(let i=0;i<dataset.length;i++){
       if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，请重新生成任务');const record=dataset[i];
-      for(const [sourceIndex,targetIndex,autoFlag] of [[9,10,'autoItemChinese'],[11,12,'autoModelChinese']]){if(manualChinese(record,targetIndex)||record[autoFlag]===false)continue;const source=translationSource(record,sourceIndex);add(source,translationLanguage(source,translationRegionHint(record)),{modelId:idFor(record),field:H[targetIndex],source})}
+      for(const [sourceIndex,targetIndex] of [[9,10],[11,12]]){if(buyerChineseProvided(record,targetIndex))continue;const source=translationSource(record,sourceIndex);add(source,translationLanguage(source,translationRegionHint(record)),{modelId:idFor(record),field:H[targetIndex],source})}
       for(const source of categoryValues(record))if(!hasChinese(source))add(source,translationLanguage(source,'en'),{modelId:'CATEGORY',field:'category',source});
       if(i&&i%100===0){googleDocumentStatus('整理待译文字 '+i+' / '+dataset.length);await new Promise(resolve=>setTimeout(resolve,0))}
     }
@@ -4018,7 +4017,7 @@ async function importGoogleDocumentResult(file,id){
     const entry=await getGoogleDocumentTask(id);let matrix;
     if(/\.(csv|txt)$/i.test(file.name)){const parsed=await WorkbenchImport.parseInWorker(file,{skipEmptyRows:false});matrix=[parsed.headers,...parsed.matrix]}
     else{const parsed=await WorkbenchXlsx.parseInWorker(file,{vendorUrl:new URL('vendor/xlsx.full.min.js',location.href).href});matrix=parsed.sheets.flatMap(sheet=>sheet.matrix)}
-    const result=await WorkbenchTranslationTasks.decodeResult(entry.task,matrix,{validate:BuyerTranslation.usable});
+    const result=await WorkbenchTranslationTasks.decodeResult(entry.task,matrix,{validate:(_source,text)=>String(text??'').trim()!==''});
     if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，没有回填译文');
     if(result.conflicts||result.unknown)throw new Error('任务键不一致或有重复冲突，没有回填。请确认选择了对应任务的完整 Google 译文。');
     if(!result.entries.length)throw new Error('没有匹配到已完成中文的任务键。请下载 Google 的译文文件，保留任务键列后导入。');
@@ -4026,7 +4025,7 @@ async function importGoogleDocumentResult(file,id){
     for(const translated of result.entries)for(const reference of translated.references){
       if(rows!==dataset||historyMode||!canEditWorkspace())throw new Error('工作台数据已切换，回填已停止');
       if(reference.field==='category'){categoryTranslationCache.set(categoryKey(reference.source),translated.translation);categories++}
-      else{const targetIndex=reference.field===H[10]?10:reference.field===H[12]?12:0,sourceIndex=targetIndex===10?9:11;for(const record of byId.get(reference.modelId)||[]){if(!targetIndex||translationSource(record,sourceIndex)!==reference.source||manualChinese(record,targetIndex)||record[targetIndex===10?'autoItemChinese':'autoModelChinese']===false){skipped++;continue}record.raw[H[targetIndex]]=translated.translation;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])];record[targetIndex===10?'autoItemChinese':'autoModelChinese']=false;record[targetIndex===10?'localTranslatedItem':'localTranslatedModel']=true;record[targetIndex===10?'translationItemSource':'translationModelSource']=reference.source;record[translationVersionField(targetIndex)]=TRANSLATION_VERSION;record[targetIndex===10?'translationItemProvider':'translationModelProvider']='google-document';record[translationWarningField(targetIndex)]=(BuyerTranslation.reviewWarnings?.(reference.source,translated.translation)||[]).join('；');invalidateRaw(record);markDirty(record);updated++}}
+      else{const targetIndex=reference.field===H[10]?10:reference.field===H[12]?12:0,sourceIndex=targetIndex===10?9:11;for(const record of byId.get(reference.modelId)||[]){if(!targetIndex||translationSource(record,sourceIndex)!==reference.source||buyerChineseProvided(record,targetIndex)){skipped++;continue}record.raw[H[targetIndex]]=translated.translation;record.userEditedFields=[...new Set([...(record.userEditedFields||[]),H[targetIndex]])];record[targetIndex===10?'autoItemChinese':'autoModelChinese']=false;record[targetIndex===10?'localTranslatedItem':'localTranslatedModel']=true;record[targetIndex===10?'translationItemSource':'translationModelSource']=reference.source;record[translationVersionField(targetIndex)]=TRANSLATION_VERSION;record[targetIndex===10?'translationItemProvider':'translationModelProvider']='google-document';record[translationWarningField(targetIndex)]='';invalidateRaw(record);markDirty(record);updated++}}
       if(++processed%100===0){googleDocumentStatus('回填中文 '+processed+' 项');await new Promise(resolve=>setTimeout(resolve,0))}
     }
     if(rows!==dataset||historyMode||!canEditWorkspace())return;try{localStorage.setItem('pool-category-translation-reference-v7',JSON.stringify(Object.fromEntries(categoryTranslationCache)))}catch(error){}save(true);render();googleDocumentStatus('回填完成：'+updated+' 个中文字段、'+categories+' 个类目；保留人工/已变更原文 '+skipped+' 项，待补译 '+result.missing+' 条。');
@@ -4310,7 +4309,38 @@ function zip(files){
   return new Blob([...parts,...central,end],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
 }
 function exportXlsx(list){let x=exportRows(list),cols=x.headers,rr=[];function c(i,r,v){return '<c r="'+colName(i)+r+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(v)+'</t></is></c>'}rr.push('<row r="1">'+cols.map((v,i)=>c(i,1,v)).join("")+"</row>");x.data.forEach((data,j)=>{let row=j+2;rr.push('<row r="'+row+'">'+data.map((v,i)=>c(i,row,v)).join("")+"</row>")});let end=colName(cols.length-1)+(x.data.length+1),sheet='<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" state="frozen"/></sheetView></sheetViews><sheetData>'+rr.join("")+'</sheetData><autoFilter ref="A1:'+end+'"/></worksheet>',ct='<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>',wb='<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="寻品工作看板" sheetId="1" r:id="rId1"/></sheets></workbook>',re='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',br='<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>';return zip([{n:"[Content_Types].xml",d:ct},{n:"_rels/.rels",d:re},{n:"xl/workbook.xml",d:wb},{n:"xl/_rels/workbook.xml.rels",d:br},{n:"xl/worksheets/sheet1.xml",d:sheet}])}
-function mergeBuyerEdits(incoming,previous){let byId=new Map();for(let source of previous||[]){let id=idFor(source);if(!id)continue;let state=byId.get(id);if(!state){state={first:source,old:{...source,raw:{...(source.raw||{})},userEditedFields:[],preTouched:false},fields:new Set(),preCopied:false};byId.set(id,state)}for(let h of source.userEditedFields||[])if(!state.fields.has(h)&&source.raw&&Object.prototype.hasOwnProperty.call(source.raw,h)){state.fields.add(h);state.old.userEditedFields.push(h);state.old.raw[h]=source.raw[h]}if(source.preTouched&&!state.preCopied){state.preCopied=true;state.old.preTouched=true;state.old.preValue=source.preValue||"";state.old.preDate=source.preDate||"";state.old.preNote=source.preNote||""}}for(let r of incoming){let state=byId.get(idFor(r)),old=state?.old,first=state?.first;if(!old)continue;let fields=old.userEditedFields||[];for(let h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];r.userEditedFields=[...new Set(fields)];if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||"";r.preDate=old.preDate||"";r.preNote=old.preNote||""}if(old.manualGroup)r.manualGroup=old.manualGroup;let sameItem=norm(getRaw(first,["item name原文","item_name","item_name_original"]))===norm(getRaw(r,["item name原文","item_name","item_name_original"])),sameModel=norm(getRaw(first,["Model name原文","model_name"]))===norm(getRaw(r,["Model name原文","model_name"]));if(sameItem&&first.localTranslatedItem&&!fields.includes(H[10])&&!BuyerTranslation.usable(translationSource(r,9),String(value(r,H[10])||"").trim())){r.raw[H[10]]=first.raw[H[10]];r.autoItemChinese=true;r.localTranslatedItem=true;r.translationItemSource=first.translationItemSource;r.translationItemVersion=first.translationItemVersion}if(sameModel&&first.localTranslatedModel&&!fields.includes(H[12])&&!BuyerTranslation.usable(translationSource(r,11),String(value(r,H[12])||"").trim())){r.raw[H[12]]=first.raw[H[12]];r.autoModelChinese=true;r.localTranslatedModel=true;r.translationModelSource=first.translationModelSource;r.translationModelVersion=first.translationModelVersion}if(fields.includes(H[10]))r.autoItemChinese=false;if(fields.includes(H[12]))r.autoModelChinese=false;if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;invalidateRaw(r)}return incoming}
+function mergeBuyerEdits(incoming,previous){
+  const byId=new Map();
+  for(const source of previous||[]){
+    const id=idFor(source);if(!id)continue;let state=byId.get(id);
+    if(!state){state={first:source,old:{...source,raw:{...(source.raw||{})},userEditedFields:[],preTouched:false},fields:new Set(),preCopied:false};byId.set(id,state)}
+    for(const h of Array.isArray(source.userEditedFields)?source.userEditedFields:[])if(!state.fields.has(h)&&source.raw&&Object.prototype.hasOwnProperty.call(source.raw,h)){state.fields.add(h);state.old.userEditedFields.push(h);state.old.raw[h]=source.raw[h]}
+    // Saved filled boxes without an automatic source are buyer-owned, including non-Chinese model labels.
+    for(const targetIndex of [10,12])if(buyerChineseProvided(source,targetIndex)&&!state.fields.has(H[targetIndex])){const h=H[targetIndex];state.fields.add(h);state.old.userEditedFields.push(h);state.old.raw[h]=chineseFieldValue(source,targetIndex)}
+    if(source.preTouched&&!state.preCopied){state.preCopied=true;state.old.preTouched=true;state.old.preValue=source.preValue||'';state.old.preDate=source.preDate||'';state.old.preNote=source.preNote||''}
+  }
+  for(const r of incoming){
+    // Claim source-file Chinese columns synchronously before the first save/render/background pass.
+    claimImportedChinese(r);
+    const state=byId.get(idFor(r)),old=state?.old,first=state?.first;if(!old)continue;
+    const fields=old.userEditedFields||[];
+    for(const h of fields)if(old.raw&&Object.prototype.hasOwnProperty.call(old.raw,h))r.raw[h]=old.raw[h];
+    r.userEditedFields=[...new Set([...(Array.isArray(r.userEditedFields)?r.userEditedFields:[]),...fields])];
+    if(old.preTouched){r.preTouched=true;r.preValue=old.preValue||'';r.preDate=old.preDate||'';r.preNote=old.preNote||''}
+    if(old.manualGroup)r.manualGroup=old.manualGroup;
+    for(const [sourceIndex,targetIndex,autoFlag,doneFlag,sourceFlag]of [[9,10,'autoItemChinese','localTranslatedItem','translationItemSource'],[11,12,'autoModelChinese','localTranslatedModel','translationModelSource']]){
+      if(buyerChineseProvided(r,targetIndex)){claimBuyerChinese(r,targetIndex);continue}
+      const sameSource=BuyerTranslation.normalize(translationSource(first,sourceIndex))===BuyerTranslation.normalize(translationSource(r,sourceIndex));
+      if(sameSource&&automaticChineseField(first,targetIndex)&&BuyerTranslation.usable(translationSource(r,sourceIndex),chineseFieldValue(first,targetIndex))){
+        const versionField=targetIndex===10?'translationItemVersion':'translationModelVersion';r.raw[H[targetIndex]]=chineseFieldValue(first,targetIndex);r[autoFlag]=true;r[doneFlag]=!!first[doneFlag];r[sourceFlag]=first[sourceFlag];r[versionField]=first[versionField];
+        for(const field of [targetIndex===10?'translationItemProvider':'translationModelProvider',targetIndex===10?'translationItemWarning':'translationModelWarning'])if(first[field]!==undefined)r[field]=first[field];
+      }
+    }
+    if(fields.includes(H[20]))r.autoBrand=false;if(fields.includes(H[21]))r.autoStyle=false;if(fields.includes(H[22]))r.autoQty=false;
+    invalidateRaw(r);
+  }
+  return incoming;
+}
 // import-deduplication:start
 async function deduplicateImportedRows(sourceRows,options={}){
   const unique=[],byId=new Map(),duplicateIds=new Set(),total=sourceRows.length;

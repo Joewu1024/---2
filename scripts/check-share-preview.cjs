@@ -94,7 +94,7 @@ function harness(overrides = {}) {
     H, rows: [record], activeProductCard: '', historyMode: false, innerWidth: 1440, innerHeight: 900,
     document, BuyerTranslation, translationLastError: '', translationUserPaused: false,
     translationQueue: { failedUntil: new Map(), setPaused() {} }, scheduleTranslationStatus() {},
-    value: (row, field) => row.raw[field] || '',
+    value: (row, field) => row.raw[field] ?? '',
     translationSource: (row, index) => BuyerTranslation.normalize(row.raw[H[index]]),
     manualChinese: (row, index) => row.userEditedFields.includes(H[index]),
     categoryPath: () => controls.category,
@@ -136,21 +136,21 @@ function harness(overrides = {}) {
   return { H, record, controls, context, document, open, fill };
 }
 
-test('preview automatically fills Chinese fields without translation controls or pending copy', async () => {
-  const gate = deferred(), h = harness({ ensure: () => gate.promise });
+test('opening and generating an empty preview never starts translation or copies source text into the boxes', async () => {
+  const h = harness();
   const card = h.open();
-  assert.equal(card.querySelector('[data-preview-field="10"]').hidden, true);
+  assert.equal(card.querySelector('[data-preview-field="10"]').hidden, false);
+  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '未填写');
+  assert.equal(card.querySelector('[data-preview-chinese="12"]').textContent, '未填写');
   assert.equal(card.querySelector('[data-preview-status]').hidden, true);
   assert.equal(card.querySelector('[data-retry-preview]'), null);
   assert.equal(card.querySelector('[data-edit-preview]'), null);
   assert.doesNotMatch(card.textContent, /Wireless speaker|Black|翻译中|待翻译|待补全/);
-  h.fill(h.record); gate.resolve(); await flush();
-  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
-  assert.equal(card.querySelector('[data-preview-chinese="12"]').textContent, '黑色');
-  assert.equal(card.querySelector('[data-preview-field="10"]').hidden, false);
-  assert.equal(card.querySelector('[data-preview-status]').hidden, true);
   assert.equal(card.querySelector('[data-generate-single]').disabled, false);
-  assert.equal(h.controls.ensureCalls, 1); assert.equal(h.controls.categoryCalls, 1);
+  await card.querySelector('[data-generate-single]').onclick();
+  const payload=JSON.parse(Buffer.from(new URL(h.controls.generatedUrls[0]).hash.slice(4),'base64url').toString('utf8'));
+  assert.equal(payload.itemChinese,'');assert.equal(payload.modelChinese,'');assert.equal(h.record.raw[h.H[10]],undefined);assert.equal(h.record.raw[h.H[12]],undefined);
+  assert.equal(h.controls.ensureCalls, 0); assert.equal(h.controls.categoryCalls, 0);
 });
 
 test('existing valid Chinese displays immediately and full wording is not shortened', async () => {
@@ -165,24 +165,25 @@ test('existing valid Chinese displays immediately and full wording is not shorte
   gate.resolve(); await flush();
 });
 
-test('network failure gives one concise instruction and never a new empty link', async () => {
+test('translation service failure cannot block a share of the current empty fields', async () => {
   const h = harness({ ensure: () => { throw new Error('Google 翻译连接超时，敏感内部错误'); } });
   const card = h.open(); await flush();
-  assert.match(card.querySelector('[data-preview-status]').textContent, /上方“一键翻译”/);
+  assert.equal(h.controls.ensureCalls,0);assert.equal(h.controls.categoryCalls,0);
   assert.doesNotMatch(card.textContent, /敏感内部错误|重试翻译|补全中文/);
-  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
   await card.querySelector('[data-generate-single]').onclick();
-  assert.equal(card.querySelector('[data-preview-link]').hidden, true);
+  assert.equal(card.querySelector('[data-preview-link]').hidden, false);
   assert.equal(card.querySelector('[data-retry-preview]'), null);
 });
 
-test('translation-editor and category-cache updates refresh an open card', async () => {
+test('current-field and category-cache updates refresh a preview without becoming share prerequisites', async () => {
   const gate = deferred(), h = harness({ category: '', ensure: () => gate.promise, ensureCategory: () => gate.promise });
   const card = h.open();
-  assert.equal(card.querySelector('[data-preview-field="category"]').hidden, true);
+  assert.equal(card.querySelector('[data-preview-field="category"]').hidden, false);
+  assert.equal(card.querySelector('[data-share-category]').textContent,'Audio');
   h.fill(h.record); card.refreshChinese(h.record);
   assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
-  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+  assert.equal(card.querySelector('[data-generate-single]').disabled, false);
   h.controls.category = '影音娱乐 > 家用音响'; card.refreshCategory();
   assert.equal(card.querySelector('[data-share-category]').textContent, '影音娱乐 > 家用音响');
   assert.equal(card.querySelector('[data-generate-single]').disabled, false);
@@ -199,28 +200,24 @@ test('watcher discovers external cache changes and stops after the card closes',
   h.context.closeProductCard(); tick(); assert.equal(h.controls.timers.size, 0);
 });
 
-test('old async work cannot update another dataset or same-UID replacement card', async () => {
-  const oldGate = deferred(), newGate = deferred(); let call = 0;
-  const h = harness({ ensure: () => (++call === 1 ? oldGate.promise : newGate.promise) });
+test('an old preview watcher cannot update a same-UID replacement card', async () => {
+  const h = harness();
   const oldCard = h.open(); await flush(); h.context.closeProductCard();
   const replacement = { ...h.record, raw: { ...h.record.raw } }; h.context.rows = [replacement];
   const newCard = h.open(); await flush();
-  h.fill(h.record); oldGate.resolve(); await flush();
-  assert.equal(newCard.querySelector('[data-preview-field="10"]').hidden, true);
-  assert.equal(oldCard.querySelector('[data-preview-chinese="10"]').textContent, '');
-  h.fill(replacement); newGate.resolve(); await flush();
+  h.fill(h.record); oldCard.refreshChinese(h.record);await flush();
+  assert.equal(newCard.querySelector('[data-preview-chinese="10"]').textContent, '未填写');
+  assert.equal(oldCard.querySelector('[data-preview-chinese="10"]').textContent, '未填写');
+  h.fill(replacement);newCard.refreshChinese(replacement);await flush();
   assert.equal(newCard.querySelector('[data-preview-chinese="10"]').textContent, '无线音箱');
 });
 
-test('raw source, empty fields and pending categories never count as ready Chinese', async () => {
-  const h = harness({ category: '类目翻译中' });
-  h.record.raw[h.H[10]] = 'Wireless speaker'; h.record.raw[h.H[12]] = 'Black';
-  const card = h.open(); await flush();
-  for (const key of ['10', '12', 'category']) assert.equal(card.querySelector('[data-preview-field="' + key + '"]').hidden, true);
-  assert.doesNotMatch(card.textContent, /Wireless speaker|Black|类目翻译中/);
-  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
-  h.record.raw = {}; card.refreshChinese(h.record);
-  assert.equal(card.querySelector('[data-generate-single]').disabled, true);
+for(const [title,model] of [['English buyer title','5pcs'],['中文 English 混合','Blue 蓝色 / 5pcs'],['旧自动标题','  5pcs  '],['','']])test('single preview shares current title/model verbatim: '+JSON.stringify([title,model]),async()=>{
+  const h=harness({category:''});h.record.raw[h.H[10]]=title;h.record.raw[h.H[12]]=model;const before={...h.record.raw},card=h.open();await flush();
+  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent,title||'未填写');assert.equal(card.querySelector('[data-preview-chinese="12"]').textContent,model||'未填写');assert.equal(card.querySelector('[data-generate-single]').disabled,false);
+  await card.querySelector('[data-generate-single]').onclick();assert.equal(card.querySelector('[data-preview-link]').hidden,false);
+  const payload=JSON.parse(Buffer.from(new URL(h.controls.generatedUrls[0]).hash.slice(4),'base64url').toString('utf8'));
+  assert.equal(payload.itemChinese,title);assert.equal(payload.modelChinese,model);assert.deepEqual(h.record.raw,before);assert.equal(h.controls.ensureCalls,0);assert.equal(h.controls.categoryCalls,0);
 });
 
 test('generation or copy controls remain usable and changed Chinese invalidates old links', async () => {
@@ -362,14 +359,16 @@ test('a pending or failed regeneration never exposes the previous successful ope
   assert.match(card.querySelector('[data-preview-status]').textContent, /Fabricated generation failure/);
 });
 
-test('a link completed after Chinese changes is discarded rather than attributed to the new product snapshot', async () => {
+test('a generation keeps the clicked preview snapshot when background fields change and invalidates only subsequent changes', async () => {
   const h = harness(); h.fill(h.record); const card = h.open(); await flush();
   const gate = deferred(); h.controls.generate = () => gate.promise;
   const generating = card.querySelector('[data-generate-single]').onclick(); await flush();
   const staleUrl = h.controls.generatedUrls.at(-1);
   h.record.raw[h.H[10]] = '生成期间更新的虚构中文标题'; card.refreshChinese(h.record);
+  assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent,'无线音箱');
   gate.resolve(staleUrl); await generating;
-  assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, false);
+  assert.equal(card.querySelector('[data-open-single]').href,staleUrl);assert.equal(card.querySelector('[data-preview-chinese="10"]').textContent,'无线音箱');assert.equal(card.querySelector('[data-generate-single]').disabled,false);
+  h.record.raw[h.H[10]]='生成结束后再次编辑';card.refreshChinese(h.record);assertSingleLinkUnavailable(card);
   h.controls.generate = null; await card.querySelector('[data-generate-single]').onclick();
   assert.notEqual(card.querySelector('[data-open-single]').href, staleUrl);
   assert.equal(card.querySelector('[data-open-single]').href, h.controls.generatedUrls.at(-1));
@@ -387,13 +386,13 @@ test('generation from a replaced dataset cannot attach an old URL to the new sam
   assertSingleLinkUnavailable(newCard);
 });
 
-test('legacy share payload gives explicit missing-Chinese text and ignores original fields', () => {
+test('the online viewer displays current foreign values and marks empty fields without falling back to original text', () => {
   const viewer = fs.readFileSync(path.join(root, 'share.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
   const context = { URL }; vm.createContext(context);
   vm.runInContext(viewer.slice(0, viewer.indexOf('\nload().catch')), context);
-  const result = context.card({ id: 'FAKE-1', itemChinese: ' ', modelChinese: '—', itemOriginal: 'Wireless speaker', modelOriginal: 'Black' }, 0);
-  assert.match(result, /中文标题未提供，请联系分享者补全/);
-  assert.match(result, /中文型号未提供，请联系分享者补全/);
+  const result = context.card({ id: 'FAKE-1', itemChinese: '', modelChinese: '', itemOriginal: 'Wireless speaker', modelOriginal: 'Black' }, 0);
+  assert.match(result,/<b>中文标题<\/b><span>未填写<\/span>/);assert.match(result,/<b>中文型号<\/b><span>未填写<\/span>/);
   assert.doesNotMatch(result, /Wireless speaker|Black/);
+  const current=context.card({id:'FAKE-ASCII',itemChinese:'Buyer English title',modelChinese:'5pcs'},0);assert.match(current,/Buyer English title/);assert.match(current,/5pcs/);
   assert.match(context.card({ id: 'FAKE-2', itemChinese: '音箱<img>', modelChinese: '黑色' }, 0), /音箱&lt;img&gt;/);
 });
