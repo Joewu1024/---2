@@ -107,10 +107,7 @@ function harness(options = {}) {
     BuyerReferenceTranslation: options.referenceProvider || (options.primaryReference ? BuyerReferenceTranslation : {create:()=>({async translateBatch(){throw Object.assign(new Error('Fabricated primary fallback'),{fallback:true})}})}),
     BuyerWorkspace: { async acquireWriter(){return {owner:true,status:'owner'}} },
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
-    BuyerShareShortener: { create:()=>({ async shorten(longUrl,...args){
-      controls.shortenerCalls.push(longUrl);
-      return options.shorten?options.shorten(longUrl,...args):{url:longUrl,shortened:false,reason:'Fabricated offline full-link fallback'};
-    } }) },
+    BuyerShareShortener: { create(){controls.shortenerCalls.push('create');throw new Error('The share builder must never use a third-party shortener');} },
     Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
@@ -515,17 +512,24 @@ test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic va
   assert.deepEqual(selected.map(r=>r.raw),before);assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
-test('the actual share builder submits only selected cards and reports a genuine short URL',async()=>{
-  const shortUrl='https://is.gd/FakeQa1',h=harness({shorten:async()=>({url:shortUrl,shortened:true,reason:''})});
+test('every new actual share URL is a same-origin direct snapshot without consulting a third-party shortener',async()=>{
+  const network=mock.fn(()=>{throw new Error('Share generation must not contact the network')});
+  const h=harness({fetch:network});
   const chosen=completedShareRecord(h,'selected-card'),other=completedShareRecord(h,'unselected-card');h.api.setRows([chosen,other]);
-  const result=await h.api.buildOnlineShareLink([chosen]);assert.equal(result,shortUrl);assert.equal(h.controls.shortenerCalls.length,1);
-  const longUrl=new URL(h.controls.shortenerCalls[0]);assert.equal(longUrl.origin,'https://buyer.example.test');assert.equal(longUrl.pathname,'/share.html');
-  assert.equal(longUrl.search,'');assert.deepEqual(decodeFabricatedShareUrl(longUrl).products.map(card=>card.id),[chosen.uid]);
-  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,true);
-  assert.match(h.api.shareLinkMessage(result,1),/短链/);
+  let previous='';
+  for(const text of ['  Buyer English / 5pcs  ','中文 & <mixed>\n5pcs','']){
+    chosen.raw[h.api.H[10]]=text;
+    const result=await h.api.buildOnlineShareLink([chosen]),url=new URL(result);
+    assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/share.html');assert.match(url.hash,/^#d=j/);assert.equal(url.search,'');
+    const products=decodeFabricatedShareUrl(result).products;assert.deepEqual(products.map(card=>card.id),[chosen.uid]);assert.equal(products[0].itemChinese,text);
+    assert.notEqual(result,previous);previous=result;
+    const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.direct,true);assert.equal(info.shortened,false);assert.equal(info.url,result);assert.equal(info.directUrl,result);
+    assert.match(h.api.shareLinkMessage(result,1),/1 个产品的直达链接/);assert.doesNotMatch(result,/is\.gd/);
+  }
+  assert.equal(h.controls.shortenerCalls.length,0);assert.equal(network.mock.callCount(),0);
 });
 
-test('the actual share builder remains usable when reading localStorage throws a SecurityError',async()=>{
+test('direct share generation never reads denied localStorage or contacts the network',async()=>{
   let denyStorage=false,deniedReads=0;
   const h=harness({storageGetter(){
     if(!denyStorage)return {getItem:()=>null};
@@ -535,23 +539,25 @@ test('the actual share builder remains usable when reading localStorage throws a
   const chosen=completedShareRecord(h,'STORAGE-DENIED-SELECTED'),other=completedShareRecord(h,'STORAGE-DENIED-PRIVATE');
   h.api.setRows([chosen,other]);h.api.setPaused(true);denyStorage=true;
   const result=await h.api.buildOnlineShareLink([chosen]);
-  assert.ok(deniedReads>0,'exercise the browser getter rather than a throwing getItem mock');
-  assert.equal(h.controls.shortenerCalls.length,1);
-  assert.equal(result,h.controls.shortenerCalls[0]);
+  assert.equal(deniedReads,0,'generating a direct link has no storage dependency');
+  assert.equal(h.controls.shortenerCalls.length,0);
   assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
   assert.equal(h.api.buildOnlineShareLink.info.get(result).shortened,false);
-  assert.match(h.api.shareLinkMessage(result,1),/完整链接/);
+  assert.equal(h.api.buildOnlineShareLink.info.get(result).direct,true);
+  assert.match(h.api.shareLinkMessage(result,1),/直达链接/);
   assert.equal(h.transport.mock.callCount(),0);
 });
 
-for(const reason of ['请求超时','请求过于频繁，请稍后重试'])test('shortener failure keeps the same-origin full URL and explicitly labels it as complete: '+reason,async()=>{
+test('direct sharing removes workspace query state and carries every selected card losslessly',async()=>{
   const location={hostname:'buyer.example.test',protocol:'https:',href:'https://buyer.example.test/---2/index.html?workspace=PRIVATE-WORKSPACE&new=1#local-state'};
-  const h=harness({location,shorten:async longUrl=>({url:longUrl,shortened:false,reason})}),chosen=completedShareRecord(h,'complete-fallback'),other=completedShareRecord(h,'never-shared');h.api.setRows([chosen,other]);
-  const result=await h.api.buildOnlineShareLink([chosen]);assert.equal(result,h.controls.shortenerCalls[0]);
+  const h=harness({location}),chosen=completedShareRecord(h,'direct-first'),second=completedShareRecord(h,'00000000000000000000000000002'),other=completedShareRecord(h,'never-shared');h.api.setRows([chosen,second,other]);
+  second.raw[h.api.H[12]]='  5pcs / 蓝色  ';
+  const result=await h.api.buildOnlineShareLink([chosen,second]);
   const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/share.html');assert.equal(full.search,'');
-  assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
-  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,false);assert.equal(info.reason,reason);
-  assert.match(h.api.shareLinkMessage(result,1),/完整链接/);
+  const products=decodeFabricatedShareUrl(result).products;
+  assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(products.map(card=>card.id),[chosen.uid,second.uid]);assert.equal(products[1].modelChinese,'  5pcs / 蓝色  ');
+  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,false);assert.equal(info.direct,true);assert.equal(info.directUrl,result);
+  assert.match(h.api.shareLinkMessage(result,2),/2 个产品的直达链接/);assert.equal(h.controls.shortenerCalls.length,0);
 });
 
 test('a dataset replacement during image preparation prevents any shortener submission',async()=>{

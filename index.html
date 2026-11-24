@@ -3280,9 +3280,8 @@ async function buildOnlineShareLink(records,options={}) {
   if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertCurrent();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
   if(token.length>1800000)throw new Error('图片数据过大，请减少分享产品数量后重试');
   const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;assertCurrent();
-  const result=await getShareShortener().shorten(full.href);assertCurrent();
-  const info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());info.set(result.url,result);while(info.size>100)info.delete(info.keys().next().value);
-  return result.url;
+  const url=full.href,info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());info.set(url,{url,directUrl:url,direct:true,shortened:false});while(info.size>100)info.delete(info.keys().next().value);
+  return url;
 }
 function getShareShortener(){
   if(!getShareShortener.client){
@@ -3295,6 +3294,7 @@ function getShareShortener(){
 function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
 function shareLinkMessage(url,count=1){
   const info=buildOnlineShareLink.info?.get(url);
+  if(info?.direct)return '已生成 '+count+' 个产品的直达链接';
   if(info?.shortened)return '已生成 '+count+' 个产品的短链接';
   if(info&&!info.shortened){const reasons={too_long:'图片或产品信息较多',rate_limited:'短链接服务暂时繁忙',timeout:'短链接连接超时',network:'短链接暂时连接失败',invalid_response:'短链接服务暂不可用',service_unavailable:'短链接服务暂不可用'};return (reasons[info.reason]||'短链接暂未生成')+'，当前为完整链接，仍可复制或打开。'}
   return '已生成 '+count+' 个产品的分享链接';
@@ -3311,7 +3311,7 @@ async function copyShareText(text) {
 async function showShareLinkDialog(records) {
   const dialog=$('shareLinkDialog'),dataset=rows,list=Array.from(records),request=showShareLinkDialog.serial=(showShareLinkDialog.serial||0)+1;
   dialog.shareRequest=request;dialog.hidden=false;
-  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成短链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p class="muted">一个链接分享全部所选产品，无需登录。短链接由 is.gd 提供，打开后自动跳转至产品卡片。</p></section>';
+  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p class="muted">一个直达链接分享全部所选产品，无需登录，打开即可查看生成时的内容快照。</p></section>';
   const current=()=>rows===dataset&&!dialog.hidden&&dialog.shareRequest===request;
   const close=()=>{if(dialog.shareRequest===request){dialog.hidden=true;dialog.shareRequest=null}};
   dialog.querySelector('[data-share-close]').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
@@ -3345,13 +3345,13 @@ function toggleProductCard(uid, anchor) {
   const image=(src,label,badges)=>'<figure class="product-card-model-figure">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(label)+'">':'<div class="product-card-empty">暂无图片</div>')+'<div class="product-card-media-footer"><figcaption>'+esc(label)+'</figcaption>'+inlineBadgesMarkup(badges)+'</div></figure>';
   const field=(label,text,attribute)=>'<div class="product-card-block"'+(attribute?' data-preview-field="'+attribute+'"':'')+'><span class="product-card-label">'+esc(label)+'</span><div class="product-card-value"'+(attribute==='category'?' data-share-category':attribute?' data-preview-chinese="'+attribute+'"':'')+'>'+esc(text||'')+'</div></div>';
   const shopee=detail.shopee?(detail.shopeeUrl?'<a href="'+esc(detail.shopeeUrl)+'" target="_blank" rel="noopener">'+esc(detail.shopee)+'</a>':esc(detail.shopee)):'未提供';
-  card.innerHTML='<button class="product-card-close" type="button" aria-label="关闭">×</button><div class="product-card-images">'+image(detail.model,'model 图片（SKU图）',detail.badges)+'</div>'+field('中文标题',sharePreviewChineseValue(record,10),'10')+field('中文型号',sharePreviewChineseValue(record,12),'12')+field('上新类目',sharePreviewCategoryValue(record),'category')+(detail.invitation?field('邀请ID',detail.invitation):'')+'<dl><dt>目标价</dt><dd>'+esc(detail.target)+'</dd><dt>Model ID</dt><dd>'+esc(detail.id)+'</dd><dt>Shopee link</dt><dd>'+shopee+'</dd></dl><p class="muted" data-preview-status role="status" hidden></p><div class="product-card-actions"><button type="button" data-generate-single>生成在线链接</button></div><div class="share-link-controls share-inline-controls" data-preview-link hidden><input class="share-inline-link" readonly aria-label="在线分享链接"><button type="button" class="btn" data-copy-single>复制链接</button><a class="btn" data-open-single target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">打开链接</a></div>';
+  card.innerHTML='<button class="product-card-close" type="button" aria-label="关闭">×</button><div class="product-card-images">'+image(detail.model,'model 图片（SKU图）',detail.badges)+'</div>'+field('中文标题',sharePreviewChineseValue(record,10),'10')+field('中文型号',sharePreviewChineseValue(record,12),'12')+field('上新类目',sharePreviewCategoryValue(record),'category')+(detail.invitation?field('邀请ID',detail.invitation):'')+'<dl><dt>目标价</dt><dd>'+esc(detail.target)+'</dd><dt>Model ID</dt><dd>'+esc(detail.id)+'</dd><dt>Shopee link</dt><dd>'+shopee+'</dd></dl><p class="muted" data-preview-status role="status" hidden></p><div class="product-card-actions"><button type="button" data-generate-single>生成直达链接</button></div><div class="share-link-controls share-inline-controls" data-preview-link hidden><input class="share-inline-link" readonly aria-label="在线分享链接"><button type="button" class="btn" data-copy-single>复制链接</button><a class="btn" data-open-single target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">打开链接</a></div>';
   document.body.append(card);activeProductCard=uid;
   const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
   const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
-  let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null;
+  let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null,linkGeneration=0;
   const snapshot=()=>{const detail=sharedSnapshot||productDetail(record);return [detail.itemChinese,detail.modelChinese,detail.category]};
-  const clearLink=()=>{result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;result.querySelector('[data-copy-single]').onclick=null;linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
+  const clearLink=()=>{linkGeneration++;result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;open.onclick=null;result.querySelector('[data-copy-single]').onclick=null;result.querySelector('[data-copy-single]').textContent='复制链接';linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
   const update=()=>{
     if(!current())return false;
     const signature=shareRecordSignature(record);
@@ -3363,6 +3363,7 @@ function toggleProductCard(uid, anchor) {
       card.querySelector(key==='category'?'[data-share-category]':'[data-preview-chinese="'+key+'"]').textContent=String(values[index]??'').trim()?values[index]:'未填写';
     }
     generate.disabled=generating;
+    generate.textContent=generating?'正在生成…':'生成直达链接';
     const message=linkError||linkNotice;
     status.textContent=message;status.hidden=!message;
     return true;
@@ -3377,7 +3378,9 @@ function toggleProductCard(uid, anchor) {
       const url=await buildOnlineShareLink([record],{isCurrent:current});
       if(!current())return;
       const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkBaselineSignature=shareRecordSignature(record);linkNotice=shareLinkMessage(url,1)+' · 已按点击时的内容生成';
-      result.querySelector('[data-copy-single]').onclick=async event=>{const button=event.currentTarget;button.textContent=await copyShareText(url)?'已复制':'复制失败'};
+      const generation=linkGeneration,currentLink=()=>current()&&linkGeneration===generation&&linkBaselineSignature===shareRecordSignature(record)&&open.getAttribute('href')===url&&!result.hidden;
+      open.onclick=event=>{if(!currentLink())event.preventDefault()};
+      result.querySelector('[data-copy-single]').onclick=async event=>{if(!currentLink())return;const button=event.currentTarget,ok=await copyShareText(url);if(currentLink())button.textContent=ok?'已复制':'复制失败'};
     }catch(error){if(current()){clearLink();linkError=error?.message||'分享链接生成失败，请稍后重试。'}}
     finally{if(current()){generating=false;update()}}
   };

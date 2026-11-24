@@ -19,6 +19,9 @@ class Node {
   setAttribute(name, value) { this.attributes[name] = String(value); }
   getAttribute(name) { return this.attributes[name] ?? null; }
   removeAttribute(name) { delete this.attributes[name]; }
+  get href() { return this.getAttribute('href') || ''; }
+  get tabIndex() { return Number(this.getAttribute('tabindex') ?? -1); }
+  set tabIndex(value) { this.setAttribute('tabindex',value); }
   get isConnected() { return true; }
   contains(node) { return this === node || [...this.nodes.values()].some(child => child === node); }
   querySelector(selector) { return this.nodes.get(selector) || null; }
@@ -51,14 +54,14 @@ function harness() {
     buildOnlineShareLink: builder,
     shareLinkMessage(url, count = 1) {
       controls.messages.push({ url, count }); const info = builder.info.get(url);
-      return info?.shortened ? '已生成 ' + count + ' 个产品的短链接' : '已生成 ' + count + ' 个产品的完整链接；短链接服务暂不可用';
+      return info?.direct ? '已生成 ' + count + ' 个产品的直达链接' : '已生成 ' + count + ' 个产品的分享链接';
     },
     copyShareText: async url => { controls.copied.push(url); return true; },
     window: { open: (...args) => controls.opened.push(args) },
     setTimeout: callback => controls.timers.push(callback), AbortController, URL, console
   });
   vm.runInContext(source, context);
-  const resolve = (index, url, shortened = true) => { builder.info.set(url, { url, shortened, reason: shortened ? '' : 'unavailable' }); controls.jobs[index].resolve(url); };
+  const resolve = (index, url) => { builder.info.set(url, { url, shortened:false, direct:true, directUrl:url }); controls.jobs[index].resolve(url); };
   return { dialog, records, controls, context, resolve, show: entries => context.showShareLinkDialog(entries) };
 }
 
@@ -67,28 +70,54 @@ function assertNoResult(dialog) {
   assert.equal(controls.hidden, true); assert.equal(controls.querySelector('input').value, '');
   assert.equal(typeof controls.querySelector('[data-copy-share]').onclick, 'undefined');
   assert.equal(typeof controls.querySelector('[data-open-share]').onclick, 'undefined');
+  assert.equal(dialog.querySelector('[data-direct-share]'),null);
 }
 
-test('bulk sharing keeps every selected record and copies/opens the exact short URL', async () => {
+test('bulk primary copy and open retain the exact direct URL without duplicate controls',async()=>{
+  const h=harness(),pending=h.show(h.records.slice(0,2));await flush();
+  const full='https://example.test/share.html#d=j'+Buffer.from(JSON.stringify({v:1,products:h.records.slice(0,2).map(r=>({id:r.uid,modelChinese:'  5pcs / 蓝色  '}))})).toString('base64url');h.resolve(0,full);await pending;
+  const controls=h.dialog.querySelector('.share-link-controls'),open=controls.querySelector('[data-open-share]'),copy=controls.querySelector('[data-copy-share]');
+  assert.equal(controls.hidden,false);assert.equal(controls.querySelector('input').value,full);
+  assert.equal(h.dialog.querySelector('[data-direct-share]'),null);assert.doesNotMatch(h.dialog.innerHTML,/is\.gd|短链接|data-copy-direct/);
+  const decoded=JSON.parse(Buffer.from(new URL(full).hash.slice(4),'base64url'));assert.deepEqual(decoded.products.map(p=>p.id),['FAKE-A','FAKE-B']);assert.equal(decoded.products[1].modelChinese,'  5pcs / 蓝色  ');
+  await copy.onclick({currentTarget:copy});assert.deepEqual(h.controls.copied,[full]);
+  open.onclick();assert.equal(h.controls.opened[0][0],full);
+});
+
+test('bulk direct handlers cannot copy or navigate after close, replacement or dataset change',async()=>{
+  for(const action of ['close','replacement','dataset']){
+    const h=harness(),pending=h.show(h.records);await flush();h.resolve(0,'https://example.test/share.html#d=jOldFull');await pending;
+    const controls=h.dialog.querySelector('.share-link-controls'),copy=controls.querySelector('[data-copy-share]'),open=controls.querySelector('[data-open-share]');
+    let next;if(action==='close')h.dialog.querySelector('[data-share-close]').onclick();
+    if(action==='dataset')h.context.rows=[...h.records];
+    if(action==='replacement'){next=h.show(h.records.slice(0,1));await flush();assertNoResult(h.dialog)}
+    await copy.onclick({currentTarget:copy});open.onclick();
+    assert.deepEqual(h.controls.copied,[],action);assert.deepEqual(h.controls.opened,[],action);
+    if(next){h.resolve(1,'https://example.test/share.html#d=jNewFull');await next}
+  }
+});
+
+test('bulk sharing keeps every selected record and copies/opens the exact direct URL', async () => {
   const h = harness(), pending = h.show(h.records); await flush();
   assert.deepEqual(Array.from(h.controls.jobs[0].records, record => record.uid), ['FAKE-A', 'FAKE-B', 'FAKE-C']);
   assertNoResult(h.dialog);
-  const url = 'https://is.gd/FakeABC'; h.resolve(0, url); await pending;
+  const url = 'https://example.test/share.html#d=jFakeABC'; h.resolve(0, url); await pending;
   const controls = h.dialog.querySelector('.share-link-controls');
   assert.equal(controls.hidden, false); assert.equal(controls.querySelector('input').value, url);
-  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的短链接/);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的直达链接/);
   assert.deepEqual(h.controls.messages.at(-1), { url, count: 3 });
   await controls.querySelector('[data-copy-share]').onclick({ currentTarget: controls.querySelector('[data-copy-share]') });
   controls.querySelector('[data-open-share]').onclick();
   assert.deepEqual(h.controls.copied, [url]); assert.equal(h.controls.opened[0][0], url); assert.equal(h.controls.opened[0][1], '_blank');
 });
 
-test('bulk complete-link fallback is usable and never advertised as a successful short link', async () => {
+test('bulk direct sharing is usable in the primary controls and has no duplicate fallback row', async () => {
   const h = harness(), pending = h.show(h.records.slice(0, 2)); await flush();
   const url = 'https://example.test/share.html#d=jFakeCompleteProducts'; h.resolve(0, url, false); await pending;
   assert.equal(h.dialog.querySelector('.share-link-controls').querySelector('input').value, url);
+  assert.equal(h.dialog.querySelector('[data-direct-share]'),null,'the direct URL is only shown in primary controls');
   const status = h.dialog.querySelector('[data-share-status]').textContent;
-  assert.match(status, /2 个产品的完整链接/); assert.doesNotMatch(status, /已生成\s*2\s*个产品的短链接|一键翻译|翻译失败/);
+  assert.match(status, /2 个产品的直达链接/); assert.doesNotMatch(status, /短链接|is\.gd|一键翻译|翻译失败/);
 });
 
 test('an earlier generation cannot overwrite a newer pending or completed dialog', async () => {
