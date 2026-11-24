@@ -53,7 +53,7 @@ class Element extends EventTarget{
     for(const token of this._html.matchAll(/<\/?([a-z][a-z0-9-]*)\b([^>]*)>|([^<]+)/gi)){
       if(token[3]){stack.at(-1)._text+=decode(token[3]);continue}if(token[0].startsWith('</')){if(stack.length>1)stack.pop();continue}
       const child=new Element(token[1],this.ownerDocument);for(const attr of token[2].matchAll(/([\w-]+)(?:\s*=\s*"([^"]*)"|\s*=\s*'([^']*)'|\s*=\s*([^\s>]+))?/g))child.setAttribute(attr[1],decode(attr[2]??attr[3]??attr[4]??''));stack.at(-1).append(child);
-      if(!['input','img','br','hr','meta','link'].includes(token[1].toLowerCase()))stack.push(child);
+      if(!['input','img','br','hr','meta','link'].includes(token[1].toLowerCase())&&!/\/\s*>$/.test(token[0]))stack.push(child);
     }
   }
   get innerHTML(){return this._html||''}
@@ -80,6 +80,61 @@ function fixture(h){
 }
 function clickConfirm(h,name='新合并产品组'){h.document.getElementById('mergeGroupName').value=name;h.document.getElementById('confirmMerge').click()}
 function assertUnchanged(h,rows,before){assert.deepEqual(plain(rows),before);assert.equal(h.db.stores.records.size,0);assert.equal(h.db.transactions.length,0)}
+function mountIdRow(h,row,count,gid,isChild=false){
+  h.document.getElementById('groupUiFixture')?.remove();const host=h.document.createElement('div');host.id='groupUiFixture';
+  host.innerHTML=h.api.rowHtml(row,[{h:'Model ID',k:'id',display:'Model ID'},{h:'勾选',k:'select',display:'勾选'}],count,gid,isChild);h.document.body.append(host);h.api.bindTable();h.api.updateSelectionUI();return host;
+}
+
+test('every singleton hides all group controls while retaining its group metadata and individual model selector',()=>{
+  for(const kind of ['image','manual','ungrouped','separate','missing','legacy']){
+    const h=setup(),row=record(h,'12345');row.groupName='保留的单例名称';if(kind==='image')row.group='IMG-0001';else if(kind==='manual'){row.group='manual-one';row.manualGroup='manual-one'}else if(kind==='ungrouped')row.group='UNGROUPED-'+row.uid;else if(kind==='separate')row.group='单独-'+row.uid;else if(kind==='missing')delete row.group;else row.group=row.uid;
+    h.api.setRows([row]);const before=plain(row),host=mountIdRow(h,row,1,row.manualGroup||row.group||row.uid);
+    for(const selector of ['[data-product-group]','[data-rename-group]','[data-toggle]','[data-select-group]'])assert.equal(host.querySelector(selector),null,kind+' singleton '+selector);
+    assert.equal(host.querySelectorAll('[data-select]').length,1);assert.equal(host.querySelectorAll('[data-share]').length,1);assert.doesNotMatch(host.textContent,/保留的单例名称|同组型号|整组选中/);assert.deepEqual(plain(row),before);
+  }
+});
+
+test('one visible model from an eleven-model group retains one compact full-group control and only the filtered-hidden note',()=>{
+  const h=setup(),rows=Array.from({length:11},(_,index)=>Object.assign(record(h,String(10001+index)),{group:'eleven-group',groupName:'十一款组'}));h.api.setRows(rows);h.api.setFilters({'Model ID':{values:['10001']}});
+  const host=mountIdRow(h,rows[0],1,'eleven-group'),control=host.querySelector('[data-product-group]');assert.ok(control);assert.equal(host.querySelectorAll('[data-product-group]').length,1);assert.equal(control.tagName,'DIV');
+  const checkbox=control.querySelector('[data-select-group]'),name=control.querySelector('[data-rename-group]');assert.equal(checkbox.getAttribute('aria-label'),'整组选中 10001，共 11 款');assert.equal(name.getAttribute('aria-label'),'修改组名称 十一款组');assert.equal(name.textContent,'十一款组 · 11 款');assert.equal(control.querySelector('[data-toggle]'),null);
+  assert.match(host.querySelector('.group-selection-note').textContent,/10/);assert.doesNotMatch(control.textContent,/整组选中|同组型号|改名/);assert.equal(checkbox.parentElement,control);assert.equal(name.parentElement,control);assert.equal(name.closest('label'),null);
+  checkbox.checked=true;checkbox.dispatchEvent(new MiniEvent('change'));assert.deepEqual([...h.api.selected].sort(),rows.map(row=>row.uid).sort());
+  h.api.setFilters({});const full=mountIdRow(h,rows[0],11,'eleven-group');assert.equal(full.querySelector('.group-selection-note'),null);assert.ok(full.querySelector('[data-toggle]'));
+});
+
+test('the compact name, count and accessible labels escape exact custom names and keep all actions as siblings',()=>{
+  const h=setup(),name='精选 "A&B" <img> 单引号\'',gid='group-"<&>',rows=[record(h,'10001'),record(h,'10002')];for(const row of rows){row.group=gid;row.groupName=name}h.api.setRows(rows);
+  const host=mountIdRow(h,rows[0],2,gid),control=host.querySelector('[data-product-group]'),label=control.querySelector('[data-rename-group]'),checkbox=control.querySelector('[data-select-group]'),toggle=control.querySelector('[data-toggle]');
+  assert.equal(control.dataset.productGroup,gid);assert.equal(label.dataset.renameGroup,gid);assert.equal(checkbox.dataset.selectGroup,gid);assert.equal(toggle.dataset.toggle,gid);
+  assert.equal(label.textContent,name+' · 2 款');assert.equal(label.querySelector('.product-group-text').textContent,name);assert.equal(label.querySelector('.product-group-count').textContent,' · 2 款');assert.equal(label.getAttribute('aria-label'),'修改组名称 '+name);assert.equal(toggle.getAttribute('aria-label'),'展开组 '+name);assert.equal(checkbox.getAttribute('aria-label'),'整组选中 10001，共 2 款');
+  assert.equal(label.parentElement,control);assert.equal(checkbox.parentElement,control);assert.equal(toggle.parentElement,control);assert.equal(control.tagName,'DIV');assert.equal(host.querySelector('img'),null);assert.doesNotMatch(control.textContent,/整组选中|同组型号|改名/);
+  const child=mountIdRow(h,rows[1],2,gid,true);assert.equal(child.querySelector('[data-product-group]'),null);assert.doesNotMatch(child.textContent,/同组展开明细|同组型号/);
+});
+
+test('generated group names use the compact default caption while custom names with the same prefix stay intact',()=>{
+  const h=setup(),rows=[record(h,'10001'),record(h,'10002')];rows.forEach(row=>row.group='IMG-default');h.api.setRows(rows);const fullName=h.api.getGroupName(rows[0]),host=mountIdRow(h,rows[0],2,'IMG-default'),button=host.querySelector('[data-rename-group]');
+  assert.equal(button.textContent,'产品组 · 2 款');assert.equal(button.getAttribute('aria-label'),'修改组名称 '+fullName);assert.ok(button.getAttribute('title').startsWith(fullName));
+  h.api.renameProductGroup('IMG-default',fullName);assert.equal(mountIdRow(h,rows[0],2,'IMG-default').querySelector('[data-rename-group]').textContent,'产品组 · 2 款');assert.equal(rows[0].groupName,fullName,'saved generated captions remain intact while their display is compact');
+  h.api.renameProductGroup('IMG-default','产品组-用户自定义');const custom=mountIdRow(h,rows[0],2,'IMG-default').querySelector('[data-rename-group]');assert.equal(custom.textContent,'产品组-用户自定义 · 2 款');
+});
+
+test('name clicks only rename, chevrons only expand and group checkboxes retain partial and complete selection',()=>{
+  const h=setup(),rows=fixture(h);h.api.setRows(rows);h.api.setSelected(['first']);const host=mountIdRow(h,rows[0],2,'group-A'),control=host.querySelector('[data-product-group]'),checkbox=control.querySelector('[data-select-group]'),label=control.querySelector('[data-rename-group]'),toggle=control.querySelector('[data-toggle]');
+  assert.equal(checkbox.checked,false);assert.equal(checkbox.indeterminate,true);assert.equal(checkbox.getAttribute('aria-checked'),'mixed');assert.ok(control.classList.contains('is-partial'));
+  label.click();assert.ok(h.document.getElementById('renameGroupBackdrop'));assert.deepEqual([...h.api.selected],['first']);assert.equal(h.api.opened.has('group-A'),false);h.document.getElementById('cancelRenameGroup').click();
+  toggle.click();assert.equal(h.api.opened.has('group-A'),true);assert.deepEqual([...h.api.selected],['first']);assert.equal(h.document.getElementById('renameGroupBackdrop'),null);
+  const opened=mountIdRow(h,rows[0],2,'group-A');assert.equal(opened.querySelector('[data-toggle]').getAttribute('aria-label'),'收起组 既有组A');const all=opened.querySelector('[data-select-group]');all.checked=true;all.dispatchEvent(new MiniEvent('change'));
+  assert.deepEqual([...h.api.selected].sort(),['first','second']);assert.equal(all.checked,true);assert.equal(all.indeterminate,false);assert.ok(opened.querySelector('[data-product-group]').classList.contains('is-selected'));assert.equal(h.api.opened.has('group-A'),true);assert.equal(h.document.getElementById('renameGroupBackdrop'),null);
+  all.checked=false;all.dispatchEvent(new MiniEvent('change'));assert.equal(h.api.selected.size,0);assert.equal(h.api.opened.has('group-A'),true);
+});
+
+test('read-only group controls disable selection and renaming while leaving the chevron available for inspection',()=>{
+  for(const mode of ['history','ownership']){const h=setup(),rows=fixture(h);h.api.setRows(rows);h.api.setSelected(['first']);if(mode==='history')h.api.setHistory(true);else h.controls.writable=false;
+    const host=mountIdRow(h,rows[0],2,'group-A'),checkbox=host.querySelector('[data-select-group]'),name=host.querySelector('[data-rename-group]'),toggle=host.querySelector('[data-toggle]');assert.equal(checkbox.disabled,true);assert.equal(name.disabled,true);assert.equal(toggle.disabled,false);
+    name.click();checkbox.click();assert.equal(h.document.getElementById('renameGroupBackdrop'),null);assert.deepEqual([...h.api.selected],['first']);toggle.click();assert.equal(h.api.opened.has('group-A'),true);assert.deepEqual([...h.api.selected],['first']);assert.equal(h.db.transactions.length,0);
+  }
+});
 
 test('opening and cancelling the visible merge preview shows selected SKU images, IDs and source names without committing',()=>{
   const h=setup(),rows=fixture(h);h.api.setRows(rows);h.api.setSelected(['first','third']);const before=plain(rows);

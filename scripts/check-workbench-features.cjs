@@ -149,7 +149,7 @@ function harness(options={}) {
       openMergePreview:typeof openMergePreview==='function'?openMergePreview:undefined,
       openRenameGroupDialog:typeof openRenameGroupDialog==='function'?openRenameGroupDialog:undefined,filterPopup,drawer,
       getGroupName:typeof getGroupName==='function'?getGroupName:undefined,groupDisplayName:typeof groupDisplayName==='function'?groupDisplayName:undefined,renameProductGroup:typeof renameProductGroup==='function'?renameProductGroup:undefined,
-      get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},
+      get rows(){return rows},get historyMode(){return historyMode},get visibleRows(){return visibleRows},get selected(){return selected},get opened(){return opened},
       setRows(next){rows=next;headers=H.slice();sourceFileName='fabricated.csv'},setFilters(next){filters=next},
       setSelected(ids){selected=new Set(ids)},setGrouping(value){groupingEnabled=value},setOpened(ids){opened=new Set(ids)},
       setFolds(c8,attrs){showC8=c8;showAttrs=attrs},setHistory(value){historyMode=value},setThreshold(value){threshold=value},setWorkspace(value){globalThis.workspace=value}
@@ -422,7 +422,7 @@ test('history and ownership loss disable whole-group editing and reject previous
 
 test('history read-only mode still permits expanding a product group',()=>{
   const h=harness();h.api.setRows([record(h,'a'),record(h,'b')]);h.api.setHistory(true);h.api.render();
-  const button=h.element('table').innerHTML.match(/<button class="group-toggle"[^>]*>/)?.[0];assert.ok(button);assert.doesNotMatch(button,/\bdisabled\b/);
+  const button=h.element('table').innerHTML.match(/<button\b[^>]*data-toggle="shared-group"[^>]*>/)?.[0];assert.ok(button);assert.doesNotMatch(button,/\bdisabled\b/);
 });
 
 test('history raw editors ignore both input and change events',async()=>{
