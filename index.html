@@ -109,7 +109,7 @@ input.buyer-choice{padding-right:24px!important;background-image:url("data:image
 </style><body><header class="top"><div class="brand"><div class="logo">寻</div><div>寻品工作看板 <span class="muted">· Buyer Pool Eyeball</span></div></div><div class="actions"><input hidden id="file" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="appendFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="translationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><input hidden id="invitationFile" type="file" accept=".xlsx,.xlsm,.xls,.csv,.txt"><button class="btn" id="cancelImport" hidden>取消导入</button><button class="btn" id="shareBlank">分享空白工作台</button><button class="btn" id="import" title="载入表格并更新当前数据" disabled>导入 Excel / CSV</button><button class="btn" id="addData" title="只追加新 Model ID；已有商品和买手编辑保持不变" disabled>新增数据</button><span class="translation-status" id="translationState">导入后自动生成中文</span><button class="btn primary" id="export">导出 Excel</button><button class="btn" id="exportCsv">导出 CSV</button></div></header><div id="workspaceNotice" class="workspace-notice" hidden></div>
 <main class="page"><section class="title"><div><span class="muted">源表字段结构 · 买手筛选与核价</span><h1>寻品工作看板</h1><p>严格按源表标题、顺序和第二行字段说明展示；无筛选时显示全部导入记录。</p></div><span class="tag" id="state">等待导入商品数据</span></section>
 <div class="control-shell"><div class="toolbar"><input type="search" id="search" placeholder="搜索 Model ID、标题、类目等；多个 Model ID 用空格分隔（最多 100 个）" aria-label="跨字段搜索 Model ID、标题、类目、价格等" aria-describedby="searchHint"><button class="btn" id="allFilters">所有字段筛选</button><button class="btn" id="clear">清空筛选</button><button class="btn" id="schemaBtn">字段来源</button><select id="sort"><option value="desc">目标价：高到低</option><option value="asc">目标价：低到高</option></select><span class="logic-note">列条件跨字段按“且”、同列多选按“或”；全文搜索匹配任一字段</span></div><div id="searchHint" class="search-hint" role="status" hidden></div><div class="toolbar-secondary"><span class="grouping-controls"><b>同组归类相似度</b><select id="thresholdPreset" aria-label="相似度预设"><option value="10">10% 宽松</option><option value="30">30%</option><option value="50">50%</option><option value="70">70%</option><option value="90" selected>90% 严格</option><option value="custom">自定义</option></select><input id="thresholdInput" type="number" min="1" max="100" value="90" aria-label="自定义相似度百分比">%<button class="btn" id="rebuildGroups">按阈值分组</button><button class="btn" id="clearGroups">取消分组</button><span id="groupState" class="muted">导入默认平铺；选择相似度后手动分组</span><button class="btn primary" id="translateAll">一键翻译</button><button class="btn" id="importTranslations">导入翻译</button><div id="advancedTranslationControls" hidden style="display:none!important"><button class="btn" id="onlineTranslate" title="优先补齐当前页中文，自动跳过已完成内容">优先翻译当前页</button><button class="btn" id="googleDocumentTools">Google 官方整表翻译</button><input type="file" id="googleDocumentFile" hidden accept=".xlsx,.xlsm,.xls,.csv"><button class="btn" id="retranslateAutomatic">重译全部自动中文</button><button class="btn" id="enableChromeTranslation" disabled>启用 Chrome 本地翻译</button><span id="chromeTranslationState" class="muted"></span><button class="btn" id="pauseTranslation">暂停翻译</button></div><button class="btn" id="importInvitations">导入邀请ID</button></span><span class="history-controls"><b>历史版本</b><select id="versionSelect" aria-label="选择历史版本"><option value="">暂无历史版本</option></select><button class="btn" id="openVersion">查看</button><button class="btn" id="restoreVersion">恢复为当前</button><button class="btn" id="returnCurrent" hidden>返回当前</button><button class="btn" id="renameVersion">改名</button><button class="btn" id="saveVersion">保存版本</button><button class="btn" id="manageVersions">删除历史版本</button><button class="btn" id="saveClose">关闭工作台</button></span></div><div class="filter-summary"><span id="result"></span><span id="saveState" class="save-state">本机自动保存</span><b id="filterBadge">未添加筛选条件</b></div><div id="filterChips" class="filter-chips" aria-live="polite"></div></div>
-<div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并所选组 / 型号</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <button class="btn" id="unselect">清除勾选</button></div>
+<div id="bulk" class="bulk" hidden><b id="selText"></b><span class="bulk-pre"><label>是否放前置核价 <select id="bulkPreValue" aria-label="批量设置是否放前置核价"><option value="">不修改</option><option value="Y">Y</option><option value="N">N</option></select></label><label>核价日期 <input id="bulkPreDate" type="date" aria-label="批量设置核价日期"></label><button class="btn primary" id="bulkPreApply">应用到所选</button></span><button class="btn" id="bulkEdit">其他字段批量填充</button> <button class="btn" id="merge">合并所选组 / 型号</button> <button class="btn" id="splitGroup">移出同组，单独展示</button> <button class="btn" id="unmerge">取消手动合并</button> <button class="btn" id="shareSelected">生成所选在线分享链接</button> <span class="muted" id="shareLimitHint">一次最多分享 11 个 Model</span> <button class="btn" id="unselect">清除勾选</button></div>
 <div class="gridbox"><table id="table"></table></div><div id="pager" class="pager"></div><div class="stats"><div class="stat"><span>筛选后商品组</span><b id="groupsN">0</b></div><div class="stat"><span>筛选后 Model ID</span><b id="modelsN">0</b></div><div class="stat"><span>待买手判断</span><b id="pendingN">0</b></div><div class="stat"><span>无 1688 前置核价</span><b id="priceN">0</b></div></div><p id="workspaceInfo" class="help"></p><p class="help">每页默认显示 50 个商品组；筛选和导出仍按全部数据计算。买手编辑会自动保存到本机数据库；请使用同一浏览器和本站网址继续工作。</p></main><div id="closeDialog" class="close-dialog" hidden><section class="close-dialog-card"><h3>关闭工作台前保存</h3><p>工作台会自动保存到本机。确认保存后，可关闭当前浏览器标签页；下次使用同一浏览器和本地启动器会恢复数据。</p><div><button class="btn" id="cancelClose">继续工作</button><button class="btn primary" id="confirmSaveClose">确认保存</button></div></section></div><div id="overlay"></div><div id="versionManager"></div><div id="shareLinkDialog" class="modalbg" hidden></div><div id="toast"></div>
 <script data-buyer-translation-engine="v3">
 (function (root) {
@@ -2947,8 +2947,6 @@ SOFTWARE.
     let key = getParam(query, 's');
     if (key === null) key = getParam(fragment, 's');
     if (key !== null) return archive(key);
-    const onlineKey = getParam(query, 'n');
-    if (onlineKey !== null) return { kind: 'online', value: archive(onlineKey).value };
     const naked = fragment.split(/[&?]/, 1)[0];
     if (/^[cjz][A-Za-z0-9+/_%.-]/.test(naked)) return payload(naked);
     if (legacyQuery !== null) return payload(legacyQuery);
@@ -2991,7 +2989,7 @@ SOFTWARE.
   }
 
   // Leave headroom below the host's request URL limit for forwarding parameters.
-  function singleProductUrl(pageHref, products, encode, maxLength = 7600) {
+  function singleProductUrl(pageHref, products, encode, maxLength = 1800) {
     try {
       const link = url(pageHref, encode(products));
       return link.length <= maxLength ? link : '';
@@ -3003,231 +3001,6 @@ SOFTWARE.
 
   return { read, url, singleProductUrl };
 });
-</script>
-<script data-buyer-online-share-config="v1">
-(function (root) {
-  'use strict';
-  const config = Object.freeze({ serviceUrl: 'https://buyer-share-joewu1024.netlify.app' });
-  if (typeof module === 'object' && module.exports) module.exports = config;
-  else root.BuyerOnlineShareConfig = config;
-})(typeof globalThis !== 'undefined' ? globalThis : this);
-</script>
-<script data-buyer-online-share="v1">
-(function (root) {
-  'use strict';
-
-  const VIEWER = 'https://joewu1024.github.io/---2/s.html';
-  const MAX_TOKEN_LENGTH = 2000000;
-  const MAX_CONTENT_LENGTH = 2666704;
-  const KEY = /^[A-Za-z0-9_-]{22}$/;
-  const TOKEN = /^[cjz][A-Za-z0-9_-]+$/;
-  const CONTENT = /^[A-Za-z0-9_-]+$/;
-  const TIMEOUT_MS = 20000;
-
-  function failure(message, retryable) {
-    const error = new Error(message);
-    error.retryable = !!retryable;
-    return error;
-  }
-
-  function serviceOrigin(value) {
-    let url;
-    try { url = new URL(value); } catch (error) {}
-    if (!url || url.protocol !== 'https:' || !/^[a-z0-9-]+\.netlify\.app$/.test(url.hostname) ||
-        url.username || url.password || url.port || url.pathname !== '/' || url.search || url.hash) {
-      throw failure('分享服务尚未配置，请联系工作台管理员');
-    }
-    return url.origin;
-  }
-
-  function viewerAddress(value) {
-    let url;
-    try { url = new URL('s.html', value || VIEWER); } catch (error) {}
-    if (!url || url.origin !== 'https://joewu1024.github.io' || url.pathname !== '/---2/s.html' ||
-        url.username || url.password) {
-      throw failure('分享页面地址配置无效');
-    }
-    url.search = '';
-    url.hash = '';
-    return url;
-  }
-
-  function checkToken(token) {
-    if (typeof token !== 'string' || !TOKEN.test(token)) throw failure('分享内容格式无效');
-    if (token.length > MAX_TOKEN_LENGTH) throw failure('分享内容过大，请联系工作台管理员');
-  }
-
-  function base64Url(bytes) {
-    const chunks = [];
-    for (let at = 0; at < bytes.length; at += 8192) {
-      chunks.push(String.fromCharCode.apply(null, bytes.subarray(at, at + 8192)));
-    }
-    return btoa(chunks.join('')).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-
-  function fromBase64Url(value) {
-    if (!CONTENT.test(value) || value.length % 4 === 1) throw failure('分享数据无法读取');
-    let padded = value.replace(/-/g, '+').replace(/_/g, '/');
-    while (padded.length % 4) padded += '=';
-    let binary;
-    try { binary = atob(padded); } catch (error) { throw failure('分享数据无法读取'); }
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-    if (base64Url(bytes) !== value) throw failure('分享数据无法读取');
-    return bytes;
-  }
-
-  function cryptoApi(options) {
-    const api = options.crypto || root.crypto;
-    if (!api || !api.subtle || typeof api.getRandomValues !== 'function') {
-      throw failure('当前浏览器无法安全读取分享，请使用新版浏览器');
-    }
-    return api;
-  }
-
-  async function identifier(bytes, cryptoImpl) {
-    const digest = new Uint8Array(await cryptoImpl.subtle.digest('SHA-256', bytes));
-    return Array.from(digest, byte => byte.toString(16).padStart(2, '0')).join('');
-  }
-
-  function assertCurrent(options) {
-    if (options.isCurrent && options.isCurrent() === false) {
-      throw failure('分享内容或工作区已变更，请重新生成');
-    }
-  }
-
-  async function sealedToken(token, cryptoImpl) {
-    const bytes = new Uint8Array(token.length);
-    for (let i = 0; i < token.length; i++) bytes[i] = token.charCodeAt(i);
-    const secret = cryptoImpl.getRandomValues(new Uint8Array(16));
-    const iv = cryptoImpl.getRandomValues(new Uint8Array(12));
-    const key = await cryptoImpl.subtle.importKey('raw', secret, 'AES-GCM', false, ['encrypt']);
-    const encrypted = new Uint8Array(await cryptoImpl.subtle.encrypt({name:'AES-GCM', iv}, key, bytes));
-    const combined = new Uint8Array(iv.length + encrypted.length);
-    combined.set(iv);
-    combined.set(encrypted, iv.length);
-    return {
-      key: base64Url(secret),
-      id: await identifier(secret, cryptoImpl),
-      content: base64Url(combined)
-    };
-  }
-
-  function responseError(status) {
-    if (status === 404) return failure('没有找到这份分享，请检查链接是否完整');
-    if (status === 413) return failure('分享内容过大，请联系工作台管理员');
-    if (status === 429) return failure('分享服务繁忙，请稍后重试', true);
-    return failure('分享服务暂时不可用，请稍后重试', status >= 500);
-  }
-
-  async function request(origin, route, options, init, consume) {
-    const fetchImpl = options.fetchImpl || root.fetch;
-    if (typeof fetchImpl !== 'function') throw failure('当前浏览器无法连接分享服务');
-    const controller = typeof AbortController === 'function' ? new AbortController() : null;
-    let timer;
-    const timedOut = new Promise((resolve, reject) => {
-      timer = setTimeout(() => {
-        if (controller) controller.abort();
-        reject(failure('分享服务连接超时，请稍后重试', true));
-      }, TIMEOUT_MS);
-    });
-    try {
-      return await Promise.race([
-        (async () => {
-          const response = await fetchImpl(origin + route, {
-            ...init, cache:'no-store', credentials:'omit', redirect:'error', referrerPolicy:'no-referrer',
-            signal: controller ? controller.signal : undefined
-          });
-          if (!response.ok) throw responseError(response.status);
-          return consume(response);
-        })(),
-        timedOut
-      ]);
-    } catch (error) {
-      if (error && typeof error.retryable === 'boolean') throw error;
-      throw failure('分享服务暂时连接失败，请检查网络后重试', true);
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
-  async function readContent(origin, id, options) {
-    return request(origin, '/api/shares/' + id, options, {method:'GET'}, async response => {
-      const content = await response.text();
-      if (content.length < 38 || content.length > MAX_CONTENT_LENGTH || !CONTENT.test(content)) {
-        throw failure('分享数据无法读取');
-      }
-      return content;
-    });
-  }
-
-  async function decrypt(content, secret, cryptoImpl) {
-    try {
-      const combined = fromBase64Url(content);
-      if (combined.length < 30) throw failure('分享数据无法读取');
-      const key = await cryptoImpl.subtle.importKey('raw', secret, 'AES-GCM', false, ['decrypt']);
-      const decrypted = new Uint8Array(await cryptoImpl.subtle.decrypt(
-        {name:'AES-GCM', iv:combined.subarray(0, 12)}, key, combined.subarray(12)
-      ));
-      if (decrypted.length > MAX_TOKEN_LENGTH) throw failure('分享数据无法读取');
-      const chunks = [];
-      for (let at = 0; at < decrypted.length; at += 8192) {
-        chunks.push(String.fromCharCode.apply(null, decrypted.subarray(at, at + 8192)));
-      }
-      const token = chunks.join('');
-      checkToken(token);
-      return token;
-    } catch (error) {
-      throw failure('分享内容校验失败，请检查链接是否完整');
-    }
-  }
-
-  async function create(token, options = {}) {
-    checkToken(token);
-    const origin = serviceOrigin(options.serviceUrl);
-    const viewer = viewerAddress(options.viewerUrl);
-    const cryptoImpl = cryptoApi(options);
-    assertCurrent(options);
-    const archived = await sealedToken(token, cryptoImpl);
-    assertCurrent(options);
-    const body = JSON.stringify({id:archived.id, content:archived.content});
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        assertCurrent(options);
-        const saved = await request(origin, '/api/shares', options, {
-          method:'POST', headers:{'Content-Type':'application/json'}, body
-        }, response => response.json());
-        assertCurrent(options);
-        if (!saved || saved.id !== archived.id) throw failure('分享保存未完成，请重试');
-        const content = await readContent(origin, archived.id, options);
-        assertCurrent(options);
-        if (content !== archived.content) throw failure('分享保存校验失败，请重试');
-        const restored = await decrypt(content, fromBase64Url(archived.key), cryptoImpl);
-        assertCurrent(options);
-        if (restored !== token) throw failure('分享保存校验失败，请重试');
-        viewer.searchParams.set('n', archived.key);
-        return viewer.href;
-      } catch (error) {
-        assertCurrent(options);
-        if (attempt || !error.retryable) throw error;
-      }
-    }
-  }
-
-  async function open(keyString, options = {}) {
-    const origin = serviceOrigin(options.serviceUrl);
-    if (typeof keyString !== 'string' || !KEY.test(keyString)) throw failure('分享网址不完整，请复制完整链接');
-    const cryptoImpl = cryptoApi(options);
-    const secret = fromBase64Url(keyString);
-    const id = await identifier(secret, cryptoImpl);
-    const content = await readContent(origin, id, options);
-    return decrypt(content, secret, cryptoImpl);
-  }
-
-  const api = {create, open};
-  if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.BuyerOnlineShare = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
 <script>
 (function(){
@@ -3555,7 +3328,7 @@ function selectWholeGroup(gid,checked){
   updateSelectionUI();return members.length;
 }
 // group-selection:end
-function updateSelectionUI(){const index=refreshGroupSelectionCounts(groupSelectionIndex());let selectedVisible=0;for(let r of visibleRows)if(selected.has(r.uid))selectedVisible++;let all=$('selectVisible');if(all){all.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;all.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length;all.disabled=historyMode||!canEditWorkspace()}let fullGroups=0;for(const [gid,count]of index.counts)if(count===index.members.get(gid)?.length)fullGroups++;$('bulk').hidden=!selected.size;$('selText').textContent='已选 '+selected.size+' 个 Model ID'+(fullGroups?' · 整组 '+fullGroups+' 组':'')+(selected.size>selectedVisible?' · 当前未显示 '+(selected.size-selectedVisible)+' 款':'');document.querySelectorAll('[data-select]').forEach(x=>{x.checked=selected.has(x.dataset.select);x.disabled=historyMode||!canEditWorkspace()});document.querySelectorAll('[data-select-group]').forEach(x=>{const state=groupSelectionState(x.dataset.selectGroup);x.checked=state.checked;x.indeterminate=state.indeterminate;x.disabled=historyMode||!canEditWorkspace();x.setAttribute?.('aria-checked',state.indeterminate?'mixed':String(state.checked));x.closest?.('.group-select')?.classList.toggle('is-selected',state.checked);x.closest?.('.group-select')?.classList.toggle('is-partial',state.indeterminate)});$('merge').disabled=historyMode||!canEditWorkspace()||selected.size<2}function filtered(){if(!filtered.searchText){filtered.memo=new WeakMap();filtered.searchText=r=>{let s=filtered.memo.get(r);if(s===undefined){s=norm(FIELD.filter(f=>f.i!==6&&f.i!==7).map(f=>value(r,f.h)).join(' ')+' '+idFor(r)+' '+getGroupName(r));filtered.memo.set(r,s)}return s}}let search=parseWorkbenchSearch($("search").value),q=search.mode==="text"?search.query:"",idState=filters["Model ID"],groupState=filters.__groupName,fieldStates=FIELD.filter(f=>filters[f.h]),stateKeys=statusFilterKeys.filter(k=>filters["status:"+k]);if(search.mode==="ids"&&search.overflow)return [];if(search.mode!=="ids"&&!q&&!idState&&!groupState&&!fieldStates.length&&!stateKeys.length)return rows.slice();return rows.filter(r=>{if(search.mode==="ids"&&!search.idSet.has(idFor(r)))return false;if(q&&!filtered.searchText(r).includes(q))return false;if(idState&&!matchesState(idState,idFor(r)))return false;if(groupState&&!matchesState(groupState,getGroupName(r)))return false;for(let f of fieldStates)if(!matchesState(filters[f.h],filterValue(r,f.h),filterNumericValue(r,f.h),filterConditionValue(r,f.h,filters[f.h].condition)))return false;for(let k of stateKeys)if(!matchesState(filters["status:"+k],statusValue(r,k)))return false;return true})}
+function updateSelectionUI(){const index=refreshGroupSelectionCounts(groupSelectionIndex());let selectedVisible=0;for(let r of visibleRows)if(selected.has(r.uid))selectedVisible++;let all=$('selectVisible');if(all){all.checked=visibleRows.length>0&&selectedVisible===visibleRows.length;all.indeterminate=selectedVisible>0&&selectedVisible<visibleRows.length;all.disabled=historyMode||!canEditWorkspace()}let fullGroups=0;for(const [gid,count]of index.counts)if(count===index.members.get(gid)?.length)fullGroups++;$('bulk').hidden=!selected.size;$('selText').textContent='已选 '+selected.size+' 个 Model ID'+(fullGroups?' · 整组 '+fullGroups+' 组':'')+(selected.size>selectedVisible?' · 当前未显示 '+(selected.size-selectedVisible)+' 款':'');document.querySelectorAll('[data-select]').forEach(x=>{x.checked=selected.has(x.dataset.select);x.disabled=historyMode||!canEditWorkspace()});document.querySelectorAll('[data-select-group]').forEach(x=>{const state=groupSelectionState(x.dataset.selectGroup);x.checked=state.checked;x.indeterminate=state.indeterminate;x.disabled=historyMode||!canEditWorkspace();x.setAttribute?.('aria-checked',state.indeterminate?'mixed':String(state.checked));x.closest?.('.group-select')?.classList.toggle('is-selected',state.checked);x.closest?.('.group-select')?.classList.toggle('is-partial',state.indeterminate)});$('merge').disabled=historyMode||!canEditWorkspace()||selected.size<2;const share=$('shareSelected');if(share){share.disabled=selected.size>11;share.title=selected.size>11?'每次最多只能分享 11 个 Model，请减少勾选后重试':'一次最多分享 11 个 Model'}}function filtered(){if(!filtered.searchText){filtered.memo=new WeakMap();filtered.searchText=r=>{let s=filtered.memo.get(r);if(s===undefined){s=norm(FIELD.filter(f=>f.i!==6&&f.i!==7).map(f=>value(r,f.h)).join(' ')+' '+idFor(r)+' '+getGroupName(r));filtered.memo.set(r,s)}return s}}let search=parseWorkbenchSearch($("search").value),q=search.mode==="text"?search.query:"",idState=filters["Model ID"],groupState=filters.__groupName,fieldStates=FIELD.filter(f=>filters[f.h]),stateKeys=statusFilterKeys.filter(k=>filters["status:"+k]);if(search.mode==="ids"&&search.overflow)return [];if(search.mode!=="ids"&&!q&&!idState&&!groupState&&!fieldStates.length&&!stateKeys.length)return rows.slice();return rows.filter(r=>{if(search.mode==="ids"&&!search.idSet.has(idFor(r)))return false;if(q&&!filtered.searchText(r).includes(q))return false;if(idState&&!matchesState(idState,idFor(r)))return false;if(groupState&&!matchesState(groupState,getGroupName(r)))return false;for(let f of fieldStates)if(!matchesState(filters[f.h],filterValue(r,f.h),filterNumericValue(r,f.h),filterConditionValue(r,f.h,filters[f.h].condition)))return false;for(let k of stateKeys)if(!matchesState(filters["status:"+k],statusValue(r,k)))return false;return true})}
 // batch-model-search:start
 const BATCH_MODEL_SEARCH_LIMIT=100;
 function parseWorkbenchSearch(text){
@@ -3701,6 +3474,7 @@ function compactShareImage(src) {
 }
 async function buildOnlineShareLink(records,options={}) {
   if (!records || !records.length) throw new Error('请至少选择一个 Model ID');
+  if(records.length>11)throw new Error('每次最多只能分享 11 个 Model，请减少勾选后重试');
   const dataset=rows,list=Array.from(records),members=new Map(dataset.map((record,index)=>[record,index]));
   const assertCurrent=()=>{if(rows!==dataset||list.some(record=>!members.has(record)||dataset[members.get(record)]!==record)||(options.isCurrent&&!options.isCurrent()))throw new Error('分享内容或工作区已变更，请重新生成')};
   assertCurrent();
@@ -3709,11 +3483,9 @@ async function buildOnlineShareLink(records,options={}) {
   // Capture edits at click time, before any image preparation.
   const products=JSON.parse(JSON.stringify(list.map(productDetail)));
   for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
-  return BuyerOnlineShare.create(BuyerShareCodec.encode(products),{
-    serviceUrl:BuyerOnlineShareConfig.serviceUrl,
-    viewerUrl:new URL('s.html',location.href).href,
-    isCurrent:assertCurrent
-  });
+  const link=BuyerShareTransport.singleProductUrl(location.href,products,BuyerShareCodec.encode);
+  if(link)return link;
+  throw new Error('分享内容较长，请减少勾选或简化分享内容后重试');
 }
 function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
 function shareLinkMessage(url,count=1){

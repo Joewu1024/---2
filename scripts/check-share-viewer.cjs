@@ -8,7 +8,6 @@ const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const githubShare = require('../github-share.js');
 const BuyerShareCodec = require('../product-share-codec.js');
-const BuyerOnlineShare = require('../online-share-client.js');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'share.html'), 'utf8');
@@ -34,7 +33,6 @@ function viewer(options = {}) {
   const sandbox = {
     URL, Uint8Array, Uint16Array, Uint32Array, ArrayBuffer,
     atob: options.atob || (text => Buffer.from(text, 'base64').toString('latin1')),
-    btoa: text => Buffer.from(text, 'latin1').toString('base64'),
     location: { search: options.search || '', hash: options.hash || '' },
     document: { title: '', getElementById: id => elements[id] },
     fetch: options.fetch || (() => { throw new Error('Complete share URLs must not fetch'); }),
@@ -54,13 +52,13 @@ function viewer(options = {}) {
     const at = source.indexOf('\nload().catch');
     vm.runInContext(at < 0 ? source : source.slice(0, at), context, { filename: 'share.html' });
   }
-  context.BuyerOnlineShareConfig = {serviceUrl:'https://fixture.netlify.app'};
   return { context, elements };
 }
 
 async function boot(context) {
   const main = scripts.at(-1)[2];
-  await vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
+  vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
+  await new Promise(resolve => setImmediate(resolve));
 }
 
 const tests = [];
@@ -82,80 +80,16 @@ test('fixed official vendor is embedded exactly, with MIT and SHA-256 provenance
   const embedded = scripts.find(script => script[1].includes('data-buyer-share-gzip="fflate-0.8.3"'));
   assert.ok(embedded && embedded[2].includes(fs.readFileSync(path.join(root, 'vendor/fflate-0.8.3.min.js'), 'utf8')));
   assert.ok(embedded[2].includes('Permission is hereby granted, free of charge'));
-  assert.equal(scripts.length, 7);
+  assert.equal(scripts.length, 5);
   const sealed = scripts.find(script => script[1].includes('data-buyer-github-share="v1"'));
   assert.equal(sealed[2].trim(), fs.readFileSync(path.join(root, 'github-share.js'), 'utf8').trim());
   const codec = fs.readFileSync(path.join(root, 'product-share-codec.js'), 'utf8').trim();
   assert.ok(scripts.some(script => script[2].trim() === codec), 'Viewer includes the same codec as the share builder');
   const transport = fs.readFileSync(path.join(root, 'product-share-transport.js'), 'utf8').trim();
   assert.ok(scripts.some(script => script[2].trim() === transport), 'Viewer includes the same carrier parser as the share builder');
-  const online = fs.readFileSync(path.join(root, 'online-share-client.js'), 'utf8').trim();
-  assert.ok(scripts.some(script => script[2].trim() === online), 'Viewer embeds the independently tested online share reader');
   assert.equal(fs.readFileSync(path.join(root, 's.html'), 'utf8'), html, 'Both viewer paths must ship the same recovery and decoding logic');
   assert.ok(!/<script\b[^>]*\bsrc\s*=/i.test(html));
   assert.ok(!/\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\s*[.(]/.test(scripts.at(-1)[2]));
-});
-
-test('one short URL reads the exact selected snapshot for 1, 40 and 1000 products without local state', async () => {
-  const lengths = [];
-  for (const count of [1, 40, 1000]) {
-    const products = Array.from({length:count}, (_, i) => ({...product, id:'ONLINE-' + i}));
-    const compact = BuyerShareCodec.encode(products);
-    const stored = new Map();
-    const fakeService = async (address, options) => {
-      const url = new URL(address);
-      assert.equal(url.origin, 'https://fixture.netlify.app');
-      if (options.method === 'POST') {
-        const entry = JSON.parse(options.body);
-        assert.match(entry.id, /^[a-f0-9]{64}$/);
-        assert.ok(!entry.content.includes('示例风扇'));
-        stored.set(entry.id, entry.content);
-        return {ok:true, status:201, json:async()=>({id:entry.id})};
-      }
-      const id = url.pathname.split('/').at(-1);
-      return {ok:stored.has(id), status:stored.has(id)?200:404, text:async()=>stored.get(id)};
-    };
-    const address = await BuyerOnlineShare.create(compact, {
-      serviceUrl:'https://fixture.netlify.app',
-      fetchImpl:fakeService,
-      crypto:crypto.webcrypto
-    });
-    lengths.push(address.length);
-    const url = new URL(address);
-    assert.equal(url.origin, 'https://joewu1024.github.io');
-    assert.match(url.searchParams.get('n'), /^[A-Za-z0-9_-]{22}$/);
-    assert.equal(url.hash, '');
-    let requests = 0;
-    const {context, elements} = viewer({
-      search:url.search + '&from=singlemessage',
-      fetch:async (value, options) => {
-        requests++;
-        assert.equal(options.method, 'GET');
-        assert.equal(options.credentials, 'omit');
-        assert.equal(options.referrerPolicy, 'no-referrer');
-        return fakeService(value, options);
-      }
-    });
-    assert.equal(await context.load(), count);
-    assert.equal(requests, 1);
-    assert.equal((elements.cards.innerHTML.match(/<article class="product">/g) || []).length, count);
-    assert.match(elements.cards.innerHTML, new RegExp('ONLINE-' + (count - 1)));
-    assert.match(elements.cards.innerHTML, /5pcs/);
-    assert.equal(elements.shareRecovery.hidden, true);
-  }
-  assert.ok(lengths.every(length => length === lengths[0]), 'Selected product count must never lengthen the shared URL');
-  assert.ok(lengths[0] < 100);
-});
-
-test('online share read failures report a clear error without displaying partial products', async () => {
-  const {context, elements} = viewer({
-    search:'?n=' + 'A'.repeat(22),
-    fetch:async()=>({ok:false,status:404})
-  });
-  await boot(context);
-  assert.equal(elements.summary.textContent, '无法显示分享内容');
-  assert.doesNotMatch(elements.cards.innerHTML, /<article/);
-  assert.match(elements.cards.innerHTML, /分享|找到/);
 });
 
 test('compact query and legacy fragment links render without network on a restricted viewer', async () => {

@@ -21,8 +21,6 @@ const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
 const html = Array.from(documentHtml.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)).at(-1)[1];
 const lines = html.split(/\r?\n/);
 const instances = new Set();
-const publishedShares = new Map();
-let shareSerial = 0;
 const TRANSLATION_VERSION = 'reference-v7-20261117';
 
 function block(label) {
@@ -66,7 +64,7 @@ async function waitFor(condition, message, timeout = 3000) {
 
 function harness(options = {}) {
   const timers = new Set(), elements = new Map();
-  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, categoryGate: null, shareImageGate: null, shareSnapshots: [], onlineShares: [], onlineShareGate: null, shortenerCalls: [], parse: null, savedState: {rows:[],meta:null}, loadGate: null };
+  const controls = { writable: true, editors: [], flushes: 0, persisted: [], renders: 0, cacheWrites: [], cacheDatabases: [], categoryCalls: 0, categoryGate: null, shareImageGate: null, shareSnapshots: [], shortenerCalls: [], parse: null, savedState: {rows:[],meta:null}, loadGate: null };
   const cacheGate = options.cacheGate || { promise: Promise.resolve() };
   const setTimer = (callback, delay, ...args) => {
     const timer = setTimeout(() => { timers.delete(timer); callback(...args); }, delay);
@@ -113,19 +111,6 @@ function harness(options = {}) {
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
     BuyerShareShortener: { create(){controls.shortenerCalls.push('create');throw new Error('The share builder must never use a third-party shortener');} },
     BuyerGithubShare: { begin(){controls.shortenerCalls.push('local publisher');throw new Error('The share builder must work independently of the local publisher');} },
-    BuyerOnlineShareConfig: { serviceUrl: 'https://fixture.netlify.app' },
-    BuyerOnlineShare: { async create(token, settings) {
-      settings.isCurrent();
-      assert.equal(settings.serviceUrl, 'https://fixture.netlify.app');
-      controls.onlineShares.push(token);
-      if (controls.onlineShareGate) await controls.onlineShareGate;
-      settings.isCurrent();
-      const link = new URL(settings.viewerUrl);
-      link.search = '?n=' + String(++shareSerial).padStart(22, 'A');
-      link.hash = '';
-      publishedShares.set(link.href, token);
-      return link.href;
-    } },
     Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
@@ -245,10 +230,9 @@ function completedShareRecord(h,id){
 }
 function decodeFabricatedShareUrl(url){
   assert.doesNotMatch(url,/[\r\n]/);
-  assert.match(new URL(url).searchParams.get('n'),/^[A-Za-z0-9_-]{22}$/);
-  assert.ok(url.length < 100);
-  assert.ok(publishedShares.has(url), 'The online client must have saved the snapshot before exposing a URL');
-  return BuyerShareCodec.decode(publishedShares.get(url));
+  const query=new URL(url).searchParams.get('d');
+  assert.match(query,/^c[A-Za-z0-9_-]+$/);
+  return BuyerShareCodec.decode(query);
 }
 
 function editor(h, r, field = h.api.H[10]) {
@@ -524,6 +508,61 @@ test('sharing freezes only selected current fields without requesting or waiting
   assert.deepEqual(selected.raw,before);assert.equal(h.transport.mock.callCount(),0);
 });
 
+test('the actual builder preserves all 11 selected short records in one direct link',async()=>{
+  const h=harness(),selected=Array.from({length:11},(_,i)=>completedShareRecord(h,'LIMIT-'+i));
+  h.api.setRows([...selected,completedShareRecord(h,'UNSELECTED-PRIVATE')]);
+  const url=await h.api.buildOnlineShareLink(selected);
+  assert.ok(url.length<=1800);
+  assert.doesNotMatch(url,/[\r\n]/);
+  assert.deepEqual(decodeFabricatedShareUrl(url).products.map(product=>product.id),selected.map(row=>row.uid));
+  assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('the actual builder rejects 12 models before preparing images or accessing a service',async()=>{
+  const h=harness(),selected=Array.from({length:12},(_,i)=>completedShareRecord(h,'OVER-LIMIT-'+i));
+  h.api.setRows(selected);
+  await assert.rejects(h.api.buildOnlineShareLink(selected),/每次最多.*11.*Model/);
+  assert.equal(h.controls.shareSnapshots.length,0);
+  assert.equal(h.controls.shortenerCalls.length,0);
+  assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('a long single record is rejected without offering a file fallback',async()=>{
+  const h=harness(),chosen=completedShareRecord(h,'LONG-ONE');
+  chosen.raw[h.api.H[10]]=Array.from({length:500},(_,i)=>i.toString(36)+'-'+Math.imul(i+123,2654435761).toString(36)).join(' ');
+  h.api.setRows([chosen]);
+  await assert.rejects(h.api.buildOnlineShareLink([chosen]),error=>{
+    assert.match(error.message,/内容较长.*减少/);
+    assert.equal(error.shareProducts,undefined);
+    return true;
+  });
+  assert.equal(h.controls.shortenerCalls.length,0);
+  assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('the selection toolbar explains the 11-model limit and restores sharing after deselection',()=>{
+  assert.match(documentHtml,/id="shareLimitHint">一次最多分享 11 个 Model/);
+  const records=Array.from({length:12},(_,i)=>({uid:'SELECTION-'+i}));
+  const selected=new Set(records.map(row=>row.uid)),nodes=new Map();
+  for(const id of ['selectVisible','bulk','selText','merge','shareSelected'])nodes.set(id,{});
+  const context=vm.createContext({
+    selected,visibleRows:records,historyMode:false,
+    canEditWorkspace:()=>true,
+    $:id=>nodes.get(id),
+    refreshGroupSelectionCounts:()=>({counts:new Map(),members:new Map()}),
+    groupSelectionIndex:()=>({}),
+    document:{querySelectorAll:()=>[]}
+  });
+  vm.runInContext(between('function updateSelectionUI(){','function filtered(){'),context);
+  context.updateSelectionUI();
+  assert.equal(nodes.get('shareSelected').disabled,true);
+  assert.match(nodes.get('shareSelected').title,/每次最多.*11.*Model/);
+  selected.delete(records[11].uid);
+  context.updateSelectionUI();
+  assert.equal(nodes.get('shareSelected').disabled,false);
+  assert.match(nodes.get('shareSelected').title,/11 个 Model/);
+});
+
 test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic values while translation is paused',async()=>{
   const h=harness(),values=[['',''],['Buyer English title','5pcs'],['混合 English 标题','Blue 蓝色 / 5pcs'],['旧自动中文标题','  5pcs  ']];
   const selected=values.map(([title,model],index)=>{const r=record(h,'SHARE-CURRENT-'+index,'Source title FICT2140',title);r.raw[h.api.H[11]]='Source model FICT2141';r.raw[h.api.H[12]]=model;if(index===3)Object.assign(r,{autoItemChinese:true,autoModelChinese:true,translationItemSource:r.raw[h.api.H[9]],translationModelSource:r.raw[h.api.H[11]],translationItemVersion:'old-provider',translationModelVersion:'old-provider'});return r});
@@ -532,7 +571,7 @@ test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic va
   assert.deepEqual(selected.map(r=>r.raw),before);assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
-test('every new share URL points to a saved snapshot without consulting a shortener or local publisher',async()=>{
+test('every new share URL is a compact same-origin snapshot without consulting a shortener or publisher',async()=>{
   const network=mock.fn(()=>{throw new Error('Share generation must not contact the network')});
   const h=harness({fetch:network});
   const chosen=completedShareRecord(h,'selected-card'),other=completedShareRecord(h,'unselected-card');h.api.setRows([chosen,other]);
@@ -548,7 +587,7 @@ test('every new share URL points to a saved snapshot without consulting a shorte
   assert.equal(h.controls.shortenerCalls.length,0);assert.equal(network.mock.callCount(),0);
 });
 
-test('online share generation never reads denied localStorage or contacts translation services',async()=>{
+test('direct share generation never reads denied localStorage or contacts the network',async()=>{
   let denyStorage=false,deniedReads=0;
   const h=harness({storageGetter(){
     if(!denyStorage)return {getItem:()=>null};
@@ -584,31 +623,6 @@ test('a dataset replacement during image preparation prevents a stale share resu
   await waitFor(()=>h.controls.shareSnapshots.length>0,'image preparation begins');
   h.api.setRows([completedShareRecord(h,'new-share-image')]);gate.resolve();await rejected;
   assert.equal(h.controls.shortenerCalls.length,0,'old products never leave the workbench after the dataset changes');
-  assert.equal(h.controls.onlineShares.length,0);
-});
-
-test('a dataset replacement during online publication prevents a stale short link from being returned',async()=>{
-  const gate=deferred(),h=harness(),chosen=completedShareRecord(h,'old-online-share');h.api.setRows([chosen]);
-  h.controls.onlineShareGate=gate.promise;
-  const pending=h.api.buildOnlineShareLink([chosen]);
-  const rejected=assert.rejects(pending,/分享.*变更|重新生成/);
-  await waitFor(()=>h.controls.onlineShares.length===1,'snapshot upload begins');
-  h.api.setRows([completedShareRecord(h,'new-online-share')]);
-  gate.resolve();
-  await rejected;
-  assert.equal(h.controls.onlineShares.length,1);
-});
-
-test('one and forty selected cards produce the same length address with exact saved coverage',async()=>{
-  const h=harness(),selected=Array.from({length:40},(_,i)=>completedShareRecord(h,'BATCH-'+i));
-  const unselected=completedShareRecord(h,'PRIVATE-UNSELECTED');
-  h.api.setRows([...selected,unselected]);h.api.setPaused(true);
-  const single=await h.api.buildOnlineShareLink(selected.slice(0,1));
-  const batch=await h.api.buildOnlineShareLink(selected);
-  assert.equal(single.length,batch.length);
-  assert.deepEqual(decodeFabricatedShareUrl(batch).products.map(row=>row.id),selected.map(row=>row.uid));
-  assert.equal(h.controls.onlineShares.length,2);
-  assert.equal(h.transport.mock.callCount(),0);
 });
 
 test('background field changes during image preparation do not replace or reject the clicked share snapshot',async()=>{

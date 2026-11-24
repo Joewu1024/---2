@@ -60,7 +60,7 @@ test('distinguishes missing data, detectable truncation, and invalid input', () 
   assert.throws(() => transport.read({search:'?d=c' + 'A'.repeat(2000000)}), { code:'too_large' });
 });
 
-test('fifty products fit one forwarded URL with every product in order', () => {
+test('long selections exceed the workbench budget while older URLs remain readable', () => {
   const batch = Array.from({length:50}, (_, i) => {
     const image = createHash('sha256').update(String(i)).digest('hex');
     const details = createHash('sha256').update('title:' + i).digest('hex');
@@ -76,7 +76,8 @@ test('fifty products fit one forwarded URL with every product in order', () => {
       shopeeUrl: shopee
     };
   });
-  const url = transport.singleProductUrl(base, batch, codec.encode);
+  assert.equal(transport.singleProductUrl(base, batch, codec.encode), '');
+  const url = transport.singleProductUrl(base, batch, codec.encode, 7600);
   assert.ok(url.length >= 6500 && url.length <= 7200, 'fixture must exercise a representative long link');
   assert.equal(url.includes('\n'), false);
   const forwarded = new URL(url);
@@ -90,11 +91,11 @@ test('single-link budget includes the complete absolute URL', () => {
   const nestedBase = base + 'qa/';
   const prefixLength = (nestedBase + 's.html?d=c').length;
   const withLength = length => () => 'c' + 'A'.repeat(length - prefixLength);
-  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(7600)).length, 7600);
-  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(7601)), '');
+  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(1800)).length, 1800);
+  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(1801)), '');
 });
 
-test('oversized selections produce a full-snapshot fallback', () => {
+test('oversized selections do not produce a potentially truncated URL', () => {
   const impossible = { id:'oversized' };
   const encode = batch => {
     if (batch.includes(impossible)) throw new Error('分享数据过大，请分批生成分享链接');
