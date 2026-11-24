@@ -39,6 +39,14 @@ if(transportTag.test(viewer))viewer=viewer.replace(transportTag,()=>transport);
 else viewer=viewer.replace(codecTag,match=>match+'\n'+transport);
 for(const tag of [githubShareTag,gzipTag,codecTag,transportTag])html=html.replace(new RegExp(tag.source+'\\r?\\n?'),'');
 html=html.replace(/<script>\s*\(function\(\)\{/,match=>gzip+'\n'+codec+'\n'+transport+'\n'+match);
+for(const [marker,name] of [['buyer-online-share-config','online-share-config.js'],['buyer-online-share','online-share-client.js']]){
+  const tag=new RegExp('<script data-'+marker+'="v1">[\\s\\S]*?<\\/script>');
+  const block='<script data-'+marker+'="v1">\n'+fs.readFileSync(path.join(root,name),'utf8')+'</script>\n';
+  html=html.replace(new RegExp(tag.source+'\\r?\\n?'),'');
+  viewer=viewer.replace(new RegExp(tag.source+'\\r?\\n?'),'');
+  html=html.replace(/<script>\s*\(function\(\)\{/,match=>block+match);
+  viewer=viewer.replace(/<script>(?=\s*function e\(v\))/,match=>block+match);
+}
 for(const match of viewer.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1],{filename:'share-viewer'});
 let count=0;for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1],{filename:'index-script-'+(++count)});
 fs.writeFileSync(file,html);

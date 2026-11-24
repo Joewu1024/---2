@@ -85,6 +85,8 @@
     let key = getParam(query, 's');
     if (key === null) key = getParam(fragment, 's');
     if (key !== null) return archive(key);
+    const onlineKey = getParam(query, 'n');
+    if (onlineKey !== null) return { kind: 'online', value: archive(onlineKey).value };
     const naked = fragment.split(/[&?]/, 1)[0];
     if (/^[cjz][A-Za-z0-9+/_%.-]/.test(naked)) return payload(naked);
     if (legacyQuery !== null) return payload(legacyQuery);

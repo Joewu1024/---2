@@ -29,12 +29,11 @@ class Node {
   set innerHTML(value) {
     this._html = value; this.nodes = new Map();
     if (!String(value).includes('data-share-close')) return;
-    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node(), file = new Node();
+    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node();
     controls.hidden = true;
-    file.hidden = true;
     status.textContent = '正在整理产品信息和中文类目…';
     controls.nodes = new Map([['input', input], ['[data-copy-share]', copy], ['[data-open-share]', open]]);
-    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls], ['[data-share-file]', file]]);
+    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls]]);
     modal.nodes = this.nodes; this.firstElementChild = modal;
   }
   get innerHTML() { return this._html || ''; }
@@ -43,7 +42,7 @@ class Node {
 function harness() {
   const dialog = new Node(); dialog.hidden = true;
   const records = ['FAKE-A', 'FAKE-B', 'FAKE-C'].map(uid => ({ uid, raw: {} }));
-  const controls = { jobs: [], copied: [], opened: [], messages: [], timers: [], downloaded: [], clipboardAllowed: true };
+  const controls = { jobs: [], copied: [], opened: [], messages: [], timers: [], clipboardAllowed: true };
   const builder = async (entries, options = {}) => {
     const gate = deferred(); controls.jobs.push({ ...gate, records: entries, options }); return gate.promise;
   };
@@ -57,7 +56,6 @@ function harness() {
       return '已生成 ' + count + ' 个产品的直达链接';
     },
     copyShareText: async url => { controls.copied.push(url); return controls.clipboardAllowed; },
-    downloadShareFile: products => controls.downloaded.push(products),
     window: { open: (...args) => controls.opened.push(args) },
     setTimeout: callback => controls.timers.push(callback), AbortController, URL, console
   });
@@ -66,32 +64,29 @@ function harness() {
   return { dialog, records, controls, context, resolve, show: entries => context.showShareLinkDialog(entries) };
 }
 
-test('the bulk dialog shows, copies and opens one long URL for the selection', async () => {
+test('the bulk dialog shows, copies and opens one short URL for the complete selection', async () => {
   const h = harness();
   const work = h.show(h.records);
-  const url = 'https://example.test/s.html?d=c' + 'A'.repeat(6700);
+  const url = 'https://example.test/s.html?n=' + 'A'.repeat(22);
   h.resolve(0, url);
   await work;
   const controls = h.dialog.querySelector('.share-link-controls');
   assert.equal(controls.querySelector('input').value, url);
-  assert.doesNotMatch(h.dialog.innerHTML, /data-share-parts|复制全部链接|打开第/);
+  assert.doesNotMatch(h.dialog.innerHTML, /data-share-parts|复制全部链接|打开第|下载产品卡/);
   assert.deepEqual(h.controls.copied, [url]);
   controls.querySelector('[data-open-share]').onclick();
   assert.deepEqual(h.controls.opened.map(args => args[0]), [url]);
   assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的直达链接/);
 });
 
-test('when the selection cannot fit, only the complete product file is offered', async () => {
+test('an online publication failure exposes no old URL, fallback download or copied data', async () => {
   const h = harness(), work = h.show(h.records);
-  const products = [{id:'demo', model:'data:image/png;base64,AAAA'}];
-  h.controls.jobs[0].reject(Object.assign(new Error('商品内容较多，可下载完整产品卡发给对方'),{shareProducts:products}));
+  h.controls.jobs[0].reject(new Error('分享保存失败，请稍后重试'));
   await work;
-  const file = h.dialog.querySelector('[data-share-file]');
-  assert.equal(file.hidden, false);
   assert.equal(h.dialog.querySelector('.share-link-controls').hidden, true);
   assert.deepEqual(h.controls.copied, []);
-  file.onclick();
-  assert.deepEqual(h.controls.downloaded, [products]);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /分享保存失败/);
+  assert.doesNotMatch(h.dialog.innerHTML, /下载产品卡|data-share-file/);
 });
 
 function assertNoResult(dialog) {

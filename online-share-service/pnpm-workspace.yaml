@@ -1,0 +1,5 @@
+minimumReleaseAgeExclude:
+  - '@netlify/blobs@11.1.11'
+  - '@netlify/dev-utils@6.1.1'
+  - '@netlify/otel@7.0.9'
+  - '@netlify/runtime-utils@3.1.0'

@@ -1,0 +1,16 @@
+[build]
+  command = "node scripts/build.mjs"
+  publish = "public"
+  functions = "dist/functions"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
