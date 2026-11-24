@@ -13,6 +13,7 @@ const BuyerTranslation = require('../translation-engine.js');
 const BuyerGoogleTranslation = require('../translation-google-provider.js');
 const BuyerReferenceTranslation = require('../translation-reference-provider.js');
 const BuyerCategoryTranslations = require('../category-translations.js');
+const BuyerShareCodec = require('../product-share-codec.js');
 const WorkbenchImport = require('../workbench-import.js');
 const root = path.join(__dirname, '..');
 const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -101,13 +102,14 @@ function harness(options = {}) {
   };
   const transport = options.transport || mock.fn(async texts => texts.map(chineseFor));
   const context = vm.createContext({
-    BuyerTranslation, BuyerGoogleTranslation, BuyerCategoryTranslations, WorkbenchImport, controls, document, console,
+    BuyerTranslation, BuyerGoogleTranslation, BuyerCategoryTranslations, BuyerShareCodec, WorkbenchImport, controls, document, console,
     // Legacy Google/Chrome fixtures deliberately request the internal fallback;
     // primaryReference fixtures below exercise the actual reference transport.
     BuyerReferenceTranslation: options.referenceProvider || (options.primaryReference ? BuyerReferenceTranslation : {create:()=>({async translateBatch(){throw Object.assign(new Error('Fabricated primary fallback'),{fallback:true})}})}),
     BuyerWorkspace: { async acquireWriter(){return {owner:true,status:'owner'}} },
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
     BuyerShareShortener: { create(){controls.shortenerCalls.push('create');throw new Error('The share builder must never use a third-party shortener');} },
+    BuyerGithubShare: { begin(){controls.shortenerCalls.push('local publisher');throw new Error('The share builder must work independently of the local publisher');} },
     Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
@@ -137,7 +139,7 @@ function harness(options = {}) {
     block('translation-state-v3'), block('translation-integration-v3'),
     between('function shareChineseFieldReady(', 'async function ensureCategoryTranslations('),
     between('async function start(){','start().catch('),
-    between('function base64Url(', 'async function copyShareText(')
+    between('async function buildOnlineShareLink(', 'async function copyShareText(')
   ].join('\n');
   const api = vm.runInContext(`(function(){
     let rows=[], visibleRows=[], historyMode=false, dirtyRows=new Set();
@@ -226,9 +228,10 @@ function completedShareRecord(h,id){
   row.userEditedFields=[h.api.H[10],h.api.H[12]];return row;
 }
 function decodeFabricatedShareUrl(url){
-  const share=new URL(url),token=new URLSearchParams(share.hash.slice(1)).get('d');
-  assert.ok(token);assert.equal(token[0],'j','this offline harness deliberately exercises uncompressed JSON');
-  return JSON.parse(Buffer.from(token.slice(1),'base64url').toString('utf8'));
+  const fragment=new URL(url).hash.slice(1);
+  const token=new URLSearchParams(fragment).get('d')||fragment;
+  assert.match(token,/^c[A-Za-z0-9_-]+$/);
+  return BuyerShareCodec.decode(token);
 }
 
 function editor(h, r, field = h.api.H[10]) {
@@ -512,7 +515,7 @@ test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic va
   assert.deepEqual(selected.map(r=>r.raw),before);assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.categoryCalls,0);
 });
 
-test('every new actual share URL is a same-origin direct snapshot without consulting a third-party shortener',async()=>{
+test('every new share URL is a compact same-origin snapshot without consulting a shortener or publisher',async()=>{
   const network=mock.fn(()=>{throw new Error('Share generation must not contact the network')});
   const h=harness({fetch:network});
   const chosen=completedShareRecord(h,'selected-card'),other=completedShareRecord(h,'unselected-card');h.api.setRows([chosen,other]);
@@ -520,10 +523,9 @@ test('every new actual share URL is a same-origin direct snapshot without consul
   for(const text of ['  Buyer English / 5pcs  ','中文 & <mixed>\n5pcs','']){
     chosen.raw[h.api.H[10]]=text;
     const result=await h.api.buildOnlineShareLink([chosen]),url=new URL(result);
-    assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/share.html');assert.match(url.hash,/^#d=j/);assert.equal(url.search,'');
+    assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/share.html');assert.equal(url.search,'');
     const products=decodeFabricatedShareUrl(result).products;assert.deepEqual(products.map(card=>card.id),[chosen.uid]);assert.equal(products[0].itemChinese,text);
     assert.notEqual(result,previous);previous=result;
-    const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.direct,true);assert.equal(info.shortened,false);assert.equal(info.url,result);assert.equal(info.directUrl,result);
     assert.match(h.api.shareLinkMessage(result,1),/1 个产品的直达链接/);assert.doesNotMatch(result,/is\.gd/);
   }
   assert.equal(h.controls.shortenerCalls.length,0);assert.equal(network.mock.callCount(),0);
@@ -542,8 +544,6 @@ test('direct share generation never reads denied localStorage or contacts the ne
   assert.equal(deniedReads,0,'generating a direct link has no storage dependency');
   assert.equal(h.controls.shortenerCalls.length,0);
   assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
-  assert.equal(h.api.buildOnlineShareLink.info.get(result).shortened,false);
-  assert.equal(h.api.buildOnlineShareLink.info.get(result).direct,true);
   assert.match(h.api.shareLinkMessage(result,1),/直达链接/);
   assert.equal(h.transport.mock.callCount(),0);
 });
@@ -556,11 +556,10 @@ test('direct sharing removes workspace query state and carries every selected ca
   const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/share.html');assert.equal(full.search,'');
   const products=decodeFabricatedShareUrl(result).products;
   assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(products.map(card=>card.id),[chosen.uid,second.uid]);assert.equal(products[1].modelChinese,'  5pcs / 蓝色  ');
-  const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,false);assert.equal(info.direct,true);assert.equal(info.directUrl,result);
   assert.match(h.api.shareLinkMessage(result,2),/2 个产品的直达链接/);assert.equal(h.controls.shortenerCalls.length,0);
 });
 
-test('a dataset replacement during image preparation prevents any shortener submission',async()=>{
+test('a dataset replacement during image preparation prevents a stale share result',async()=>{
   const gate=deferred(),h=harness(),chosen=completedShareRecord(h,'old-share-image');h.api.setRows([chosen]);
   h.controls.shareImageGate=gate.promise;
   const pending=h.api.buildOnlineShareLink([chosen]);

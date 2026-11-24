@@ -7,6 +7,7 @@ const vm = require('node:vm');
 const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const githubShare = require('../github-share.js');
+const BuyerShareCodec = require('../product-share-codec.js');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'share.html'), 'utf8');
@@ -29,8 +30,9 @@ function viewer(options = {}) {
     location: { search: options.search || '', hash: options.hash || '' },
     document: { title: '', getElementById: id => elements[id] },
     fetch: options.fetch || (() => { throw new Error('Complete share URLs must not fetch'); }),
-    crypto: crypto.webcrypto, setTimeout, clearTimeout, AbortController
+    setTimeout, clearTimeout, AbortController
   };
+  if (options.crypto !== false) sandbox.crypto = crypto.webcrypto;
   if (options.textDecoder !== false) sandbox.TextDecoder = TextDecoder;
   if (options.Blob) sandbox.Blob = options.Blob;
   if (options.DecompressionStream) sandbox.DecompressionStream = options.DecompressionStream;
@@ -65,11 +67,57 @@ test('fixed official vendor is embedded exactly, with MIT and SHA-256 provenance
   const embedded = scripts.find(script => script[1].includes('data-buyer-share-gzip="fflate-0.8.3"'));
   assert.ok(embedded && embedded[2].includes(fs.readFileSync(path.join(root, 'vendor/fflate-0.8.3.min.js'), 'utf8')));
   assert.ok(embedded[2].includes('Permission is hereby granted, free of charge'));
-  assert.equal(scripts.length, 3);
+  assert.equal(scripts.length, 4);
   const sealed = scripts.find(script => script[1].includes('data-buyer-github-share="v1"'));
   assert.equal(sealed[2].trim(), fs.readFileSync(path.join(root, 'github-share.js'), 'utf8').trim());
+  const codec = fs.readFileSync(path.join(root, 'product-share-codec.js'), 'utf8').trim();
+  assert.ok(scripts.some(script => script[2].trim() === codec), 'Viewer includes the same codec as the share builder');
   assert.ok(!/<script\b[^>]*\bsrc\s*=/i.test(html));
   assert.ok(!/\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\s*[.(]/.test(scripts.at(-1)[2]));
+});
+
+test('compact links render without transport on a clean viewer without native decompression or crypto', async () => {
+  const products = [
+    product,
+    { ...product, id: '000000000000000045', itemChinese: '', target: '0', modelChinese: '  蓝色 / 5pcs  ' },
+    { ...product, id: 'OTHER', itemChinese: '越南语 Bộ mẫu mới · 中文 😀 𠮷 é\n<literal>', badges: [] }
+  ];
+  for (const entries of [[product], products]) {
+    const compact = BuyerShareCodec.encode(entries);
+    const legacy = token({ v: 1, products: entries });
+    assert.ok(compact.length < legacy.length, 'the fabricated share should be shorter than its former gzip payload');
+    for (const fragment of ['#' + compact, '#d=' + compact]) {
+      let requests = 0;
+      const { context, elements } = viewer({
+        hash: fragment,
+        textDecoder: false,
+        crypto: false,
+        fetch() { requests++; throw new Error('Compact links carry all card fields'); }
+      });
+      assert.deepEqual(plain(await context.decodeSharePayload(context.readShareToken())), { v: 1, products: entries });
+      assert.equal(await context.load(), entries.length);
+      assert.equal(requests, 0);
+      assert.match(elements.summary.textContent, new RegExp(entries.length + ' 个产品'));
+      assert.match(elements.cards.innerHTML, /示例风扇/);
+      assert.match(elements.cards.innerHTML, /5pcs/);
+      assert.equal((elements.cards.innerHTML.match(/<article class="product">/g) || []).length, entries.length);
+      if (entries.length > 1) {
+        assert.match(elements.cards.innerHTML, /000000000000000045/);
+        assert.match(elements.cards.innerHTML, /&lt;literal&gt;/);
+        assert.match(elements.cards.innerHTML, /未填写/);
+      }
+    }
+  }
+});
+
+test('malformed compact fragments display a readable error', async () => {
+  const { context, elements } = viewer({ hash: '#cBAD' });
+  const main = scripts.at(-1)[2];
+  vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(elements.summary.textContent, '无法显示分享内容');
+  assert.ok(elements.cards.innerHTML.includes('emptyState'));
+  assert.doesNotMatch(elements.cards.innerHTML, /cBAD/);
 });
 
 test('one product and a batch have the same length short URL and render from a public encrypted file', async () => {
@@ -293,7 +341,14 @@ test('boot error rendering remains escaped and does not expose the input URL', a
       const count = await context.load();
       if (process.env.BUYER_SHARE_VIEWER_EXPECTED_COUNT && count !== Number(process.env.BUYER_SHARE_VIEWER_EXPECTED_COUNT)) throw new Error('count mismatch');
       assert.equal((elements.cards.innerHTML.match(/<article class="product">/g) || []).length, count);
-      console.log(JSON.stringify({ realLink: 'local opt-in', cards: count, mode: context.readShareToken().charAt(0), nativeDecompression: false, textDecoder: false }));
+      const snapshot = plain(await context.decodeSharePayload(context.readShareToken()));
+      const compactUrl = new URL(url.href);
+      compactUrl.search = '';
+      compactUrl.hash = BuyerShareCodec.encode(snapshot.products);
+      const compact = viewer({ hash: compactUrl.hash, textDecoder: false });
+      assert.deepEqual(plain(await compact.context.decodeSharePayload(compact.context.readShareToken())).products, snapshot.products);
+      assert.equal(await compact.context.load(), count);
+      console.log(JSON.stringify({ realLink: 'local opt-in', cards: count, legacyChars: url.href.length, compactChars: compactUrl.href.length, nativeDecompression: false, textDecoder: false }));
     } catch (error) { throw new Error('Real-link compatibility check failed; private input omitted'); }
   }
 })().catch(error => { console.error(error.message); process.exitCode = 1; });

@@ -86,7 +86,7 @@ const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve();
 function harness(overrides = {}) {
   const H = Array.from({ length: 26 }, (_, index) => 'field-' + index);
   const record = { uid: 'fake-row-1', raw: { [H[9]]: 'Wireless speaker', [H[11]]: 'Black' }, userEditedFields: [] };
-  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], target: '2.00', timers: new Map(), nextTimer: 1, generatedUrls: [], copiedUrls: [], linkMessages: [], linkInfo: new Map(), ...overrides };
+  const controls = { ensureCalls: 0, categoryCalls: 0, saves: 0, renders: 0, dirty: [], writable: true, category: '音响', categoryNames: ['Audio'], target: '2.00', timers: new Map(), nextTimer: 1, generatedUrls: [], copiedUrls: [], linkMessages: [], clipboardAllowed: true, ...overrides };
   const body = new Element('body'), overlay = new Element(); overlay.id = 'overlay'; body.append(overlay);
   const anchor = new Element('button'); anchor.attributes['data-share'] = record.uid; anchor.dataset.share = record.uid; body.append(anchor);
   const document = { body, getElementById: id => body.querySelector('#' + id), createElement: tag => new Element(tag), querySelectorAll: selector => body.querySelectorAll(selector) };
@@ -118,20 +118,17 @@ function harness(overrides = {}) {
       if (controls.generateError) throw controls.generateError;
       const row = records[0], payload = context.productDetail(row);
       const url = 'https://example.test/share.html#d=j' + Buffer.from(JSON.stringify(payload)).toString('base64url');
-      controls.linkInfo.set(url,{url,directUrl:url,direct:true,shortened:false});
       controls.generatedUrls.push(url); return controls.generate ? controls.generate(records, url) : url;
     },
     shareLinkMessage(url, count = 1) {
       controls.linkMessages.push({ url, count });
-      const info = controls.linkInfo.get(url);
-      return info?.direct ? '已生成 ' + count + ' 个产品的直达链接' : '已生成 ' + count + ' 个产品的分享链接';
+      return '已生成 ' + count + ' 个产品的直达链接';
     },
-    copyShareText: async url => { controls.copiedUrls.push(url); return true; },
+    copyShareText: async url => { controls.copiedUrls.push(url); return controls.clipboardAllowed; },
     closeProductCard() { document.getElementById('productCard')?.remove(); context.activeProductCard = ''; },
     $: id => document.getElementById(id),
     setTimeout(callback) { const id = controls.nextTimer++; controls.timers.set(id, callback); return id; }
   };
-  context.buildOnlineShareLink.info = controls.linkInfo;
   vm.createContext(context); vm.runInContext(detailSource + '\n' + signatureSource + '\n' + source, context);
   const open = () => { context.toggleProductCard(record.uid, anchor); return document.getElementById('productCard'); };
   const fill = row => { row.raw[H[10]] = '无线音箱'; row.raw[H[12]] = '黑色'; };
@@ -247,7 +244,7 @@ function assertSingleLinkUnavailable(card) {
   assert.equal(card.querySelector('[data-preview-direct]'),null,'one primary direct-link control is sufficient');
 }
 
-test('single-card primary anchor and copy preserve the exact direct URL without a duplicate fallback row', async () => {
+test('single-card generation copies the exact direct URL once and retains the primary controls', async () => {
   const h=harness();
   const card=h.open();await card.querySelector('[data-generate-single]').onclick();
   const result=card.querySelector('[data-preview-link]'),open=result.querySelector('[data-open-single]'),directUrl=h.controls.generatedUrls.at(-1);
@@ -255,9 +252,27 @@ test('single-card primary anchor and copy preserve the exact direct URL without 
   assert.equal(open.target,'_blank');assert.match(open.rel,/noopener/);assert.match(open.rel,/noreferrer/);assert.equal(open.tabIndex,0);
   assert.equal(result.querySelector('input').value,directUrl);assert.equal(new URL(directUrl).origin,'https://example.test');
   assert.equal(card.querySelector('[data-preview-direct]'),null);assert.doesNotMatch(card.textContent,/is\.gd|短链接/);
+  assert.deepEqual(h.controls.copiedUrls,[directUrl]);
+  assert.match(card.querySelector('[data-preview-status]').textContent,/已复制/);
   let prevented=false;open.onclick({preventDefault(){prevented=true}});assert.equal(prevented,false);
   const copy=result.querySelector('[data-copy-single]');await copy.onclick({currentTarget:copy});
-  assert.deepEqual(h.controls.copiedUrls,[directUrl]);
+  assert.deepEqual(h.controls.copiedUrls,[directUrl,directUrl]);
+});
+
+test('single-card share retains the generated link when the browser blocks automatic copy', async () => {
+  const h = harness({ clipboardAllowed: false });
+  const card = h.open(); await card.querySelector('[data-generate-single]').onclick();
+  const url = h.controls.generatedUrls.at(-1);
+  const result = card.querySelector('[data-preview-link]'), copy = result.querySelector('[data-copy-single]');
+  assert.deepEqual(h.controls.copiedUrls, [url]);
+  assert.doesNotMatch(card.querySelector('[data-preview-status]').textContent, /已复制|链接生成失败/);
+  assert.equal(result.hidden, false);
+  assert.equal(result.querySelector('input').value, url);
+  assert.equal(result.querySelector('[data-open-single]').href, url);
+  h.controls.clipboardAllowed = true;
+  await copy.onclick({ currentTarget: copy });
+  assert.equal(copy.textContent, '已复制');
+  assert.deepEqual(h.controls.copiedUrls, [url, url]);
 });
 
 test('single-card direct controls reject stale handlers after edit, close, dataset replacement or same-URL regeneration',async()=>{
@@ -271,8 +286,9 @@ test('single-card direct controls reject stale handlers after edit, close, datas
     if(action==='close')h.context.closeProductCard();
     if(action==='dataset')h.context.rows=[{...h.record,raw:{...h.record.raw}}];
     if(action==='regenerate')await card.querySelector('[data-generate-single]').onclick();
+    const copiedBeforeStaleClick=h.controls.copiedUrls.slice();
     await oldCopy({currentTarget:button});let prevented=false;oldOpen({preventDefault(){prevented=true}});
-    assert.deepEqual(h.controls.copiedUrls,[],action);assert.equal(prevented,true,action);
+    assert.deepEqual(h.controls.copiedUrls,copiedBeforeStaleClick,action);assert.equal(prevented,true,action);
   }
 });
 
@@ -290,7 +306,7 @@ test('single open link is unavailable before generation and points to the exact 
   assert.ok(open.rel.split(/\s+/).includes('noopener')); assert.ok(open.rel.split(/\s+/).includes('noreferrer'));
   assert.notEqual(open.getAttribute('aria-disabled'), 'true'); assert.equal(open.tabIndex, 0);
   await card.querySelector('[data-copy-single]').onclick({ currentTarget: card.querySelector('[data-copy-single]') });
-  assert.deepEqual(h.controls.copiedUrls, [generatedUrl]);
+  assert.deepEqual(h.controls.copiedUrls, [generatedUrl, generatedUrl]);
   assert.equal(card.querySelector('[data-generate-single]').disabled, false);
 });
 
@@ -361,22 +377,11 @@ test('generation errors after valid Chinese are not misreported as translation f
   assertSingleLinkUnavailable(card);
 });
 
-test('actual shareLinkMessage prioritizes direct results and preserves older metadata compatibility', () => {
-  const builder = function () {}; builder.info = new Map();
-  const context = vm.createContext({ buildOnlineShareLink: builder }); vm.runInContext(messageSource, context);
-  const directUrl='https://example.test/share.html#d=jDirect';builder.info.set(directUrl,{url:directUrl,direct:true,shortened:false});
-  assert.match(context.shareLinkMessage(directUrl,3),/已生成 3 个产品的直达链接/);assert.doesNotMatch(context.shareLinkMessage(directUrl,3),/短链接|暂未生成|繁忙/);
-  const shortUrl = 'https://is.gd/Fake123'; builder.info.set(shortUrl, { url: shortUrl, shortened: true });
-  assert.match(context.shareLinkMessage(shortUrl, 3), /已生成 3 个产品的短链接/);
-  for (const reason of ['too_long', 'rate_limited', 'timeout', 'network', 'invalid_response', 'service_unavailable', 'unknown']) {
-    const url = 'https://example.test/share.html#d=jFake' + reason;
-    builder.info.set(url, { url, shortened: false, reason });
-    const message = context.shareLinkMessage(url, 3);
-    assert.match(message, /完整链接/); assert.match(message, /复制或打开/);
-    assert.doesNotMatch(message, /已生成 3 个产品的短链接|一键翻译|翻译失败/);
-  }
-  const unknown = context.shareLinkMessage('https://example.test/unknown', 2);
-  assert.match(unknown, /2 个产品的分享链接/); assert.doesNotMatch(unknown, /短链接/);
+test('actual shareLinkMessage reports the number of products in the generated direct link', () => {
+  const context = vm.createContext({}); vm.runInContext(messageSource, context);
+  const url = 'https://example.test/share.html#d=cDirect';
+  assert.equal(context.shareLinkMessage(url, 3), '已生成 3 个产品的直达链接');
+  assert.equal(context.shareLinkMessage(url), '已生成 1 个产品的直达链接');
 });
 
 test('a pending or failed regeneration never exposes the previous successful open URL', async () => {
@@ -389,6 +394,7 @@ test('a pending or failed regeneration never exposes the previous successful ope
   gate.reject(new Error('Fabricated generation failure')); await generating;
   assertSingleLinkUnavailable(card); assert.equal(card.querySelector('[data-generate-single]').disabled, false);
   assert.match(card.querySelector('[data-preview-status]').textContent, /Fabricated generation failure/);
+  assert.deepEqual(h.controls.copiedUrls, [h.controls.generatedUrls[0]]);
 });
 
 test('a generation keeps the clicked preview snapshot when background fields change and invalidates only subsequent changes', async () => {
@@ -416,6 +422,7 @@ test('generation from a replaced dataset cannot attach an old URL to the new sam
   const newCard = h.open(); await flush();
   gate.resolve(oldUrl); await generating;
   assertSingleLinkUnavailable(newCard);
+  assert.deepEqual(h.controls.copiedUrls, []);
 });
 
 test('the online viewer displays current foreign values and marks empty fields without falling back to original text', () => {

@@ -21,15 +21,20 @@ for(const [marker,name] of [['buyer-workspace','workbench-workspace.js'],['workb
   if(re.test(html))html=html.replace(re,()=>block.trimEnd());
   else html=html.replace(/<script>\s*\(function\(\)\{/,match=>block+match);
 }
-const githubShareTag=/<script data-buyer-github-share="v1">[\s\S]*?<\/script>/;
-const githubShare='<script data-buyer-github-share="v1">\n'+fs.readFileSync(path.join(root,'github-share.js'),'utf8')+'</script>';
-function embedGithubShare(document){
-  if(githubShareTag.test(document))return document.replace(githubShareTag,()=>githubShare);
-  return document.replace(/<script>(?=\s*(?:\(function\(\)\{|function e\(v\)))/,match=>githubShare+'\n'+match);
-}
-html=embedGithubShare(html.replace(/<script data-buyer-share-shortener="v1">[\s\S]*?<\/script>\r?\n/,''));
 const viewerFile=path.join(root,'share.html');
-const viewer=embedGithubShare(fs.readFileSync(viewerFile,'utf8'));
+let viewer=fs.readFileSync(viewerFile,'utf8');
+const githubShareTag=/<script data-buyer-github-share="v1">[\s\S]*?<\/script>/;
+const gzipTag=/<script data-buyer-share-gzip="fflate-0\.8\.3">[\s\S]*?<\/script>/;
+const codecTag=/<script data-buyer-share-codec="v1">[\s\S]*?<\/script>/;
+const githubShare='<script data-buyer-github-share="v1">\n'+fs.readFileSync(path.join(root,'github-share.js'),'utf8')+'</script>';
+const codec='<script data-buyer-share-codec="v1">\n'+fs.readFileSync(path.join(root,'product-share-codec.js'),'utf8')+'</script>';
+const gzip=viewer.match(gzipTag)?.[0];
+if(!gzip||!githubShareTag.test(viewer))throw Error('Embedded share reader missing');
+viewer=viewer.replace(githubShareTag,()=>githubShare);
+if(codecTag.test(viewer))viewer=viewer.replace(codecTag,()=>codec);
+else viewer=viewer.replace(githubShareTag,match=>match+'\n'+codec);
+for(const tag of [githubShareTag,gzipTag,codecTag])html=html.replace(new RegExp(tag.source+'\\r?\\n?'),'');
+html=html.replace(/<script>\s*\(function\(\)\{/,match=>gzip+'\n'+codec+'\n'+match);
 for(const match of viewer.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1],{filename:'share-viewer'});
 let count=0;for(const match of html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g))new vm.Script(match[1],{filename:'index-script-'+(++count)});
 fs.writeFileSync(file,html);

@@ -42,26 +42,25 @@ class Node {
 function harness() {
   const dialog = new Node(); dialog.hidden = true;
   const records = ['FAKE-A', 'FAKE-B', 'FAKE-C'].map(uid => ({ uid, raw: {} }));
-  const controls = { jobs: [], copied: [], opened: [], messages: [], timers: [] };
+  const controls = { jobs: [], copied: [], opened: [], messages: [], timers: [], clipboardAllowed: true };
   const builder = async (entries, options = {}) => {
     const gate = deferred(); controls.jobs.push({ ...gate, records: entries, options }); return gate.promise;
   };
-  builder.info = new Map();
   const context = vm.createContext({
     rows: records, historyMode: false, canEditWorkspace: () => true,
     $: id => id === 'shareLinkDialog' ? dialog : null,
     document: { getElementById: id => id === 'shareLinkDialog' ? dialog : null, body: { contains: () => true } },
     buildOnlineShareLink: builder,
     shareLinkMessage(url, count = 1) {
-      controls.messages.push({ url, count }); const info = builder.info.get(url);
-      return info?.direct ? '已生成 ' + count + ' 个产品的直达链接' : '已生成 ' + count + ' 个产品的分享链接';
+      controls.messages.push({ url, count });
+      return '已生成 ' + count + ' 个产品的直达链接';
     },
-    copyShareText: async url => { controls.copied.push(url); return true; },
+    copyShareText: async url => { controls.copied.push(url); return controls.clipboardAllowed; },
     window: { open: (...args) => controls.opened.push(args) },
     setTimeout: callback => controls.timers.push(callback), AbortController, URL, console
   });
   vm.runInContext(source, context);
-  const resolve = (index, url) => { builder.info.set(url, { url, shortened:false, direct:true, directUrl:url }); controls.jobs[index].resolve(url); };
+  const resolve = (index, url) => { controls.jobs[index].resolve(url); };
   return { dialog, records, controls, context, resolve, show: entries => context.showShareLinkDialog(entries) };
 }
 
@@ -73,15 +72,33 @@ function assertNoResult(dialog) {
   assert.equal(dialog.querySelector('[data-direct-share]'),null);
 }
 
-test('bulk primary copy and open retain the exact direct URL without duplicate controls',async()=>{
+test('bulk generation copies the exact direct URL once and retains its primary controls',async()=>{
   const h=harness(),pending=h.show(h.records.slice(0,2));await flush();
   const full='https://example.test/share.html#d=j'+Buffer.from(JSON.stringify({v:1,products:h.records.slice(0,2).map(r=>({id:r.uid,modelChinese:'  5pcs / 蓝色  '}))})).toString('base64url');h.resolve(0,full);await pending;
   const controls=h.dialog.querySelector('.share-link-controls'),open=controls.querySelector('[data-open-share]'),copy=controls.querySelector('[data-copy-share]');
   assert.equal(controls.hidden,false);assert.equal(controls.querySelector('input').value,full);
   assert.equal(h.dialog.querySelector('[data-direct-share]'),null);assert.doesNotMatch(h.dialog.innerHTML,/is\.gd|短链接|data-copy-direct/);
   const decoded=JSON.parse(Buffer.from(new URL(full).hash.slice(4),'base64url'));assert.deepEqual(decoded.products.map(p=>p.id),['FAKE-A','FAKE-B']);assert.equal(decoded.products[1].modelChinese,'  5pcs / 蓝色  ');
-  await copy.onclick({currentTarget:copy});assert.deepEqual(h.controls.copied,[full]);
+  assert.deepEqual(h.controls.copied,[full]);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent,/已复制/);
+  await copy.onclick({currentTarget:copy});assert.deepEqual(h.controls.copied,[full,full]);
   open.onclick();assert.equal(h.controls.opened[0][0],full);
+});
+
+test('bulk share retains the generated link when the browser blocks automatic copy', async () => {
+  const h = harness(); h.controls.clipboardAllowed = false;
+  const pending = h.show(h.records); await flush();
+  const url = 'https://example.test/share.html#d=cFakeCompleteProducts'; h.resolve(0, url); await pending;
+  const controls = h.dialog.querySelector('.share-link-controls');
+  const copy = controls.querySelector('[data-copy-share]');
+  assert.deepEqual(h.controls.copied, [url]);
+  assert.doesNotMatch(h.dialog.querySelector('[data-share-status]').textContent, /已复制|链接生成失败/);
+  assert.equal(controls.hidden, false);
+  assert.equal(controls.querySelector('input').value, url);
+  h.controls.clipboardAllowed = true;
+  await copy.onclick({ currentTarget: copy });
+  assert.equal(copy.textContent, '已复制');
+  assert.deepEqual(h.controls.copied, [url, url]);
 });
 
 test('bulk direct handlers cannot copy or navigate after close, replacement or dataset change',async()=>{
@@ -92,7 +109,7 @@ test('bulk direct handlers cannot copy or navigate after close, replacement or d
     if(action==='dataset')h.context.rows=[...h.records];
     if(action==='replacement'){next=h.show(h.records.slice(0,1));await flush();assertNoResult(h.dialog)}
     await copy.onclick({currentTarget:copy});open.onclick();
-    assert.deepEqual(h.controls.copied,[],action);assert.deepEqual(h.controls.opened,[],action);
+    assert.deepEqual(h.controls.copied,['https://example.test/share.html#d=jOldFull'],action);assert.deepEqual(h.controls.opened,[],action);
     if(next){h.resolve(1,'https://example.test/share.html#d=jNewFull');await next}
   }
 });
@@ -108,7 +125,7 @@ test('bulk sharing keeps every selected record and copies/opens the exact direct
   assert.deepEqual(h.controls.messages.at(-1), { url, count: 3 });
   await controls.querySelector('[data-copy-share]').onclick({ currentTarget: controls.querySelector('[data-copy-share]') });
   controls.querySelector('[data-open-share]').onclick();
-  assert.deepEqual(h.controls.copied, [url]); assert.equal(h.controls.opened[0][0], url); assert.equal(h.controls.opened[0][1], '_blank');
+  assert.deepEqual(h.controls.copied, [url, url]); assert.equal(h.controls.opened[0][0], url); assert.equal(h.controls.opened[0][1], '_blank');
 });
 
 test('bulk direct sharing is usable in the primary controls and has no duplicate fallback row', async () => {
@@ -125,9 +142,11 @@ test('an earlier generation cannot overwrite a newer pending or completed dialog
   const second = h.show(h.records.slice(1)); await flush();
   h.resolve(0, 'https://is.gd/FakeOld'); await first;
   assertNoResult(h.dialog);
+  assert.deepEqual(h.controls.copied, []);
   const url = 'https://is.gd/FakeNew'; h.resolve(1, url); await second;
   assert.equal(h.dialog.querySelector('.share-link-controls').querySelector('input').value, url);
   assert.match(h.dialog.querySelector('[data-share-status]').textContent, /2 个产品/);
+  assert.deepEqual(h.controls.copied, [url]);
 });
 
 test('late errors from an old request cannot overwrite a newer successful link', async () => {
@@ -152,6 +171,7 @@ for (const close of ['button', 'backdrop', 'hidden']) {
       await pending;
       assert.equal(h.dialog.hidden, true); assertNoResult(h.dialog);
       assert.equal(h.dialog.querySelector('[data-share-status]').textContent, status);
+      assert.deepEqual(h.controls.copied, []);
     }
   });
 }
@@ -175,6 +195,7 @@ test('builder receives a current-request guard that turns false on close or repl
   h.dialog.querySelector('[data-share-close]').onclick(); assert.equal(newCurrent(), false);
   h.resolve(0, 'https://is.gd/FakeOldGuard'); h.resolve(1, 'https://is.gd/FakeNewGuard'); await Promise.all([first, second]);
   assertNoResult(h.dialog); assert.equal(h.dialog.hidden, true);
+  assert.deepEqual(h.controls.copied, []);
 });
 
 test('obsolete copy/open handlers cannot act after a newer request or dialog close', async () => {
@@ -183,11 +204,11 @@ test('obsolete copy/open handlers cannot act after a newer request or dialog clo
   const oldCopy = oldCopyButton.onclick, oldOpen = oldControls.querySelector('[data-open-share]').onclick;
   const next = h.show(h.records.slice(0, 1)); await flush();
   await oldCopy({ currentTarget: oldCopyButton }); oldOpen();
-  assert.deepEqual(h.controls.copied, []); assert.deepEqual(h.controls.opened, []);
+  assert.deepEqual(h.controls.copied, ['https://is.gd/FakeObsolete']); assert.deepEqual(h.controls.opened, []);
   h.resolve(1, 'https://is.gd/FakeCurrent'); await next;
   const currentControls = h.dialog.querySelector('.share-link-controls'), copyButton = currentControls.querySelector('[data-copy-share]');
   const copy = copyButton.onclick, open = currentControls.querySelector('[data-open-share]').onclick;
   h.dialog.querySelector('[data-share-close]').onclick();
   await copy({ currentTarget: copyButton }); open();
-  assert.deepEqual(h.controls.copied, []); assert.deepEqual(h.controls.opened, []);
+  assert.deepEqual(h.controls.copied, ['https://is.gd/FakeObsolete', 'https://is.gd/FakeCurrent']); assert.deepEqual(h.controls.opened, []);
 });
