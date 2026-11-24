@@ -1,0 +1,58 @@
+{
+  "productCount": 8,
+  "imageCount": 8,
+  "failedImageCount": 0,
+  "imageBytes": 2387797,
+  "htmlBytes": 11928,
+  "offlineHtmlBytes": 3195617,
+  "assets": [
+    {
+      "index": 1,
+      "file": "assets/model-01.jpg",
+      "bytes": 201942,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 2,
+      "file": "assets/model-02.jpg",
+      "bytes": 701433,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 3,
+      "file": "assets/model-03.jpg",
+      "bytes": 571660,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 4,
+      "file": "assets/model-04.jpg",
+      "bytes": 197429,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 5,
+      "file": "assets/model-05.jpg",
+      "bytes": 168993,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 6,
+      "file": "assets/model-06.jpg",
+      "bytes": 201630,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 7,
+      "file": "assets/model-07.jpg",
+      "bytes": 62246,
+      "type": "image/jpeg"
+    },
+    {
+      "index": 8,
+      "file": "assets/model-08.jpg",
+      "bytes": 282464,
+      "type": "image/jpeg"
+    }
+  ]
+}

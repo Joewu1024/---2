@@ -124,6 +124,7 @@ function harness(options = {}) {
     crypto: { randomUUID: () => 'fabricated-test-id' },
     transport
   });
+  if (options.storageGetter) Object.defineProperty(context, 'localStorage', { configurable: true, get: options.storageGetter });
   const extracted = [
     between('// product-group-names:start','// product-group-names:end'),
     lineStarting('const H='),
@@ -522,6 +523,25 @@ test('the actual share builder submits only selected cards and reports a genuine
   assert.equal(longUrl.search,'');assert.deepEqual(decodeFabricatedShareUrl(longUrl).products.map(card=>card.id),[chosen.uid]);
   const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,true);
   assert.match(h.api.shareLinkMessage(result,1),/短链/);
+});
+
+test('the actual share builder remains usable when reading localStorage throws a SecurityError',async()=>{
+  let denyStorage=false,deniedReads=0;
+  const h=harness({storageGetter(){
+    if(!denyStorage)return {getItem:()=>null};
+    deniedReads++;const error=new Error('Fabricated browser storage denial');error.name='SecurityError';throw error;
+  }});
+  await h.api.ready;
+  const chosen=completedShareRecord(h,'STORAGE-DENIED-SELECTED'),other=completedShareRecord(h,'STORAGE-DENIED-PRIVATE');
+  h.api.setRows([chosen,other]);h.api.setPaused(true);denyStorage=true;
+  const result=await h.api.buildOnlineShareLink([chosen]);
+  assert.ok(deniedReads>0,'exercise the browser getter rather than a throwing getItem mock');
+  assert.equal(h.controls.shortenerCalls.length,1);
+  assert.equal(result,h.controls.shortenerCalls[0]);
+  assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
+  assert.equal(h.api.buildOnlineShareLink.info.get(result).shortened,false);
+  assert.match(h.api.shareLinkMessage(result,1),/完整链接/);
+  assert.equal(h.transport.mock.callCount(),0);
 });
 
 for(const reason of ['请求超时','请求过于频繁，请稍后重试'])test('shortener failure keeps the same-origin full URL and explicitly labels it as complete: '+reason,async()=>{

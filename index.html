@@ -3287,7 +3287,8 @@ async function buildOnlineShareLink(records,options={}) {
 function getShareShortener(){
   if(!getShareShortener.client){
     const origin=new URL(location.href).origin,key=typeof workspace!=='undefined'?workspace.storageKey('pool-share-short-v1'):'pool-share-short-v1';
-    getShareShortener.client=typeof BuyerShareShortener!=='undefined'?BuyerShareShortener.create({fetchImpl:fetch,storage:localStorage,storageKey:key,allowedOrigin:origin}):{shorten:async url=>({url,shortened:false,reason:'service_unavailable'})};
+    let storage=null;try{storage=localStorage}catch(error){}
+    getShareShortener.client=typeof BuyerShareShortener!=='undefined'?BuyerShareShortener.create({fetchImpl:fetch,storage,storageKey:key,allowedOrigin:origin}):{shorten:async url=>({url,shortened:false,reason:'service_unavailable'})};
   }
   return getShareShortener.client;
 }
