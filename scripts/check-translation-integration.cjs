@@ -542,7 +542,7 @@ test('a long single record is rejected without offering a file fallback',async()
 
 function shareLimitSelectionHarness(){
   const records=Array.from({length:50},(_,i)=>({uid:'SELECTION-'+i}));
-  const selected=new Set(),nodes=new Map(),controls={writable:true,opens:0,restoredFocus:0};
+  const selected=new Set(),nodes=new Map(),controls={writable:true,opens:0,restoredFocus:0,generations:[],toasts:[]};
   for(const id of ['selectVisible','bulk','selText','merge','shareSelected'])nodes.set(id,{});
   const classes=new Set();
   nodes.set('shareLimitHint',{textContent:'',classList:{toggle(name,on){on?classes.add(name):classes.delete(name)}}});
@@ -557,7 +557,8 @@ function shareLimitSelectionHarness(){
   };
   nodes.set('shareLinkDialog',dialog);
   const context=vm.createContext({
-    selected,visibleRows:records,historyMode:false,document,
+    selected,rows:records,visibleRows:records,historyMode:false,document,
+    sorted:list=>list,showShareLinkDialog:list=>controls.generations.push(list),toast:message=>controls.toasts.push(message),
     canEditWorkspace:()=>controls.writable,$:id=>nodes.get(id),
     refreshGroupSelectionCounts:()=>({counts:new Map(),members:new Map()}),groupSelectionIndex:()=>({})
   });
@@ -566,10 +567,10 @@ function shareLimitSelectionHarness(){
   return {context,selected,nodes,controls,classes,dialog,document,previous,update};
 }
 
-test('the selection toolbar prominently explains the 11-model limit and restores sharing after deselection',()=>{
+test('the selection toolbar explains the 11-model limit without preventing a click for guidance',()=>{
   assert.match(documentHtml,/id="shareLimitHint"[^>]*>单次最多分享 11 个 Model/);
   const h=shareLimitSelectionHarness();h.update(12);
-  assert.equal(h.nodes.get('shareSelected').disabled,true);
+  assert.equal(h.nodes.get('shareSelected').disabled,false);
   assert.match(h.nodes.get('shareSelected').title,/每次最多.*11.*Model/);
   assert.match(h.nodes.get('shareLimitHint').textContent,/已选 12 个，请减少 1 个/);
   assert.ok(h.classes.has('is-over-limit'));
@@ -580,41 +581,57 @@ test('the selection toolbar prominently explains the 11-model limit and restores
   assert.equal(h.dialog.hidden,true);
 });
 
-test('crossing the share limit opens once without reopening on rerenders or changes within the over-limit range',()=>{
+test('selection changes and rerenders never open a share-limit dialog',()=>{
   const h=shareLimitSelectionHarness();h.update(11);assert.equal(h.controls.opens,0);
-  h.update(12);assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,false);
-  assert.match(h.dialog.markup,/role="alertdialog"/);
-  h.dialog.querySelector('[data-close-share-limit]').onclick();
-  h.update();h.update(15);h.update(13);
-  assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,true);
-  h.update(11);h.update(12);assert.equal(h.controls.opens,2);assert.equal(h.dialog.hidden,false);
+  h.update(12);h.update();h.update(50);h.update(15);h.update(13);h.update(11);h.update(12);
+  assert.equal(h.controls.opens,0);assert.equal(h.dialog.hidden,true);
+  assert.equal(h.controls.generations.length,0);
 });
 
-test('selecting 50 models explains the 39-model excess while preserving the entire selection',()=>{
+test('clicking share with 50 models explains the 39-model excess without generating or changing the selection',()=>{
   const h=shareLimitSelectionHarness();h.update(50);
   assert.match(h.nodes.get('shareLimitHint').textContent,/已选 50 个，请减少 39 个/);
+  assert.equal(h.controls.opens,0);
+  h.context.shareSelectedProducts();
+  assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,false);
+  assert.match(h.dialog.markup,/role="alertdialog"/);
   assert.equal(h.dialog.querySelector('[data-share-limit-message]').textContent,'当前已选 50 个，请至少取消 39 个后再生成分享链接。');
   assert.equal(h.selected.size,50);
+  assert.equal(h.controls.generations.length,0);
+  h.dialog.querySelector('[data-close-share-limit]').onclick();
+  h.update();assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,true);
+  h.context.shareSelectedProducts();assert.equal(h.controls.opens,2);assert.equal(h.dialog.hidden,false);
   h.update(49);
-  assert.equal(h.controls.opens,1);
+  assert.equal(h.controls.opens,2);
   assert.match(h.dialog.querySelector('[data-share-limit-message]').textContent,/当前已选 49 个，请至少取消 38 个/);
   assert.equal(h.selected.size,49);
+});
+
+test('clicking share with 11 models generates the complete selected list once',()=>{
+  assert.match(documentHtml,/\$\("shareSelected"\)\.onclick=shareSelectedProducts/);
+  const h=shareLimitSelectionHarness();h.update(11);
+  h.context.shareSelectedProducts();
+  assert.equal(h.controls.opens,0);assert.equal(h.controls.generations.length,1);
+  assert.deepEqual(Array.from(h.controls.generations[0],record=>record.uid),Array.from(h.selected));
+  assert.equal(h.selected.size,11);
 });
 
 test('historical or read-only selections do not open a share-limit dialog and close one already open',()=>{
   for(const mode of ['history','readonly']){
     const h=shareLimitSelectionHarness();
     if(mode==='history')h.context.historyMode=true;else h.controls.writable=false;
-    h.update(50);assert.equal(h.controls.opens,0,mode);assert.equal(h.dialog.hidden,true,mode);
+    h.update(50);h.context.shareSelectedProducts();
+    assert.equal(h.controls.opens,0,mode);assert.equal(h.dialog.hidden,true,mode);
+    assert.equal(h.controls.generations.length,0,mode);assert.equal(h.nodes.get('shareSelected').disabled,true,mode);
     if(mode==='history')h.context.historyMode=false;else h.controls.writable=true;
-    h.update(11);h.update(12);assert.equal(h.dialog.hidden,false,mode);
+    h.update(12);h.context.shareSelectedProducts();assert.equal(h.dialog.hidden,false,mode);
     if(mode==='history')h.context.historyMode=true;else h.controls.writable=false;
     h.update();assert.equal(h.dialog.hidden,true,mode);
   }
 });
 
 test('the share-limit dialog traps Tab and restores the prior focus when Escape closes it',()=>{
-  const h=shareLimitSelectionHarness();h.update(12);
+  const h=shareLimitSelectionHarness();h.update(12);h.context.shareSelectedProducts();
   const button=h.dialog.querySelector('[data-close-share-limit]'),section=h.dialog.querySelector('section');
   assert.equal(h.document.activeElement,button);
   let prevented=0,stopped=0;
