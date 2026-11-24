@@ -229,11 +229,10 @@ function completedShareRecord(h,id){
   row.userEditedFields=[h.api.H[10],h.api.H[12]];return row;
 }
 function decodeFabricatedShareUrl(url){
-  return {v:1,products:url.split('\n').flatMap(link=>{
-    const query=new URL(link).searchParams.get('d');
-    assert.match(query,/^c[A-Za-z0-9_-]+$/);
-    return BuyerShareCodec.decode(query).products;
-  })};
+  assert.doesNotMatch(url,/[\r\n]/);
+  const query=new URL(url).searchParams.get('d');
+  assert.match(query,/^c[A-Za-z0-9_-]+$/);
+  return BuyerShareCodec.decode(query);
 }
 
 function editor(h, r, field = h.api.H[10]) {

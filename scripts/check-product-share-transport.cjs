@@ -12,7 +12,7 @@ const compact = codec.encode(products);
 const payload = value => ({ kind: 'payload', value });
 const archiveKey = 'a'.repeat(22);
 
-test('new links carry the exact compressed snapshot in a short query URL', () => {
+test('new links carry the exact compressed snapshot in a query URL', () => {
   const url = transport.url(base + 'index.html?workspace=hidden#old', compact);
   assert.equal(url, base + 's.html?d=' + compact);
   assert.equal(new URL(url).hash, '');
@@ -60,26 +60,47 @@ test('distinguishes missing data, detectable truncation, and invalid input', () 
   assert.throws(() => transport.read({search:'?d=c' + 'A'.repeat(2000000)}), { code:'too_large' });
 });
 
-test('fifty products produce bounded links with exact ordered coverage', () => {
-  const batch = Array.from({length:50}, (_, i) => ({
-    id: String(10000 + i),
-    modelChinese: '示例型号 ' + i,
-    model: 'https://example.test/' + createHash('sha256').update(String(i)).digest('hex') + '.png'
-  }));
-  const links = transport.splitProducts(base, batch, codec.encode);
-  assert.ok(links.length > 1 && links.length < batch.length);
-  assert.ok(links.every(link => link.length <= 1800));
-  const restored = links.flatMap(link => codec.decode(transport.read(link).value).products);
+test('fifty products fit one forwarded URL with every product in order', () => {
+  const batch = Array.from({length:50}, (_, i) => {
+    const image = createHash('sha256').update(String(i)).digest('hex');
+    const details = createHash('sha256').update('title:' + i).digest('hex');
+    const shopee = 'https://shopee.com.my/product/100005/' + parseInt(details.slice(-12), 16);
+    return {
+      id: String(10000 + i),
+      itemChinese: '示例产品 ' + i + ' ' + details.slice(0, 53),
+      modelChinese: '示例型号 ' + i,
+      model: 'https://example.test/' + image + '.png',
+      category: '家用电器',
+      target: String(i + 1),
+      shopee,
+      shopeeUrl: shopee
+    };
+  });
+  const url = transport.singleProductUrl(base, batch, codec.encode);
+  assert.ok(url.length >= 6500 && url.length <= 7200, 'fixture must exercise a representative long link');
+  assert.equal(url.includes('\n'), false);
+  const forwarded = new URL(url);
+  forwarded.searchParams.append('from', 'singlemessage');
+  const restored = codec.decode(transport.read(forwarded).value).products;
+  assert.equal(restored.length, 50);
   assert.deepEqual(restored, codec.decode(codec.encode(batch)).products);
 });
 
-test('singletons that cannot fit produce a full-snapshot fallback, never partial links', () => {
+test('single-link budget includes the complete absolute URL', () => {
+  const nestedBase = base + 'qa/';
+  const prefixLength = (nestedBase + 's.html?d=c').length;
+  const withLength = length => () => 'c' + 'A'.repeat(length - prefixLength);
+  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(7600)).length, 7600);
+  assert.equal(transport.singleProductUrl(nestedBase, products, withLength(7601)), '');
+});
+
+test('oversized selections produce a full-snapshot fallback', () => {
   const impossible = { id:'oversized' };
   const encode = batch => {
     if (batch.includes(impossible)) throw new Error('分享数据过大，请分批生成分享链接');
     return codec.encode(batch);
   };
-  assert.deepEqual(transport.splitProducts(base, [...products, impossible], encode), []);
-  assert.deepEqual(transport.splitProducts(base, products, codec.encode, 25), []);
-  assert.throws(() => transport.splitProducts(base, products, () => { throw new Error('BOOM'); }), /BOOM/);
+  assert.equal(transport.singleProductUrl(base, [...products, impossible], encode), '');
+  assert.equal(transport.singleProductUrl(base, products, codec.encode, 25), '');
+  assert.throws(() => transport.singleProductUrl(base, products, () => { throw new Error('BOOM'); }), /BOOM/);
 });

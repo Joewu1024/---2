@@ -461,45 +461,18 @@ SOFTWARE.
     return target.href;
   }
 
-  function splitProducts(pageHref, products, encode, maxLength = 1800) {
-    const links = [];
-    function fittingLink(start, end) {
-      try {
-        const link = url(pageHref, encode(products.slice(start, end)));
-        return link.length <= maxLength ? link : '';
-      } catch (error) {
-        if (/^分享数据过大/.test(error.message)) return '';
-        throw error;
-      }
+  // Leave headroom below the host's request URL limit for forwarding parameters.
+  function singleProductUrl(pageHref, products, encode, maxLength = 7600) {
+    try {
+      const link = url(pageHref, encode(products));
+      return link.length <= maxLength ? link : '';
+    } catch (error) {
+      if (/^分享数据过大/.test(error.message)) return '';
+      throw error;
     }
-
-    for (let start = 0; start < products.length;) {
-      let end = start + 1;
-      let link = fittingLink(start, end);
-      if (!link) return [];
-
-      // Grow quickly until the next group is too long, then tighten that range.
-      let limit = products.length + 1;
-      for (let size = 2; end < products.length; size *= 2) {
-        const candidate = Math.min(start + size, products.length);
-        const nextLink = fittingLink(start, candidate);
-        if (!nextLink) { limit = candidate; break; }
-        end = candidate;
-        link = nextLink;
-      }
-      while (limit - end > 1) {
-        const candidate = Math.floor((end + limit) / 2);
-        const nextLink = fittingLink(start, candidate);
-        if (nextLink) { end = candidate; link = nextLink; }
-        else limit = candidate;
-      }
-      links.push(link);
-      start = end;
-    }
-    return links;
   }
 
-  return { read, url, splitProducts };
+  return { read, url, singleProductUrl };
 });
 </script>
 <script>

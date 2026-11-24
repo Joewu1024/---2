@@ -2988,45 +2988,18 @@ SOFTWARE.
     return target.href;
   }
 
-  function splitProducts(pageHref, products, encode, maxLength = 1800) {
-    const links = [];
-    function fittingLink(start, end) {
-      try {
-        const link = url(pageHref, encode(products.slice(start, end)));
-        return link.length <= maxLength ? link : '';
-      } catch (error) {
-        if (/^分享数据过大/.test(error.message)) return '';
-        throw error;
-      }
+  // Leave headroom below the host's request URL limit for forwarding parameters.
+  function singleProductUrl(pageHref, products, encode, maxLength = 7600) {
+    try {
+      const link = url(pageHref, encode(products));
+      return link.length <= maxLength ? link : '';
+    } catch (error) {
+      if (/^分享数据过大/.test(error.message)) return '';
+      throw error;
     }
-
-    for (let start = 0; start < products.length;) {
-      let end = start + 1;
-      let link = fittingLink(start, end);
-      if (!link) return [];
-
-      // Grow quickly until the next group is too long, then tighten that range.
-      let limit = products.length + 1;
-      for (let size = 2; end < products.length; size *= 2) {
-        const candidate = Math.min(start + size, products.length);
-        const nextLink = fittingLink(start, candidate);
-        if (!nextLink) { limit = candidate; break; }
-        end = candidate;
-        link = nextLink;
-      }
-      while (limit - end > 1) {
-        const candidate = Math.floor((end + limit) / 2);
-        const nextLink = fittingLink(start, candidate);
-        if (nextLink) { end = candidate; link = nextLink; }
-        else limit = candidate;
-      }
-      links.push(link);
-      start = end;
-    }
-    return links;
   }
 
-  return { read, url, splitProducts };
+  return { read, url, singleProductUrl };
 });
 </script>
 <script>
@@ -3509,9 +3482,9 @@ async function buildOnlineShareLink(records,options={}) {
   // Capture edits at click time, before any image preparation.
   const products=JSON.parse(JSON.stringify(list.map(productDetail)));
   for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
-  const links=BuyerShareTransport.splitProducts(location.href,products,BuyerShareCodec.encode);
-  if(links.length)return links.join('\n');
-  const error=new Error('商品内容较多，可下载完整产品卡发给对方');
+  const link=BuyerShareTransport.singleProductUrl(location.href,products,BuyerShareCodec.encode);
+  if(link)return link;
+  const error=new Error('全部产品超出单个网址可承载的大小，可下载一份完整产品卡');
   error.shareProducts=products;
   throw error;
 }
@@ -3536,24 +3509,17 @@ function downloadShareFile(products) {
 async function showShareLinkDialog(records) {
   const dialog=$('shareLinkDialog'),dataset=rows,list=Array.from(records),request=showShareLinkDialog.serial=(showShareLinkDialog.serial||0)+1;
   dialog.shareRequest=request;dialog.hidden=false;
-  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p data-share-parts hidden></p><button type="button" class="btn primary" data-share-file hidden>下载产品卡</button></section>';
+  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><button type="button" class="btn primary" data-share-file hidden>下载产品卡</button></section>';
   const current=()=>rows===dataset&&!dialog.hidden&&dialog.shareRequest===request;
   const close=()=>{if(dialog.shareRequest===request){dialog.hidden=true;dialog.shareRequest=null}};
   dialog.querySelector('[data-share-close]').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
   try{
     const link=await buildOnlineShareLink(list,{isCurrent:current});if(!current())return;
     const status=dialog.querySelector('[data-share-status]'),controls=dialog.querySelector('.share-link-controls');
-    const links=link.split('\n'),multiple=links.length>1,input=controls.querySelector('input');
-    const copy=controls.querySelector('[data-copy-share]'),open=controls.querySelector('[data-open-share]'),copyLabel=multiple?'复制全部链接':'复制链接';
-    status.textContent=multiple?'已为 '+list.length+' 个产品生成 '+links.length+' 条链接，转发时请发送全部地址':shareLinkMessage(link,list.length);
-    input.value=links[0];input.hidden=multiple;open.hidden=multiple;copy.textContent=copyLabel;controls.hidden=false;
-    if(multiple){
-      const parts=dialog.querySelector('[data-share-parts]');
-      parts.innerHTML=links.map((url,i)=>'<a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">打开第 '+(i+1)+' 条</a>').join(' ');
-      parts.hidden=false;
-    }
-    copy.onclick=async()=>{if(!current())return;const ok=await copyShareText(link);if(current()){copy.textContent=ok?'已复制':'复制失败';setTimeout(()=>{if(current())copy.textContent=copyLabel},1500)}};
-    open.onclick=()=>{if(current())window.open(links[0],'_blank','noopener,noreferrer')};
+    status.textContent=shareLinkMessage(link,list.length);controls.querySelector('input').value=link;controls.hidden=false;
+    const copy=controls.querySelector('[data-copy-share]');
+    copy.onclick=async()=>{if(!current())return;const ok=await copyShareText(link);if(current()){copy.textContent=ok?'已复制':'复制失败';setTimeout(()=>{if(current())copy.textContent='复制链接'},1500)}};
+    controls.querySelector('[data-open-share]').onclick=()=>{if(current())window.open(link,'_blank','noopener,noreferrer')};
     const copied=await copyShareText(link);
     if(current()&&copied)status.textContent+=' · 已复制';
   }catch(error){

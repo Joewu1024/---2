@@ -29,12 +29,12 @@ class Node {
   set innerHTML(value) {
     this._html = value; this.nodes = new Map();
     if (!String(value).includes('data-share-close')) return;
-    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node(), parts = new Node(), file = new Node();
+    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node(), file = new Node();
     controls.hidden = true;
-    parts.hidden = file.hidden = true;
+    file.hidden = true;
     status.textContent = '正在整理产品信息和中文类目…';
     controls.nodes = new Map([['input', input], ['[data-copy-share]', copy], ['[data-open-share]', open]]);
-    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls], ['[data-share-parts]', parts], ['[data-share-file]', file]]);
+    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls], ['[data-share-file]', file]]);
     modal.nodes = this.nodes; this.firstElementChild = modal;
   }
   get innerHTML() { return this._html || ''; }
@@ -57,7 +57,6 @@ function harness() {
       return '已生成 ' + count + ' 个产品的直达链接';
     },
     copyShareText: async url => { controls.copied.push(url); return controls.clipboardAllowed; },
-    esc: value => value,
     downloadShareFile: products => controls.downloaded.push(products),
     window: { open: (...args) => controls.opened.push(args) },
     setTimeout: callback => controls.timers.push(callback), AbortController, URL, console
@@ -67,20 +66,22 @@ function harness() {
   return { dialog, records, controls, context, resolve, show: entries => context.showShareLinkDialog(entries) };
 }
 
-test('a split share copies every URL on a separate line and exposes every open link', async () => {
+test('the bulk dialog shows, copies and opens one long URL for the selection', async () => {
   const h = harness();
   const work = h.show(h.records);
-  const urls = ['https://example.test/s.html?d=cA', 'https://example.test/s.html?d=cB'];
-  h.resolve(0, urls.join('\n'));
+  const url = 'https://example.test/s.html?d=c' + 'A'.repeat(6700);
+  h.resolve(0, url);
   await work;
-  assert.deepEqual(h.controls.copied, [urls.join('\n')]);
-  const parts = h.dialog.querySelector('[data-share-parts]');
-  assert.equal(parts.hidden, false);
-  for (const url of urls) assert.ok(parts.innerHTML.includes(url));
-  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品生成 2 条链接/);
+  const controls = h.dialog.querySelector('.share-link-controls');
+  assert.equal(controls.querySelector('input').value, url);
+  assert.doesNotMatch(h.dialog.innerHTML, /data-share-parts|复制全部链接|打开第/);
+  assert.deepEqual(h.controls.copied, [url]);
+  controls.querySelector('[data-open-share]').onclick();
+  assert.deepEqual(h.controls.opened.map(args => args[0]), [url]);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的直达链接/);
 });
 
-test('when an item cannot fit, only the complete product file is offered', async () => {
+test('when the selection cannot fit, only the complete product file is offered', async () => {
   const h = harness(), work = h.show(h.records);
   const products = [{id:'demo', model:'data:image/png;base64,AAAA'}];
   h.controls.jobs[0].reject(Object.assign(new Error('商品内容较多，可下载完整产品卡发给对方'),{shareProducts:products}));
