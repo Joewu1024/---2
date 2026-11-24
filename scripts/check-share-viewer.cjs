@@ -6,6 +6,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 const zlib = require('node:zlib');
 const crypto = require('node:crypto');
+const githubShare = require('../github-share.js');
 
 const root = path.resolve(__dirname, '..');
 const html = fs.readFileSync(path.join(root, 'share.html'), 'utf8');
@@ -27,7 +28,8 @@ function viewer(options = {}) {
     atob: text => Buffer.from(text, 'base64').toString('latin1'),
     location: { search: options.search || '', hash: options.hash || '' },
     document: { title: '', getElementById: id => elements[id] },
-    fetch() { throw new Error('Viewer must not fetch'); }
+    fetch: options.fetch || (() => { throw new Error('Complete share URLs must not fetch'); }),
+    crypto: crypto.webcrypto, setTimeout, clearTimeout, AbortController
   };
   if (options.textDecoder !== false) sandbox.TextDecoder = TextDecoder;
   if (options.Blob) sandbox.Blob = options.Blob;
@@ -63,9 +65,44 @@ test('fixed official vendor is embedded exactly, with MIT and SHA-256 provenance
   const embedded = scripts.find(script => script[1].includes('data-buyer-share-gzip="fflate-0.8.3"'));
   assert.ok(embedded && embedded[2].includes(fs.readFileSync(path.join(root, 'vendor/fflate-0.8.3.min.js'), 'utf8')));
   assert.ok(embedded[2].includes('Permission is hereby granted, free of charge'));
-  assert.equal(scripts.length, 2);
+  assert.equal(scripts.length, 3);
+  const sealed = scripts.find(script => script[1].includes('data-buyer-github-share="v1"'));
+  assert.equal(sealed[2].trim(), fs.readFileSync(path.join(root, 'github-share.js'), 'utf8').trim());
   assert.ok(!/<script\b[^>]*\bsrc\s*=/i.test(html));
-  assert.ok(!/\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\s*[.(]/.test(scripts[1][2]));
+  assert.ok(!/\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\s*[.(]/.test(scripts.at(-1)[2]));
+});
+
+test('one product and a batch have the same length short URL and render from a public encrypted file', async () => {
+  for (const count of [1, 11]) {
+    const products = Array.from({ length: count }, (_, i) => ({ ...product, id: 'DEMO-' + i }));
+    const archived = await githubShare.seal(token({ v: 1, products }), crypto.webcrypto);
+    assert.equal(archived.key.length, 22);
+    assert.equal(archived.id.length, 64);
+    assert.ok(!archived.content.includes(archived.key) && !archived.content.includes(token({ v: 1, products })));
+    let reads = 0;
+    const { context, elements } = viewer({
+      hash: '#s=' + archived.key,
+      fetch(url, options) {
+        reads++;
+        assert.equal(url, 'https://joewu1024.github.io/---2/p/data/' + archived.id + '.txt');
+        assert.equal(options.referrerPolicy, 'no-referrer');
+        return { ok: true, text: async () => archived.content };
+      }
+    });
+    assert.equal(await context.load(), count);
+    assert.equal(reads, 1);
+    assert.match(elements.cards.innerHTML, /示例风扇 🌿 – Bộ mới/);
+    assert.match(elements.cards.innerHTML, /5pcs/);
+    assert.equal((elements.cards.innerHTML.match(/class="product"/g) || []).length, count);
+  }
+});
+
+test('bad or missing short snapshot fails with a readable error', async () => {
+  const archived = await githubShare.seal(token(), crypto.webcrypto);
+  const missing = viewer({ hash: '#s=' + archived.key, fetch: async () => ({ ok: false, status: 404 }) });
+  await assert.rejects(missing.context.load(), /没有找到这份分享/);
+  const corrupted = viewer({ hash: '#s=' + archived.key, fetch: async () => ({ ok: true, text: async () => archived.content + 'abc' }) });
+  await assert.rejects(corrupted.context.load(), /无法读取/);
 });
 
 test('gzip works with DecompressionStream, Blob and TextDecoder all absent', async () => {
@@ -232,7 +269,7 @@ test('forged small ISIZE cannot bypass the streaming expansion limit', async () 
 
 test('boot error rendering remains escaped and does not expose the input URL', async () => {
   const { context, elements } = viewer({ hash: '#d=jinvalid<script>' });
-  const main = scripts.find(script => !script[1].includes('data-buyer-share-gzip'))[2];
+  const main = scripts.at(-1)[2];
   vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
   await new Promise(resolve => setImmediate(resolve));
   assert.equal(elements.summary.textContent, '无法显示分享内容');

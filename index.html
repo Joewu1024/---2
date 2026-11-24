@@ -2619,180 +2619,185 @@ input.buyer-choice{padding-right:24px!important;background-image:url("data:image
 });
 
 </script>
-<script data-buyer-share-shortener="v1">
+<script data-buyer-github-share="v1">
 (function (root) {
   'use strict';
 
-  const endpoint = 'https://is.gd/create.php';
-  const maximumLength = 5000;
-  const minimumCooldown = 60000;
-  const hour = 3600000;
+  const VIEWER = 'https://joewu1024.github.io/---2/share.html';
+  const PUBLISHER = 'http://127.0.0.1:43716';
+  const PAIR_KEY = 'buyer-github-share-pair-v1';
+  const KEY = /^[A-Za-z0-9_-]{22}$/;
+  const PAIR = /^[A-Za-z0-9_-]{43}$/;
+  const PAYLOAD = /^[jz][A-Za-z0-9_-]+$/;
+  const MAX_PAYLOAD = 1800000;
+  const encoder = () => new TextEncoder();
 
-  function validShortUrl(value) {
-    return typeof value === 'string' && value === value.trim() && /^https:\/\/is\.gd\/[A-Za-z0-9_]{5,30}$/.test(value);
+  function base64Url(bytes) {
+    let binary = '';
+    for (let at = 0; at < bytes.length; at += 16384) {
+      binary += String.fromCharCode(...bytes.subarray(at, at + 16384));
+    }
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   }
 
-  function create(options = {}) {
-    options = options || {};
-    const fetchImpl = options.fetchImpl === undefined ? root.fetch : options.fetchImpl;
-    const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0 && options.timeoutMs <= 2147483647 ? options.timeoutMs : 10000;
-    const maxEntries = Number.isFinite(options.maxEntries) && options.maxEntries >= 0 ? Math.min(80, Math.floor(options.maxEntries)) : 80;
-    const storageKey = typeof options.storageKey === 'string' && options.storageKey ? options.storageKey : 'buyer-share-shortener-isgd-v1';
-    const clock = typeof options.now === 'function' ? options.now : Date.now;
-    const cache = new Map(), pending = new Map(), queue = [];
-    let active = 0, cooldownUntil = 0, attempts = [], storage = null, allowedOrigin = '';
+  function fromBase64Url(value) {
+    const encoded = value.replace(/-/g, '+').replace(/_/g, '/');
+    return Uint8Array.from(atob(encoded), c => c.charCodeAt(0));
+  }
 
-    function now() {
-      try { const value = clock(); if (Number.isFinite(value)) return value; } catch (error) {}
-      return Date.now();
+  async function archiveKey(keyBytes, cryptoImpl) {
+    const digest = await cryptoImpl.subtle.digest('SHA-256', keyBytes);
+    return Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  function importShareKey(keyBytes, usage, cryptoImpl) {
+    return cryptoImpl.subtle.importKey('raw', keyBytes, 'AES-GCM', false, [usage]);
+  }
+
+  async function seal(payload, cryptoImpl = root.crypto) {
+    if (typeof payload !== 'string' || payload.length > MAX_PAYLOAD || !PAYLOAD.test(payload)) {
+      throw new Error('分享内容过大或格式无效，请减少产品数量后重试');
     }
+    if (!cryptoImpl?.subtle) throw new Error('当前浏览器无法加密分享，请使用新版浏览器');
+    const keyBytes = cryptoImpl.getRandomValues(new Uint8Array(16));
+    const iv = cryptoImpl.getRandomValues(new Uint8Array(12));
+    const key = await importShareKey(keyBytes, 'encrypt', cryptoImpl);
+    const ciphertext = await cryptoImpl.subtle.encrypt({ name: 'AES-GCM', iv }, key, encoder().encode(payload));
+    const sealed = new Uint8Array(iv.length + ciphertext.byteLength);
+    sealed.set(iv);
+    sealed.set(new Uint8Array(ciphertext), iv.length);
+    return { key: base64Url(keyBytes), id: await archiveKey(keyBytes, cryptoImpl), content: base64Url(sealed) };
+  }
 
+  function readerError(message) {
+    return new Error(message || '暂时无法读取分享，请稍后重新打开');
+  }
+
+  async function open(keyString, options = {}) {
+    const cryptoImpl = options.crypto || root.crypto;
+    if (!KEY.test(keyString)) throw readerError('分享网址不完整，请复制完整链接');
+    if (!cryptoImpl?.subtle) throw readerError('请在手机或电脑的浏览器中打开此链接');
+    const keyBytes = fromBase64Url(keyString);
+    const id = await archiveKey(keyBytes, cryptoImpl);
+    const file = new URL('p/data/' + id + '.txt', VIEWER);
+    const fetchImpl = options.fetchImpl || root.fetch;
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeout = setTimeout(() => controller?.abort(), 12000);
     try {
-      const input = options.allowedOrigin === undefined ? root.location && root.location.origin : options.allowedOrigin;
-      if (typeof input === 'string') {
-        const url = new URL(input);
-        if (url.protocol === 'https:' && !url.username && !url.password && !url.search && !url.hash && url.pathname === '/') allowedOrigin = url.origin;
-      }
-    } catch (error) {}
-    try { storage = options.storage === undefined ? root.localStorage : options.storage; } catch (error) {}
-    if (!storage || typeof storage.getItem !== 'function' || typeof storage.setItem !== 'function') storage = null;
-
-    function inputReason(value) {
-      if (!allowedOrigin || typeof value !== 'string' || !value || value !== value.trim() || /[\u0000-\u001f\u007f]/.test(value)) return 'invalid_response';
-      try {
-        const url = new URL(value);
-        if (url.protocol !== 'https:' || url.origin !== allowedOrigin || url.username || url.password || !/\/share\.html$/.test(url.pathname) || !url.hash.startsWith('#d=') || url.hash.length <= 3) return 'invalid_response';
-        if (value.length > maximumLength || url.href.length > maximumLength) return 'too_long';
-      } catch (error) { return 'invalid_response'; }
-      return '';
-    }
-
-    function remember(longUrl, shortUrl) {
-      if (!maxEntries) return;
-      cache.delete(longUrl); cache.set(longUrl, shortUrl);
-      while (cache.size > maxEntries) cache.delete(cache.keys().next().value);
-    }
-
-    function persist() {
-      if (!storage) return;
-      try { storage.setItem(storageKey, JSON.stringify({ version: 1, entries: [...cache] })); }
-      catch (error) { storage = null; }
-    }
-
-    if (storage && maxEntries) {
-      try {
-        const saved = JSON.parse(storage.getItem(storageKey) || 'null');
-        if (saved && saved.version === 1 && Array.isArray(saved.entries)) {
-          for (const entry of saved.entries) {
-            if (!Array.isArray(entry) || entry.length !== 2 || inputReason(entry[0]) || !validShortUrl(entry[1])) continue;
-            remember(entry[0], entry[1]);
-          }
-        }
-      } catch (error) {}
-    }
-
-    const fallback = (url, reason) => ({ url, shortened: false, reason });
-
-    function blocked() {
-      const time = now();
-      attempts = attempts.filter(value => value > time - hour);
-      if (attempts.length >= 200) cooldownUntil = Math.max(cooldownUntil, attempts[0] + hour, time + minimumCooldown);
-      return time < cooldownUntil;
-    }
-
-    function rateLimit(response) {
-      let delay = minimumCooldown;
-      try {
-        const raw = response && response.headers && typeof response.headers.get === 'function' ? response.headers.get('Retry-After') : null;
-        if (raw != null && String(raw).trim()) {
-          const value = String(raw).trim();
-          const parsed = /^\d+(?:\.\d+)?$/.test(value) ? Number(value) * 1000 : Date.parse(value) - now();
-          if (Number.isFinite(parsed)) delay = Math.max(delay, parsed);
-        }
-      } catch (error) {}
-      cooldownUntil = Math.max(cooldownUntil, now() + delay);
-    }
-
-    async function request(longUrl) {
-      if (typeof fetchImpl !== 'function') return fallback(longUrl, 'service_unavailable');
-      const controller = new AbortController();
-      let timer, timedOut = false;
-      const deadline = new Promise(resolve => {
-        timer = setTimeout(() => {
-          timedOut = true;
-          resolve(fallback(longUrl, 'timeout'));
-          controller.abort();
-        }, timeoutMs);
+      const result = await fetchImpl(file.href, {
+        cache: 'no-store', credentials: 'omit', redirect: 'error', referrerPolicy: 'no-referrer',
+        signal: controller?.signal
       });
-      const operation = async () => {
-        try {
-          const body = new URLSearchParams();
-          body.set('format', 'json'); body.set('url', longUrl);
-          const response = await fetchImpl(endpoint, { method: 'POST', body, credentials: 'omit', redirect: 'error', signal: controller.signal });
-          if (response && response.status === 429) {
-            rateLimit(response); return fallback(longUrl, 'rate_limited');
-          }
-          let data;
-          try { data = await response.json(); }
-          catch (error) { return fallback(longUrl, timedOut ? 'timeout' : response && response.status >= 500 ? 'service_unavailable' : 'invalid_response'); }
-          if (data && (data.errorcode === 3 || data.errorcode === '3')) {
-            rateLimit(response); return fallback(longUrl, 'rate_limited');
-          }
-          if (data && (data.errorcode === 4 || data.errorcode === '4')) return fallback(longUrl, 'service_unavailable');
-          if (data && data.errorcode !== undefined) return fallback(longUrl, 'invalid_response');
-          if (!response || (response.status !== 200 && !(response.status == null && response.ok === true))) return fallback(longUrl, 'service_unavailable');
-          if (!data || typeof data !== 'object' || Array.isArray(data) || data.errorcode !== undefined || !validShortUrl(data.shorturl)) return fallback(longUrl, 'invalid_response');
-          if (timedOut) return fallback(longUrl, 'timeout');
-          remember(longUrl, data.shorturl); persist();
-          return { url: data.shorturl, shortened: true };
-        } catch (error) { return fallback(longUrl, timedOut ? 'timeout' : 'network'); }
-      };
-      try { return await Promise.race([operation(), deadline]); }
-      finally { clearTimeout(timer); }
-    }
-
-    function finish(job, result) {
-      pending.delete(job.url); job.resolve(result);
-    }
-
-    function pump() {
-      while (active < 5 && queue.length) {
-        const job = queue.shift();
-        if (blocked()) { finish(job, fallback(job.url, 'rate_limited')); continue; }
-        active++; attempts.push(now());
-        request(job.url).then(result => finish(job, result), () => finish(job, fallback(job.url, 'network'))).finally(() => { active--; pump(); });
+      if (!result.ok) {
+        if (result.status === 404) throw readerError('没有找到这份分享，请检查链接是否复制完整');
+        throw readerError();
       }
+      const content = (await result.text()).trim();
+      if (content.length > 2400080 || !/^[A-Za-z0-9_-]+$/.test(content)) throw readerError('分享数据无法读取');
+      const sealed = fromBase64Url(content);
+      const key = await importShareKey(keyBytes, 'decrypt', cryptoImpl);
+      const plaintext = await cryptoImpl.subtle.decrypt({ name: 'AES-GCM', iv: sealed.subarray(0, 12) }, key, sealed.subarray(12));
+      const payload = new TextDecoder().decode(plaintext);
+      if (!PAYLOAD.test(payload) || payload.length > MAX_PAYLOAD) throw readerError('分享数据无法读取');
+      return payload;
+    } catch (error) {
+      throw readerError(error?.name === 'Error' ? error.message : undefined);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    function shorten(longUrl) {
-      let value;
-      try { value = typeof longUrl === 'string' ? longUrl : String(longUrl == null ? '' : longUrl); }
-      catch (error) { return Promise.resolve(fallback('', 'invalid_response')); }
-      const reason = inputReason(value);
-      if (reason) return Promise.resolve(fallback(value, reason));
-      if (cache.has(value)) {
-        const result = cache.get(value); remember(value, result);
-        return Promise.resolve({ url: result, shortened: true });
-      }
-      if (pending.has(value)) return pending.get(value);
-      if (blocked()) return Promise.resolve(fallback(value, 'rate_limited'));
-      let resolve;
-      const promise = new Promise(done => { resolve = done; });
-      pending.set(value, promise); queue.push({ url: value, resolve }); pump();
-      return promise;
-    }
-
-    return { shorten };
   }
 
-  const api = { create };
-  root.BuyerShareShortener = api;
-  if (typeof module !== 'undefined' && module.exports) module.exports = api;
-})(typeof globalThis !== 'undefined' ? globalThis : this);
+  let paired = '';
+  function pairFromLocation() {
+    if (root.location?.origin !== new URL(VIEWER).origin) return;
+    const value = new URLSearchParams(String(root.location.hash || '').replace(/^#/, '')).get('publisher');
+    if (PAIR.test(value || '')) {
+      paired = value;
+      try { root.localStorage.setItem(PAIR_KEY, value); } catch (error) {}
+      const clean = new URL(root.location.href);
+      clean.hash = '';
+      root.history.replaceState(root.history.state, '', clean.href);
+    }
+  }
 
+  function publisherPair() {
+    if (root.location?.origin !== new URL(VIEWER).origin) return '';
+    if (paired) return paired;
+    try { const value = root.localStorage.getItem(PAIR_KEY); return PAIR.test(value || '') ? value : ''; }
+    catch (error) { return ''; }
+  }
+
+  // Open synchronously from the existing share button so no browser network permission is needed.
+  // The popup accepts one encrypted file from the workbench's exact origin.
+  function begin() {
+    const pair = publisherPair();
+    if (!pair) return null;
+    const popup = root.open(PUBLISHER + '/publish', '_blank', 'popup,width=420,height=220');
+    if (!popup) throw new Error('请允许工作台打开生成链接的窗口');
+    let ready = false, sent = false, message = null, done = false, assertCurrent;
+    let timer, watch, resolveResult, rejectResult;
+    const outcome = new Promise((resolve, reject) => { resolveResult = resolve; rejectResult = reject; });
+    outcome.catch(() => {});
+    function finish(error, value) {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      clearInterval(watch);
+      root.removeEventListener('message', onMessage);
+      try { popup.close(); } catch (error) {}
+      if (error) rejectResult(error);
+      else resolveResult(value);
+    }
+    function send() {
+      if (ready && message && !sent && !done) {
+        try { assertCurrent?.(); }
+        catch (error) { finish(error); return; }
+        sent = true;
+        popup.postMessage(message, PUBLISHER);
+      }
+    }
+    function onMessage(event) {
+      if (event.origin !== PUBLISHER || event.source !== popup) return;
+      const result = event.data;
+      if (result?.type === 'buyer-share-publisher-ready') {
+        ready = true;
+        clearTimeout(timer);
+        timer = setTimeout(() => finish(new Error('发布等待超时，请稍后重试')), 120000);
+        send();
+      } else if (sent && result?.type === 'buyer-share-published' && result.id === message.id) {
+        finish(null, true);
+      } else if (sent && result?.type === 'buyer-share-publish-error') {
+        finish(new Error(result.message || '分享发布失败，请稍后重试'));
+      }
+    }
+    root.addEventListener('message', onMessage);
+    timer = setTimeout(() => finish(new Error('本机分享发布服务暂不可用')), 5000);
+    watch = setInterval(() => {
+      if (popup.closed) finish(new Error('分享发布窗口已关闭'));
+    }, 500);
+    return {
+      async publish(payload, checkCurrent) {
+        assertCurrent = checkCurrent;
+        const archived = await seal(payload);
+        if (!done) {
+          message = { type: 'buyer-share-publish', pair, id: archived.id, content: archived.content };
+          send();
+        }
+        await outcome;
+        return VIEWER + '#s=' + archived.key;
+      },
+      close() { finish(new Error('已取消生成链接')); }
+    };
+  }
+
+  const api = { seal, open, begin, pairFromLocation };
+  if (typeof module === 'object' && module.exports) module.exports = api;
+  else root.BuyerGithubShare = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
 <script>
 (function(){
+if(typeof BuyerGithubShare!=='undefined')BuyerGithubShare.pairFromLocation();
 const qaEnabled=new URLSearchParams(location.search).get("qa")==="1";function reportQa(event,detail){if(qaEnabled)console.info("[BuyerQA] "+JSON.stringify({event,...detail}))}
 let workspace;
 try{workspace=BuyerWorkspace.resolve()}catch(error){const notice=document.getElementById('workspaceNotice');notice.hidden=false;notice.textContent=error.message+' ';const link=document.createElement('a');link.href='./?new=1';link.textContent='新建独立空白工作区';notice.append(link);document.querySelector('main').inert=true;return}
@@ -3273,23 +3278,25 @@ async function buildOnlineShareLink(records,options={}) {
   assertCurrent();
   const host=location.hostname.toLowerCase(),privateIpv4=/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host);
   if(location.protocol!=='https:'||host==='localhost'||host.endsWith('.localhost')||host==='127.0.0.1'||host==='::1'||privateIpv4)throw new Error('请在已发布的公开 HTTPS 工作台生成分享链接');
-  // Sharing records the current editors immediately and never starts or waits for translation.
-  const products=JSON.parse(JSON.stringify(list.map(productDetail)));
-  for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
-  const bytes=new TextEncoder().encode(JSON.stringify({v:1,products}));let token;
-  if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertCurrent();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
-  if(token.length>1800000)throw new Error('图片数据过大，请减少分享产品数量后重试');
-  const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;assertCurrent();
-  const url=full.href,info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());info.set(url,{url,directUrl:url,direct:true,shortened:false});while(info.size>100)info.delete(info.keys().next().value);
-  return url;
-}
-function getShareShortener(){
-  if(!getShareShortener.client){
-    const origin=new URL(location.href).origin,key=typeof workspace!=='undefined'?workspace.storageKey('pool-share-short-v1'):'pool-share-short-v1';
-    let storage=null;try{storage=localStorage}catch(error){}
-    getShareShortener.client=typeof BuyerShareShortener!=='undefined'?BuyerShareShortener.create({fetchImpl:fetch,storage,storageKey:key,allowedOrigin:origin}):{shorten:async url=>({url,shortened:false,reason:'service_unavailable'})};
+  const publisher=typeof BuyerGithubShare!=='undefined'?BuyerGithubShare.begin():null;
+  try {
+    // Sharing records the current editors without waiting for translation.
+    const products=JSON.parse(JSON.stringify(list.map(productDetail)));
+    for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
+    const bytes=new TextEncoder().encode(JSON.stringify({v:1,products}));let token;
+    if('CompressionStream' in window){const zipped=new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer());assertCurrent();token='z'+base64Url(zipped)}else token='j'+base64Url(bytes);
+    if(token.length>1800000)throw new Error('图片数据过大，请减少分享产品数量后重试');
+    assertCurrent();
+    const full=new URL('share.html',location.href);full.search='';full.hash='d='+token;
+    const url=publisher?await publisher.publish(token,assertCurrent):full.href;
+    assertCurrent();
+    const info=buildOnlineShareLink.info||(buildOnlineShareLink.info=new Map());
+    info.set(url,{url,directUrl:full.href,direct:!publisher,shortened:!!publisher});
+    while(info.size>100)info.delete(info.keys().next().value);
+    return url;
+  } finally {
+    publisher?.close();
   }
-  return getShareShortener.client;
 }
 function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
 function shareLinkMessage(url,count=1){
@@ -3363,7 +3370,7 @@ function toggleProductCard(uid, anchor) {
       card.querySelector(key==='category'?'[data-share-category]':'[data-preview-chinese="'+key+'"]').textContent=String(values[index]??'').trim()?values[index]:'未填写';
     }
     generate.disabled=generating;
-    generate.textContent=generating?'正在生成…':'生成直达链接';
+    generate.textContent=generating?'正在生成…':'生成分享链接';
     const message=linkError||linkNotice;
     status.textContent=message;status.hidden=!message;
     return true;
