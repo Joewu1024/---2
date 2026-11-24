@@ -540,27 +540,90 @@ test('a long single record is rejected without offering a file fallback',async()
   assert.equal(h.transport.mock.callCount(),0);
 });
 
-test('the selection toolbar explains the 11-model limit and restores sharing after deselection',()=>{
-  assert.match(documentHtml,/id="shareLimitHint">一次最多分享 11 个 Model/);
-  const records=Array.from({length:12},(_,i)=>({uid:'SELECTION-'+i}));
-  const selected=new Set(records.map(row=>row.uid)),nodes=new Map();
+function shareLimitSelectionHarness(){
+  const records=Array.from({length:50},(_,i)=>({uid:'SELECTION-'+i}));
+  const selected=new Set(),nodes=new Map(),controls={writable:true,opens:0,restoredFocus:0};
   for(const id of ['selectVisible','bulk','selText','merge','shareSelected'])nodes.set(id,{});
+  const classes=new Set();
+  nodes.set('shareLimitHint',{textContent:'',classList:{toggle(name,on){on?classes.add(name):classes.delete(name)}}});
+  const previous={isConnected:true,focus(){controls.restoredFocus++;document.activeElement=previous}};
+  const document={activeElement:previous,querySelectorAll:()=>[]};
+  const dialog={hidden:true,parts:new Map(),querySelector(selector){return this.parts.get(selector)||null},
+    set innerHTML(value){
+      this.markup=value;controls.opens++;
+      const button={focus(){document.activeElement=button}},message={textContent:''},section={};
+      this.parts=new Map([['[data-close-share-limit]',button],['[data-share-limit-message]',message],['section',section]]);
+    }
+  };
+  nodes.set('shareLinkDialog',dialog);
   const context=vm.createContext({
-    selected,visibleRows:records,historyMode:false,
-    canEditWorkspace:()=>true,
-    $:id=>nodes.get(id),
-    refreshGroupSelectionCounts:()=>({counts:new Map(),members:new Map()}),
-    groupSelectionIndex:()=>({}),
-    document:{querySelectorAll:()=>[]}
+    selected,visibleRows:records,historyMode:false,document,
+    canEditWorkspace:()=>controls.writable,$:id=>nodes.get(id),
+    refreshGroupSelectionCounts:()=>({counts:new Map(),members:new Map()}),groupSelectionIndex:()=>({})
   });
-  vm.runInContext(between('function updateSelectionUI(){','function filtered(){'),context);
-  context.updateSelectionUI();
-  assert.equal(nodes.get('shareSelected').disabled,true);
-  assert.match(nodes.get('shareSelected').title,/每次最多.*11.*Model/);
-  selected.delete(records[11].uid);
-  context.updateSelectionUI();
-  assert.equal(nodes.get('shareSelected').disabled,false);
-  assert.match(nodes.get('shareSelected').title,/11 个 Model/);
+  vm.runInContext(block('share-limit-notice')+'\n'+between('function updateSelectionUI(){','function filtered(){'),context);
+  const update=count=>{if(count!==undefined){selected.clear();for(const record of records.slice(0,count))selected.add(record.uid)}context.updateSelectionUI()};
+  return {context,selected,nodes,controls,classes,dialog,document,previous,update};
+}
+
+test('the selection toolbar prominently explains the 11-model limit and restores sharing after deselection',()=>{
+  assert.match(documentHtml,/id="shareLimitHint"[^>]*>单次最多分享 11 个 Model/);
+  const h=shareLimitSelectionHarness();h.update(12);
+  assert.equal(h.nodes.get('shareSelected').disabled,true);
+  assert.match(h.nodes.get('shareSelected').title,/每次最多.*11.*Model/);
+  assert.match(h.nodes.get('shareLimitHint').textContent,/已选 12 个，请减少 1 个/);
+  assert.ok(h.classes.has('is-over-limit'));
+  h.update(11);
+  assert.equal(h.nodes.get('shareSelected').disabled,false);
+  assert.equal(h.nodes.get('shareLimitHint').textContent,'单次最多分享 11 个 Model');
+  assert.equal(h.classes.has('is-over-limit'),false);
+  assert.equal(h.dialog.hidden,true);
+});
+
+test('crossing the share limit opens once without reopening on rerenders or changes within the over-limit range',()=>{
+  const h=shareLimitSelectionHarness();h.update(11);assert.equal(h.controls.opens,0);
+  h.update(12);assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,false);
+  assert.match(h.dialog.markup,/role="alertdialog"/);
+  h.dialog.querySelector('[data-close-share-limit]').onclick();
+  h.update();h.update(15);h.update(13);
+  assert.equal(h.controls.opens,1);assert.equal(h.dialog.hidden,true);
+  h.update(11);h.update(12);assert.equal(h.controls.opens,2);assert.equal(h.dialog.hidden,false);
+});
+
+test('selecting 50 models explains the 39-model excess while preserving the entire selection',()=>{
+  const h=shareLimitSelectionHarness();h.update(50);
+  assert.match(h.nodes.get('shareLimitHint').textContent,/已选 50 个，请减少 39 个/);
+  assert.equal(h.dialog.querySelector('[data-share-limit-message]').textContent,'当前已选 50 个，请至少取消 39 个后再生成分享链接。');
+  assert.equal(h.selected.size,50);
+  h.update(49);
+  assert.equal(h.controls.opens,1);
+  assert.match(h.dialog.querySelector('[data-share-limit-message]').textContent,/当前已选 49 个，请至少取消 38 个/);
+  assert.equal(h.selected.size,49);
+});
+
+test('historical or read-only selections do not open a share-limit dialog and close one already open',()=>{
+  for(const mode of ['history','readonly']){
+    const h=shareLimitSelectionHarness();
+    if(mode==='history')h.context.historyMode=true;else h.controls.writable=false;
+    h.update(50);assert.equal(h.controls.opens,0,mode);assert.equal(h.dialog.hidden,true,mode);
+    if(mode==='history')h.context.historyMode=false;else h.controls.writable=true;
+    h.update(11);h.update(12);assert.equal(h.dialog.hidden,false,mode);
+    if(mode==='history')h.context.historyMode=true;else h.controls.writable=false;
+    h.update();assert.equal(h.dialog.hidden,true,mode);
+  }
+});
+
+test('the share-limit dialog traps Tab and restores the prior focus when Escape closes it',()=>{
+  const h=shareLimitSelectionHarness();h.update(12);
+  const button=h.dialog.querySelector('[data-close-share-limit]'),section=h.dialog.querySelector('section');
+  assert.equal(h.document.activeElement,button);
+  let prevented=0,stopped=0;
+  section.onkeydown({key:'Tab',preventDefault(){prevented++}});
+  assert.equal(h.document.activeElement,button);assert.equal(prevented,1);
+  section.onkeydown({key:'Escape',preventDefault(){prevented++},stopPropagation(){stopped++}});
+  assert.equal(h.dialog.hidden,true);assert.equal(h.document.activeElement,h.previous);
+  assert.equal(h.controls.restoredFocus,1);assert.equal(prevented,2);assert.equal(stopped,1);
+  assert.equal(h.selected.size,12);
 });
 
 test('multi-card sharing accepts empty, foreign, mixed and obsolete automatic values while translation is paused',async()=>{

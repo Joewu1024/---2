@@ -137,6 +137,7 @@ function harness(options={}) {
     async function openWorkbenchDB(){if(controls.dbGate)await controls.dbGate;return db}
     function refreshTranslationReadiness(){} function scheduleTranslationStatus(){}
     function closeProductCard(){} function closeImageZoom(){} function queueVisibleTranslation(){}
+    function updateShareSelectionNotice(){} // Share-limit dialog behavior is covered by translation-integration.
     function translationSource(r,index){return value(r,H[index])} function deriveChineseField(){}
     function editTranslationSource(){} function toggleProductCard(){} function showImageZoom(){} function scheduleImageZoomClose(){}
     function runDeferredProcessing(){} async function parseXlsx(){throw Error('XLSX parser not under test')}
