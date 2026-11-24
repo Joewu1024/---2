@@ -228,7 +228,9 @@ test('batch Model ID parsing normalizes textual formatting without rounding long
   assert.equal(parsed.mode,'ids');assert.deepEqual(Array.from(parsed.ids),['12345','000123',long,'1000']);assert.ok(parsed.ids.every(id=>typeof id==='string'));
   h.api.setRows([record(h,'12,345.0'),record(h,'000123'),record(h,long),record(h,'1000'),record(h,'123')]);h.element('search').value='12345 000123 '+long+' 1e3';
   assert.deepEqual(ids(h.api.filtered()),['12,345.0','000123',long,'1000']);
-  assert.equal(h.api.parseWorkbenchSearch('9.00719925474099312345e20 123').mode,'text','unsafe scientific notation is not rounded into a different numeric ID');
+  const scientific=h.api.parseWorkbenchSearch('9.00719925474099312345e20 123');
+  assert.equal(scientific.mode,'ids');assert.deepEqual(Array.from(scientific.ids),[long,'123'],'scientific text expands without rounding its significant digits');
+  h.element('search').value='9.00719925474099312345e20 123';assert.deepEqual(ids(h.api.filtered()),[long,'123']);
 });
 
 test('pasting a numeric ID column preserves separators and replaces only the selected search text',()=>{

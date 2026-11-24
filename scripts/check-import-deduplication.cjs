@@ -82,11 +82,68 @@ function harness() {
   return { api, controls, element, async flushDelayed(delay=30){const pending=controls.delayed.filter(timer=>timer.delay===delay);controls.delayed=controls.delayed.filter(timer=>timer.delay!==delay);for(const timer of pending)await timer.callback()} };
 }
 function record(h,id,nb,extra={}) { return { uid: extra.uid || 'row-' + id, excelRow: extra.excelRow || 2, raw: { 'Model ID': id, backcal_cogs_non_brand: nb, ...extra.raw }, ...Object.fromEntries(Object.entries(extra).filter(([key]) => key !== 'raw')) }; }
-function fileFor(format,matrix) {
+function fileFor(format,matrix,configureSheet) {
   if(format==='csv') { const cell=value=>/[",\r\n]/.test(String(value??''))?'"'+String(value).replace(/"/g,'""')+'"':String(value??'');const file=new Blob([matrix.map(row=>row.map(cell).join(',')).join('\r\n')],{type:'text/csv'});file.name='fabricated-duplicates.csv';return file; }
-  const book=XLSX.utils.book_new();XLSX.utils.book_append_sheet(book,XLSX.utils.aoa_to_sheet(matrix),'Synthetic products');
+  const book=XLSX.utils.book_new(),sheet=XLSX.utils.aoa_to_sheet(matrix);configureSheet?.(sheet);XLSX.utils.book_append_sheet(book,sheet,'Synthetic products');
   const file=new Blob([XLSX.write(book,{type:'buffer',bookType:'xlsx',compression:true})]);file.name='fabricated-duplicates.xlsx';return file;
 }
+
+test('Excel numeric Model IDs with the same scientific display retain their complete distinct source values',async()=>{
+  const h=harness(),file=fileFor('xlsx',[
+    ['model_id','item_id','item_name','model_name','backcal_cogs_non_brand'],
+    [219627179576,58268933437,'First full ID','First model','10'],
+    [219627179577,58268933438,'Second full ID','Second model','20']
+  ],sheet=>{for(const address of ['A2','A3']){sheet[address].z='0.00000E+00';sheet[address].w='2.19627E+11'}});
+  await h.api.importFile(file);
+  assert.equal(h.api.rows.length,2,'the visible rounded values must not merge two genuine IDs');
+  assert.deepEqual(Array.from(h.api.rows,row=>h.api.idFor(row)),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw.model_id),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw._modelId),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw.item_id),['58268933437','58268933438']);
+  assert.equal(h.controls.errors.length,0);
+});
+
+for(const format of ['csv','xlsx'])test(format+' scientific-text Model and item IDs import as exact complete decimal strings',async()=>{
+  const h=harness();
+  await h.api.importFile(fileFor(format,[
+    ['model_id','item_id','item_name','model_name','backcal_cogs_non_brand'],
+    ['2.19627179576E+11','5.8268933437E+10','Scientific first','First model','10'],
+    ['2.19627179577E+11','5.8268933438E+10','Scientific second','Second model','20']
+  ]));
+  assert.equal(h.api.rows.length,2);
+  assert.deepEqual(Array.from(h.api.rows,row=>h.api.idFor(row)),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw.model_id),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw._modelId),['219627179576','219627179577']);
+  assert.deepEqual(Array.from(h.api.rows,row=>row.raw.item_id),['58268933437','58268933438']);
+  assert.equal(h.controls.errors.length,0);
+});
+
+for(const format of ['csv','xlsx'])test(format+' scientific text above the safe integer range deduplicates exactly and retains the highest-price row',async()=>{
+  const h=harness(),long='900719925474099312345';
+  await h.api.importFile(fileFor(format,[
+    ['model_id','item_id','item_name','model_name','backcal_cogs_non_brand'],
+    ['9.00719925474099312345E+20','5.8268933437E+10','Lower scientific source','Lower model','10'],
+    [long,'5.8268933438E+10','Winning exact source','Winner model','20'],
+    ['000219627179576','00058268933437','Leading-zero source','Zero model','30'],
+    ['MODEL-A1','ITEM-B2','Alphanumeric source','Text model','40']
+  ]));
+  assert.equal(h.api.rows.length,3);
+  assert.deepEqual(Array.from(h.api.rows,row=>h.api.idFor(row)),[long,'000219627179576','MODEL-A1']);
+  const winner=h.api.rows[0];assert.equal(winner.raw.model_id,long);assert.equal(winner.raw._modelId,long);
+  assert.equal(winner.raw.item_name,'Winning exact source');assert.equal(winner.raw.backcal_cogs_non_brand,'20');
+  assert.equal(winner.raw.item_id,'58268933438');assert.equal(h.api.rows[1].raw.item_id,'00058268933437');
+  assert.equal(h.api.rows[2].raw.item_id,'ITEM-B2');assert.equal(h.controls.errors.length,0);
+});
+
+test('normalization expands exact scientific integers without rounding long text or removing ordinary leading zeros',()=>{
+  const h=harness();
+  for(const [input,expected]of [
+    ['2.19627179576E+11','219627179576'],['2.19627179577e+11','219627179577'],
+    ['9.00719925474099312345E+20','900719925474099312345'],
+    ['900719925474099312345','900719925474099312345'],['000219627179576','000219627179576'],
+    ['MODEL-A1','MODEL-A1'],['000123.0','000123']
+  ])assert.equal(h.api.normalizeModelId(input),expected,input);
+});
 function existingAppendFixture(h,format='csv') {
   const rows=[
     record(h,' 12,345.0 ','1',{uid:format+'2',raw:{item_name:'Existing first',[h.api.H[10]]:'Buyer title',[h.api.H[12]]:'5pcs',[h.api.H[24]]:'First buyer note'},userEditedFields:[h.api.H[10],h.api.H[12],h.api.H[24]],manualGroup:'manual-kept',group:'manual-kept',preTouched:true,preValue:'N',preDate:'2026-11-23',preNote:'Keep tuple',buyerAudit:{revision:7}}),

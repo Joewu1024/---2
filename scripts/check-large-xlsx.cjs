@@ -66,10 +66,12 @@ const mapperContext = {
   setTimeout, H: Array.from({ length: 24 }, (_, index) => 'column' + index),
   headerScore: row => row.filter(header => ['item_name', 'model_name', 'Target Price'].includes(header)).length,
   key: header => String(header).toLowerCase().replace(/[_\s]/g, ''),
+  norm: value => String(value??'').toLowerCase().replace(/[^a-z0-9\u3400-\u9fff]/g,''),
   getRaw: (record, names) => { for (const name of names) if (record.raw[name] !== undefined) return record.raw[name]; return ''; },
   isMetaRow: () => false
 };
 vm.createContext(mapperContext);
+vm.runInContext(indexHtml.split(/\r?\n/).find(line=>line.startsWith('function normalizeModelId(')),mapperContext);
 vm.runInContext(indexHtml.slice(mapperStart, mapperEnd), mapperContext);
 
 function workbookBytes(rows) {
@@ -87,7 +89,11 @@ async function edgeCases() {
   for (const url of ['https://other.invalid/xlsx.js', 'data:text/javascript,1', 'file:///xlsx.js', 'javascript:1']) assert.throws(() => browserApi.resolveVendorUrl(url), /本站/);
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../vendor/sheetjs-ce-0.20.3-source.json'), 'utf8'));
   for (const entry of manifest.files) {
-    const bytes = fs.readFileSync(path.join(__dirname, '../vendor', entry.path));
+    const actual = fs.readFileSync(path.join(__dirname, '../vendor', entry.path));
+    // A Windows autocrlf checkout may change only line endings. Require the
+    // original downloaded hash even in that case, rather than skipping checks.
+    const bytes = crypto.createHash('sha256').update(actual).digest('hex')===entry.sha256
+      ?actual:Buffer.from(actual.toString('utf8').replace(/\r\n/g,'\n'));
     assert.equal(bytes.length, entry.bytes);
     assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), entry.sha256);
   }
@@ -111,6 +117,24 @@ async function edgeCases() {
   assert.deepEqual(threaded.sheets, parsed.sheets);
   assert.equal(workers.at(-1).terminateCalls, 1);
   await workers.at(-1).termination;
+
+  const idFixture=workbookBytes([
+    ['model_id','item_id','item_name','model_name','Target Price'],
+    [219627179576,58268933437,'First complete number','A',1],
+    [219627179577,58268933438,'Second complete number','B',2],
+    ['2.19627179576E+11','5.8268933437E+10','Scientific text','C',3],
+    ['9.00719925474099312345E+20','9.00719925474099312345E+20','Exact long scientific text','D',4],
+    ['000219627179576','00058268933437','Leading-zero text','E',5]
+  ]);
+  for(const address of ['A2','A3']){idFixture.sheet[address].z='0.00000E+00';idFixture.sheet[address].w='2.19627E+11'}
+  const idSource=await browserApi.parseInWorker(new Blob([idFixture.bytes()]),{vendorUrl});
+  await workers.at(-1).termination;
+  const idMatrix=idSource.sheets[1].matrix;
+  assert.deepEqual(idMatrix.slice(1,3).map(row=>row[0]),['219627179576','219627179577']);
+  const idMapped=await mapperContext.mapImportedMatrix(idMatrix,mapperContext.selectImportHeader(idMatrix,3),{prefix:'xlsx'});
+  assert.deepEqual(Array.from(idMapped.rows,row=>row.raw.model_id),['219627179576','219627179577','219627179576','900719925474099312345','000219627179576']);
+  assert.deepEqual(Array.from(idMapped.rows,row=>row.raw._modelId),Array.from(idMapped.rows,row=>row.raw.model_id));
+  assert.deepEqual(Array.from(idMapped.rows,row=>row.raw.item_id),['58268933437','58268933438','58268933437','900719925474099312345','00058268933437']);
 
   const rowHeaders = ['item_name', 'model_name', 'Target Price'];
   for (const [inputRows, expectedHeaderRow, expectedSourceRows] of [
@@ -200,6 +224,7 @@ async function benchmark(count) {
 
 (async () => {
   await edgeCases();
+  if(process.argv.includes('--edge-only')){console.log('large-xlsx: offline edge cases passed, including exact scientific Model/item ID mapping');return}
   const measurements = [];
   for (const count of [10000, 20000]) measurements.push(await benchmark(count));
   const report = {
