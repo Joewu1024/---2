@@ -55,6 +55,12 @@
 
 ## 验证
 
+持久短网址的源码位于 [`share-service/`](share-service/README.md)，由自有 Worker、D1 和 R2 保存选中产品的不可变快照及图片，读取路径为 `/s/<随机编号>`，直接返回 HTML，不经过第三方短链跳转。服务端没有自动过期逻辑；长期可用仍要求保留托管账号、数据库、存储和域名。
+
+此分支的服务端与客户端正在准备部署授权，**尚未部署或启用**。`share-service-config.js` 的 `baseUrl` 保持为空，防止未配置服务破坏当前可用的完整直达分享。只有部署、实际保存并从新浏览器验证成功后，才填入真实 HTTPS 地址并发布。配置后单卡和批量使用同一持久化客户端；保存失败明确报错，不把长地址或未确认的短编号当作成功结果。账号凭据不会放入工作台或公开仓库。
+
+持久化相关本地检查：`node --test --test-isolation=none scripts/check-persistent-share-client.cjs share-service/test/worker.test.mjs scripts/check-persistent-share-e2e.cjs`，以及 `node --test --test-isolation=none scripts/check-translation-integration.cjs`。受控本地检查不代替真实线上存储和手机网络验证。
+
 `scripts/` 包含功能、翻译通道、类目、分享、工作区、CSV、Excel、分组和导出回归检查。Node 检查使用虚构数据和受控传输；通过单测不代表真实在线翻译可用。`artifacts/` 区分 Node 模块基准与浏览器实际验收结果，报告各自说明验证范围。部署只需保留仓库文件，含 `vendor/` 和 `.nojekyll`。
 
 可用 `node --test --test-isolation=none scripts/check-share-preview.cjs` 检查真实分享预览函数；大数据检查分别运行 `check-large-import.cjs`、`check-large-xlsx.cjs`、`check-large-grouping.cjs` 和 `check-workbench-export.cjs`。Node 计时不代表浏览器渲染帧率或完整买手操作耗时。

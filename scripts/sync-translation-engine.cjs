@@ -14,7 +14,7 @@ else {
   if(!app.test(html))throw Error('Workbench script missing');
   html=html.replace(app,match=>providerScript+match);
 }
-for(const [marker,name] of [['buyer-workspace','workbench-workspace.js'],['workbench-import','workbench-import.js'],['workbench-xlsx','workbench-xlsx.js'],['workbench-export','workbench-export.js'],['buyer-chrome-translation','translation-chrome-provider.js'],['workbench-translation-tasks','workbench-translation-tasks.js'],['buyer-reference-translation','translation-reference-provider.js'],['buyer-category-translations','category-translations.js'],['buyer-share-shortener','share-shortener.js']]){
+for(const [marker,name] of [['buyer-workspace','workbench-workspace.js'],['workbench-import','workbench-import.js'],['workbench-xlsx','workbench-xlsx.js'],['workbench-export','workbench-export.js'],['buyer-chrome-translation','translation-chrome-provider.js'],['workbench-translation-tasks','workbench-translation-tasks.js'],['buyer-reference-translation','translation-reference-provider.js'],['buyer-category-translations','category-translations.js'],['buyer-share-shortener','share-shortener.js'],['buyer-persistent-share-client','persistent-share-client.js'],['buyer-persistent-share-config','share-service-config.js']]){
   const body=fs.readFileSync(path.join(root,name),'utf8');
   const re=new RegExp('<script data-'+marker+'="v1">[\\s\\S]*?<\\/script>');
   const block='<script data-'+marker+'="v1">\n'+body+'\n</script>\n';

@@ -1,0 +1,31 @@
+name = "buyer-product-shares"
+main = "worker.mjs"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+# Copy to wrangler.toml and insert real provisioned IDs. Do not commit credentials.
+[[d1_databases]]
+binding = "DB"
+database_name = "buyer-product-shares"
+# database_id must be filled with the real provisioned D1 database ID.
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "buyer-product-shares"
+
+[vars]
+ALLOWED_ORIGINS = "https://joewu1024.github.io"
+MAX_PRODUCTS = "200"
+MAX_BODY_BYTES = "2097152"
+MAX_IMAGE_BYTES = "8388608"
+MAX_ASSET_BYTES = "33554432"
+MAX_IMAGE_ARCHIVE_MS = "45000"
+MAX_REMOTE_IMAGE_FETCHES = "24"
+BOOTSTRAP_IP_DAILY_LIMIT = "10"
+BOOTSTRAP_GLOBAL_DAILY_LIMIT = "200"
+SHARE_IP_DAILY_LIMIT = "50"
+SHARE_WRITER_DAILY_LIMIT = "50"
+SHARE_GLOBAL_DAILY_LIMIT = "200"
+GLOBAL_BYTES_DAILY_LIMIT = "1073741824"
+GLOBAL_BYTES_TOTAL_LIMIT = "8589934592"

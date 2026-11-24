@@ -108,13 +108,14 @@ function harness(options = {}) {
     BuyerWorkspace: { async acquireWriter(){return {owner:true,status:'owner'}} },
     BuyerChromeTranslation: options.chromeProvider ? { create:()=>options.chromeProvider } : undefined,
     BuyerShareShortener: { create(){controls.shortenerCalls.push('create');throw new Error('The share builder must never use a third-party shortener');} },
+    BuyerPersistentShareClient: options.persistentShareClient,
     Translator: options.chromeProvider ? {} : undefined,
     workspace: { isDefault:true, created:false, dbName:base=>base||'buyer-pool-workbench', storageKey:base=>base, workspaceLabel:()=> '虚构工作区',blankShareUrl:()=> 'https://buyer.example.test/?new=1' },
     referenceTranslationCache: new Map(options.bakedCache || []),
     setTimeout: setTimer, clearTimeout: clearTimer, queueMicrotask,
     localStorage: { getItem: key => key === 'sourcing-cn-cache-v2' && options.localCache ? JSON.stringify(options.localCache) : null },
     indexedDB: { open(name) { controls.cacheDatabases.push(name); const request = {}; queueMicrotask(() => { request.result = db; request.onsuccess?.(); }); return request; } },
-    window: { addEventListener() {} },
+    window: { addEventListener() {}, BUYER_SHARE_SERVICE: options.persistentShareConfig },
     fetch: options.fetch || (() => { throw new Error('Network access is forbidden in translation-integration checks'); }),
     AbortController, URL, TextEncoder,TextDecoder,Blob,btoa:text=>Buffer.from(text,'binary').toString('base64'),
     location: options.location || { hostname: 'buyer.example.test', protocol: 'https:', href: 'https://buyer.example.test/index.html' },
@@ -558,6 +559,35 @@ test('direct sharing removes workspace query state and carries every selected ca
   assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(products.map(card=>card.id),[chosen.uid,second.uid]);assert.equal(products[1].modelChinese,'  5pcs / 蓝色  ');
   const info=h.api.buildOnlineShareLink.info.get(result);assert.equal(info.shortened,false);assert.equal(info.direct,true);assert.equal(info.directUrl,result);
   assert.match(h.api.shareLinkMessage(result,2),/2 个产品的直达链接/);assert.equal(h.controls.shortenerCalls.length,0);
+});
+
+test('a configured owned service receives only frozen selected cards and supplies the primary short URL',async()=>{
+  const calls=[],config={baseUrl:'https://cards.example.test'},result={id:'A'.repeat(22),url:'https://cards.example.test/s/'+'A'.repeat(22),persisted:true,imagesArchived:0,imageFailures:[],productCount:2};
+  const client={create(options){calls.push({options});return {async publish(products,request){assert.equal(request.isCurrent(),true);calls.push({products:JSON.parse(JSON.stringify(products))});return result}}}};
+  const h=harness({persistentShareConfig:config,persistentShareClient:client});
+  const first=completedShareRecord(h,'SELECTED-ONE'),second=completedShareRecord(h,'SELECTED-TWO'),privateRow=completedShareRecord(h,'UNSELECTED-PRIVATE');
+  first.raw[h.api.H[10]]='  Buyer English title  ';first.raw[h.api.H[12]]='';second.raw[h.api.H[10]]='混合标题';second.raw[h.api.H[12]]=' 5pcs ';
+  h.api.setRows([first,second,privateRow]);const url=await h.api.buildOnlineShareLink([first,second]);
+  assert.equal(url,result.url);assert.equal(new URL(url).hash,'');assert.equal(calls.length,2);assert.equal(calls[0].options.baseUrl,config.baseUrl);assert.equal(calls[0].options.timeoutMs,90000);
+  assert.deepEqual(calls[1].products.map(p=>[p.id,p.itemChinese,p.modelChinese]),[['SELECTED-ONE','  Buyer English title  ',''],['SELECTED-TWO','混合标题',' 5pcs ']]);
+  assert.equal(h.api.buildOnlineShareLink.info.get(url).persisted,true);assert.match(h.api.shareLinkMessage(url,2),/已保存 2 个产品/);assert.equal(h.controls.shortenerCalls.length,0);assert.equal(h.transport.mock.callCount(),0);
+});
+
+test('a failed or missing configured persistence service never substitutes a long URL or an unconfirmed short URL',async()=>{
+  for(const missing of [false,true]){
+    const h=harness({persistentShareConfig:{baseUrl:'https://cards.example.test'},persistentShareClient:missing?undefined:{create(){return {async publish(){throw new Error('保存失败：虚构限流')}}}}});
+    const chosen=completedShareRecord(h,'PERSISTENCE-FAILED');h.api.setRows([chosen]);
+    await assert.rejects(h.api.buildOnlineShareLink([chosen]),missing?/分享服务未载入/:/保存失败/);
+    assert.equal(h.api.buildOnlineShareLink.info?.size||0,0);assert.equal(h.controls.shortenerCalls.length,0);
+  }
+});
+
+test('a late persistence receipt cannot become a result for a replacement dataset',async()=>{
+  const gate=deferred();let started=false;
+  const h=harness({persistentShareConfig:{baseUrl:'https://cards.example.test'},persistentShareClient:{create(){return {async publish(){started=true;await gate.promise;return {id:'B'.repeat(22),url:'https://cards.example.test/s/'+'B'.repeat(22),persisted:true,imagesArchived:0,imageFailures:[],productCount:1}}}}}});
+  const chosen=completedShareRecord(h,'OLD-PERSISTED-TWO');h.api.setRows([chosen]);const sharing=h.api.buildOnlineShareLink([chosen]);
+  const rejected=assert.rejects(sharing,/分享内容或工作区已变更/);await waitFor(()=>started,'persistence request begins');h.api.setRows([completedShareRecord(h,'NEW-DATASET')]);gate.resolve();await rejected;
+  assert.equal(h.api.buildOnlineShareLink.info?.size||0,0);
 });
 
 test('a dataset replacement during image preparation prevents any shortener submission',async()=>{
