@@ -2743,7 +2743,8 @@ SOFTWARE.
 
   function fromBase64Url(value) {
     if (!/^[A-Za-z0-9_-]+$/.test(value) || value.length % 4 === 1) throw invalid();
-    const string = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
+    const padding = (4 - value.length % 4) % 4;
+    const string = atob(value.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, padding));
     const bytes = new Uint8Array(string.length);
     for (let i = 0; i < string.length; i++) bytes[i] = string.charCodeAt(i);
     return bytes;
@@ -2784,6 +2785,60 @@ SOFTWARE.
     return bytes;
   }
 
+  function decodeUtf8(bytes) {
+    if (typeof TextDecoder === 'function') {
+      try {
+        const decoded = new TextDecoder('utf-8', {fatal:true}).decode(bytes);
+        // Some WebViews silently ignore fatal mode. Validate any replacement characters below.
+        if (!decoded.includes('\uFFFD')) return decoded;
+      } catch (error) {
+        // A WebView may expose TextDecoder without supporting strict decoding.
+      }
+    }
+    const chunks = [];
+    let part = '';
+    for (let i = 0; i < bytes.length;) {
+      const first = bytes[i++];
+      let point = first;
+      let extra = 0;
+      let minimum = 0;
+      if (first >= 194 && first <= 223) {
+        point = first & 31;
+        extra = 1;
+        minimum = 128;
+      } else if (first >= 224 && first <= 239) {
+        point = first & 15;
+        extra = 2;
+        minimum = 2048;
+      } else if (first >= 240 && first <= 244) {
+        point = first & 7;
+        extra = 3;
+        minimum = 65536;
+      } else if (first > 127) {
+        throw invalid();
+      }
+      if (i + extra > bytes.length) throw invalid();
+      for (let j = 0; j < extra; j++) {
+        const next = bytes[i++];
+        if ((next & 192) !== 128) throw invalid();
+        point = point * 64 + (next & 63);
+      }
+      if (point < minimum || point > 1114111 || (point >= 55296 && point <= 57343)) throw invalid();
+      if (point > 65535) {
+        point -= 65536;
+        part += String.fromCharCode(55296 + (point >> 10), 56320 + (point & 1023));
+      } else {
+        part += String.fromCharCode(point);
+      }
+      if (part.length >= 8192) {
+        chunks.push(part);
+        part = '';
+      }
+    }
+    chunks.push(part);
+    return chunks.join('');
+  }
+
   function decode(token) {
     if (typeof token !== 'string' || token.charAt(0) !== 'c') throw invalid();
     if (token.length > MAX_TOKEN_LENGTH) throw tooLarge();
@@ -2792,10 +2847,7 @@ SOFTWARE.
       if (packet.length <= 4) throw invalid();
       const bytes = inflate(packet.subarray(4));
       if (checksum(bytes) !== new DataView(packet.buffer).getUint32(0)) throw invalid();
-      const json = typeof TextDecoder === 'function'
-        ? new TextDecoder('utf-8', {fatal:true}).decode(bytes)
-        : fflate.strFromU8(bytes);
-      const rows = JSON.parse(json);
+      const rows = JSON.parse(decodeUtf8(bytes));
       if (!Array.isArray(rows) || !rows.length) throw invalid();
       return {v:1, products:rows.map(unpack)};
     } catch (error) {
@@ -2804,7 +2856,177 @@ SOFTWARE.
     }
   }
 
-  return {encode, decode};
+  return {encode, decode, decodeUtf8};
+});
+</script>
+<script data-buyer-share-transport="v1">
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.BuyerShareTransport = factory();
+})(typeof globalThis !== 'undefined' ? globalThis : this, function () {
+  'use strict';
+
+  const MAX_TOKEN_LENGTH = 2000000;
+  const MAX_INPUT_LENGTH = MAX_TOKEN_LENGTH * 3 + 4096;
+  const WRAPPING = /[\s\u200B-\u200F\u202A-\u202E\u2060-\u2069\uFEFF]/g;
+
+  function problem(code) {
+    const message = {
+      incomplete: '分享链接不完整，请从原消息复制完整链接或分享码',
+      invalid: '无法识别分享链接，请粘贴完整链接或分享码',
+      too_large: '分享数据过大，请让分享者分批分享'
+    }[code];
+    const error = new Error(message);
+    error.code = code;
+    return error;
+  }
+
+  function normalize(value) {
+    let text = String(value);
+    if (text.length > MAX_INPUT_LENGTH) throw problem('too_large');
+    // A forwarded link can encode the characters or the already encoded value.
+    // Share codes have no percent signs in their canonical form.
+    for (let pass = 0; pass < 2 && text.includes('%'); pass++) {
+      try { text = decodeURIComponent(text); }
+      catch (error) { throw problem('invalid'); }
+    }
+    return text.replace(WRAPPING, '');
+  }
+
+  function requireComplete(value, length) {
+    if (value.length < length || /(?:\.{3}|…)$/.test(value)) throw problem('incomplete');
+    if (value.length > MAX_TOKEN_LENGTH) throw problem('too_large');
+  }
+
+  function payload(value) {
+    const token = normalize(value);
+    requireComplete(token, 2);
+    const compact = token.charAt(0) === 'c';
+    if (!(compact ? /^c[A-Za-z0-9_-]+$/ : /^[jz][A-Za-z0-9+/_-]+={0,2}$/).test(token)) {
+      throw problem('invalid');
+    }
+    const body = token.slice(1);
+    if ((compact && body.length < 7) || body.replace(/=+$/, '').length % 4 === 1) {
+      throw problem('incomplete');
+    }
+    if (body.includes('=') && body.length % 4 !== 0) throw problem('invalid');
+    return { kind: 'payload', value: token };
+  }
+
+  function archive(value) {
+    const key = normalize(value);
+    requireComplete(key, 22);
+    if (!/^[A-Za-z0-9_-]{22}$/.test(key)) throw problem('invalid');
+    return { kind: 'archive', value: key };
+  }
+
+  function getParam(value, name) {
+    let result = null;
+    for (const part of value.split('&')) {
+      const separator = part.indexOf('=');
+      if (separator === -1 || part.slice(0, separator) !== name) continue;
+      const data = part.slice(separator + 1);
+      if (result !== null && result !== data) throw problem('invalid');
+      result = data;
+    }
+    return result;
+  }
+
+  function readParts(search = '', hash = '') {
+    if (search.length + hash.length > MAX_INPUT_LENGTH) throw problem('too_large');
+    const query = search.replace(/^\?/, '');
+    const fragment = hash.replace(/^#/, '');
+    // Parse only explicit share parameters and preserve literal plus signs in legacy URLs.
+    const fromQuery = getParam(query, 'd');
+    if (fromQuery !== null) return payload(fromQuery);
+    const legacyQuery = getParam(query, 'v');
+    if (legacyQuery !== null && /^[cjz]/.test(legacyQuery)) return payload(legacyQuery);
+    let fromFragment = getParam(fragment, 'd');
+    if (fromFragment === null) fromFragment = getParam(fragment, 'v');
+    if (fromFragment !== null) return payload(fromFragment);
+    let key = getParam(query, 's');
+    if (key === null) key = getParam(fragment, 's');
+    if (key !== null) return archive(key);
+    const naked = fragment.split(/[&?]/, 1)[0];
+    if (/^[cjz][A-Za-z0-9+/_%.-]/.test(naked)) return payload(naked);
+    if (legacyQuery !== null) return payload(legacyQuery);
+    return { kind: 'missing' };
+  }
+
+  function read(input) {
+    if (input && typeof input === 'object') return readParts(input.search, input.hash);
+    if (typeof input !== 'string') return { kind: 'missing' };
+    if (input.length > MAX_INPUT_LENGTH) throw problem('too_large');
+    let text = input.trim().replace(WRAPPING, '');
+    text = text.replace(/[。；，、]+$/, '');
+    for (const pair of ['<>', '「」', '（）', '()']) {
+      if (text.startsWith(pair[0]) && text.endsWith(pair[1])) { text = text.slice(1, -1); break; }
+    }
+    if (/^https?%3a%2f%2f/i.test(text)) {
+      try { text = decodeURIComponent(text); } catch (error) { throw problem('invalid'); }
+    }
+    if (/^https?:\/\//i.test(text)) {
+      let target;
+      try { target = new URL(text); } catch (error) { throw problem('invalid'); }
+      return readParts(target.search, target.hash);
+    }
+    if (text.startsWith('?')) {
+      const hashAt = text.indexOf('#');
+      return hashAt === -1 ? readParts(text) : readParts(text.slice(0, hashAt), text.slice(hashAt));
+    }
+    if (text.startsWith('#')) return readParts('', text);
+    if (/^[cjz]/.test(text)) return payload(text);
+    return { kind: 'missing' };
+  }
+
+  function url(pageHref, token) {
+    const data = payload(token);
+    const target = new URL('s.html', pageHref);
+    if (target.protocol !== 'https:') throw problem('invalid');
+    target.search = '?d=' + encodeURIComponent(data.value);
+    target.hash = '';
+    return target.href;
+  }
+
+  function splitProducts(pageHref, products, encode, maxLength = 1800) {
+    const links = [];
+    function fittingLink(start, end) {
+      try {
+        const link = url(pageHref, encode(products.slice(start, end)));
+        return link.length <= maxLength ? link : '';
+      } catch (error) {
+        if (/^分享数据过大/.test(error.message)) return '';
+        throw error;
+      }
+    }
+
+    for (let start = 0; start < products.length;) {
+      let end = start + 1;
+      let link = fittingLink(start, end);
+      if (!link) return [];
+
+      // Grow quickly until the next group is too long, then tighten that range.
+      let limit = products.length + 1;
+      for (let size = 2; end < products.length; size *= 2) {
+        const candidate = Math.min(start + size, products.length);
+        const nextLink = fittingLink(start, candidate);
+        if (!nextLink) { limit = candidate; break; }
+        end = candidate;
+        link = nextLink;
+      }
+      while (limit - end > 1) {
+        const candidate = Math.floor((end + limit) / 2);
+        const nextLink = fittingLink(start, candidate);
+        if (nextLink) { end = candidate; link = nextLink; }
+        else limit = candidate;
+      }
+      links.push(link);
+      start = end;
+    }
+    return links;
+  }
+
+  return { read, url, splitProducts };
 });
 </script>
 <script>
@@ -3287,9 +3509,11 @@ async function buildOnlineShareLink(records,options={}) {
   // Capture edits at click time, before any image preparation.
   const products=JSON.parse(JSON.stringify(list.map(productDetail)));
   for(const product of products){product.model=await compactShareImage(product.model);assertCurrent()}
-  const url=new URL('share.html',location.href);
-  url.search='';url.hash=BuyerShareCodec.encode(products);
-  return url.href;
+  const links=BuyerShareTransport.splitProducts(location.href,products,BuyerShareCodec.encode);
+  if(links.length)return links.join('\n');
+  const error=new Error('商品内容较多，可下载完整产品卡发给对方');
+  error.shareProducts=products;
+  throw error;
 }
 function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
 function shareLinkMessage(url,count=1){
@@ -3303,23 +3527,44 @@ async function copyShareText(text) {
   catch(e){return false}
   finally{input.remove();previous?.focus({preventScroll:true})}
 }
+function downloadShareFile(products) {
+  const html='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>寻品产品分享</title><style>body{margin:16px;font:16px system-ui,sans-serif;color:#20362f;background:#f3f6f4}main{max-width:960px;margin:auto}.product{margin:16px 0;padding:16px;background:#fff;border:1px solid #d4ded8;border-radius:12px;overflow-wrap:anywhere}.product-head,.image-caption-row{display:flex;gap:12px;flex-wrap:wrap}.field{padding:8px 0;border-top:1px solid #e1e9e4}.field b{display:block;font-size:.86em}.field span{white-space:pre-wrap}figure{margin:12px 0}img{display:block;width:100%;max-width:440px;max-height:360px;object-fit:contain;background:#f3f6f4}.share-badge{display:inline-block;margin:4px;padding:3px 6px;background:#fff4db;border-radius:5px}@media print{.product{break-inside:avoid}}</style><main><h1>寻品产品分享</h1><p>'+products.length+' 个产品</p>'+products.map(productCardHTML).join('')+'</main></html>';
+  const url=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'})),anchor=document.createElement('a');
+  anchor.href=url;anchor.download='寻品产品分享.html';document.body.append(anchor);anchor.click();anchor.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
 async function showShareLinkDialog(records) {
   const dialog=$('shareLinkDialog'),dataset=rows,list=Array.from(records),request=showShareLinkDialog.serial=(showShareLinkDialog.serial||0)+1;
   dialog.shareRequest=request;dialog.hidden=false;
-  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p class="muted">一个直达链接分享全部所选产品，无需登录，打开即可查看生成时的内容快照。</p></section>';
+  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div><p data-share-parts hidden></p><button type="button" class="btn primary" data-share-file hidden>下载产品卡</button></section>';
   const current=()=>rows===dataset&&!dialog.hidden&&dialog.shareRequest===request;
   const close=()=>{if(dialog.shareRequest===request){dialog.hidden=true;dialog.shareRequest=null}};
   dialog.querySelector('[data-share-close]').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
   try{
     const link=await buildOnlineShareLink(list,{isCurrent:current});if(!current())return;
     const status=dialog.querySelector('[data-share-status]'),controls=dialog.querySelector('.share-link-controls');
-    status.textContent=shareLinkMessage(link,list.length);controls.querySelector('input').value=link;controls.hidden=false;
-    const copy=controls.querySelector('[data-copy-share]');
-    copy.onclick=async()=>{if(!current())return;const ok=await copyShareText(link);if(current()){copy.textContent=ok?'已复制':'复制失败';setTimeout(()=>{if(current())copy.textContent='复制链接'},1500)}};
-    controls.querySelector('[data-open-share]').onclick=()=>{if(current())window.open(link,'_blank','noopener,noreferrer')};
+    const links=link.split('\n'),multiple=links.length>1,input=controls.querySelector('input');
+    const copy=controls.querySelector('[data-copy-share]'),open=controls.querySelector('[data-open-share]'),copyLabel=multiple?'复制全部链接':'复制链接';
+    status.textContent=multiple?'已为 '+list.length+' 个产品生成 '+links.length+' 条链接，转发时请发送全部地址':shareLinkMessage(link,list.length);
+    input.value=links[0];input.hidden=multiple;open.hidden=multiple;copy.textContent=copyLabel;controls.hidden=false;
+    if(multiple){
+      const parts=dialog.querySelector('[data-share-parts]');
+      parts.innerHTML=links.map((url,i)=>'<a class="btn" href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">打开第 '+(i+1)+' 条</a>').join(' ');
+      parts.hidden=false;
+    }
+    copy.onclick=async()=>{if(!current())return;const ok=await copyShareText(link);if(current()){copy.textContent=ok?'已复制':'复制失败';setTimeout(()=>{if(current())copy.textContent=copyLabel},1500)}};
+    open.onclick=()=>{if(current())window.open(links[0],'_blank','noopener,noreferrer')};
     const copied=await copyShareText(link);
     if(current()&&copied)status.textContent+=' · 已复制';
-  }catch(error){if(current())dialog.querySelector('[data-share-status]').textContent='链接生成失败：'+(error?.message||'请稍后重试')}
+  }catch(error){
+    if(!current())return;
+    const status=dialog.querySelector('[data-share-status]');
+    if(error?.shareProducts){
+      status.textContent=error.message;
+      const file=dialog.querySelector('[data-share-file]');file.hidden=false;
+      file.onclick=()=>{if(current())downloadShareFile(error.shareProducts)};
+    }else status.textContent='链接生成失败：'+(error?.message||'请稍后重试');
+  }
 }
 function sharePreviewChineseValue(record,targetIndex) {
   return String(value(record,H[targetIndex])??'');
@@ -3347,9 +3592,9 @@ function toggleProductCard(uid, anchor) {
   document.body.append(card);activeProductCard=uid;
   const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
   const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
-  let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null,linkGeneration=0;
+  let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null,linkGeneration=0,shareFileButton=null;
   const snapshot=()=>{const detail=sharedSnapshot||productDetail(record);return [detail.itemChinese,detail.modelChinese,detail.category]};
-  const clearLink=()=>{linkGeneration++;result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;open.onclick=null;result.querySelector('[data-copy-single]').onclick=null;result.querySelector('[data-copy-single]').textContent='复制链接';linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
+  const clearLink=()=>{linkGeneration++;shareFileButton?.remove();shareFileButton=null;result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;open.onclick=null;result.querySelector('[data-copy-single]').onclick=null;result.querySelector('[data-copy-single]').textContent='复制链接';linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
   const update=()=>{
     if(!current())return false;
     const signature=shareRecordSignature(record);
@@ -3381,7 +3626,17 @@ function toggleProductCard(uid, anchor) {
       result.querySelector('[data-copy-single]').onclick=async event=>{if(!currentLink())return;const button=event.currentTarget,ok=await copyShareText(url);if(currentLink())button.textContent=ok?'已复制':'复制失败'};
       const copied=await copyShareText(url);
       if(currentLink()&&copied)linkNotice+=' · 已复制';
-    }catch(error){if(current()){clearLink();linkError=error?.message||'分享链接生成失败，请稍后重试。'}}
+    }catch(error){
+      if(current()){
+        clearLink();linkError=error?.message||'分享链接生成失败，请稍后重试。';
+        if(error?.shareProducts){
+          const button=document.createElement('button');button.type='button';button.textContent='下载产品卡';
+          shareFileButton=button;linkBaselineSignature=shareRecordSignature(record);
+          button.onclick=()=>{if(current()&&shareFileButton===button&&linkBaselineSignature===shareRecordSignature(record))downloadShareFile(error.shareProducts)};
+          card.querySelector('.product-card-actions').append(button);
+        }
+      }
+    }
     finally{if(current()){generating=false;update()}}
   };
   update();

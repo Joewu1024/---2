@@ -53,14 +53,49 @@ test('round-trips image data and a batch larger than a single compressed input c
   assert.deepEqual(codec.decode(encoded), {v:1, products});
 });
 
-test('decodes in a browser context without native text codecs or decompression', () => {
-  const context = vm.createContext({atob, TextEncoder:undefined, TextDecoder:undefined, DecompressionStream:undefined});
+function browserCodec(overrides = {}) {
+  const context = vm.createContext({atob, TextEncoder:undefined, TextDecoder:undefined, DecompressionStream:undefined, ...overrides});
   const root = path.resolve(__dirname, '..');
   for (const file of ['vendor/fflate-0.8.3.min.js', 'product-share-codec.js']) {
     vm.runInContext(fs.readFileSync(path.join(root, file), 'utf8'), context, {filename:file});
   }
-  const decoded = context.BuyerShareCodec.decode(codec.encode([product]));
+  return context.BuyerShareCodec;
+}
+
+test('decodes in a browser context without native text codecs or decompression', () => {
+  const decoded = browserCodec().decode(codec.encode([product]));
   assert.deepEqual(JSON.parse(JSON.stringify(decoded)), {v:1, products:[product]});
+});
+
+test('WebViews requiring Base64 padding can decode an intact unpadded URL', () => {
+  const products = [product];
+  const token = codec.encode(products);
+  assert.notEqual((token.length - 1) % 4, 0);
+  let input;
+  const mobile = browserCodec({
+    atob(value) {
+      input = value;
+      if (value.length % 4 !== 0) throw new Error('Base64 padding required');
+      return atob(value);
+    }
+  });
+  assert.deepEqual(JSON.parse(JSON.stringify(mobile.decode(token))), {v:1, products});
+  assert.match(input, /=+$/);
+});
+
+test('WebViews with an unusable TextDecoder still display exact multilingual text', () => {
+  let nativeCalls = 0;
+  const mobile = browserCodec({
+    TextDecoder: class {
+      decode() {
+        nativeCalls++;
+        throw new Error('TextDecoder unsupported');
+      }
+    }
+  });
+  const products = [{...product, itemChinese:'遥控器 / Điều khiển 🎉 \uFFFD'}];
+  assert.deepEqual(JSON.parse(JSON.stringify(mobile.decode(codec.encode(products)))), {v:1, products});
+  assert.ok(nativeCalls >= 2, 'vendor probe and data decode reached the stub');
 });
 
 // A zlib stream has the same Adler-32 checksum and DEFLATE data as the packet,
@@ -69,6 +104,17 @@ function packetFor(bytes) {
   const stream = zlib.deflateSync(bytes);
   return 'c' + Buffer.concat([stream.subarray(-4), stream.subarray(2, -4)]).toString('base64url');
 }
+
+test('the strict fallback rejects malformed UTF-8 even when its checksum matches', () => {
+  const corrupt = Buffer.concat([Buffer.from('[["id","'), Buffer.from([0xf0, 0x80, 0x80, 0x80]), Buffer.from('"]]')]);
+  const token = packetFor(corrupt);
+  const ignoresFatal = class {
+    decode(bytes) { return new TextDecoder().decode(bytes); }
+  };
+  for (const implementation of [codec, browserCodec(), browserCodec({TextDecoder:ignoresFatal})]) {
+    assert.throws(() => implementation.decode(token), /损坏|无效/);
+  }
+});
 
 test('rejects damaged tokens and snapshots with invalid card fields', () => {
   const token = codec.encode([product]);

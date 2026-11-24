@@ -14,6 +14,7 @@ const BuyerGoogleTranslation = require('../translation-google-provider.js');
 const BuyerReferenceTranslation = require('../translation-reference-provider.js');
 const BuyerCategoryTranslations = require('../category-translations.js');
 const BuyerShareCodec = require('../product-share-codec.js');
+const BuyerShareTransport = require('../product-share-transport.js');
 const WorkbenchImport = require('../workbench-import.js');
 const root = path.join(__dirname, '..');
 const documentHtml = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
@@ -102,7 +103,7 @@ function harness(options = {}) {
   };
   const transport = options.transport || mock.fn(async texts => texts.map(chineseFor));
   const context = vm.createContext({
-    BuyerTranslation, BuyerGoogleTranslation, BuyerCategoryTranslations, BuyerShareCodec, WorkbenchImport, controls, document, console,
+    BuyerTranslation, BuyerGoogleTranslation, BuyerCategoryTranslations, BuyerShareCodec, BuyerShareTransport, WorkbenchImport, controls, document, console,
     // Legacy Google/Chrome fixtures deliberately request the internal fallback;
     // primaryReference fixtures below exercise the actual reference transport.
     BuyerReferenceTranslation: options.referenceProvider || (options.primaryReference ? BuyerReferenceTranslation : {create:()=>({async translateBatch(){throw Object.assign(new Error('Fabricated primary fallback'),{fallback:true})}})}),
@@ -228,10 +229,11 @@ function completedShareRecord(h,id){
   row.userEditedFields=[h.api.H[10],h.api.H[12]];return row;
 }
 function decodeFabricatedShareUrl(url){
-  const fragment=new URL(url).hash.slice(1);
-  const token=new URLSearchParams(fragment).get('d')||fragment;
-  assert.match(token,/^c[A-Za-z0-9_-]+$/);
-  return BuyerShareCodec.decode(token);
+  return {v:1,products:url.split('\n').flatMap(link=>{
+    const query=new URL(link).searchParams.get('d');
+    assert.match(query,/^c[A-Za-z0-9_-]+$/);
+    return BuyerShareCodec.decode(query).products;
+  })};
 }
 
 function editor(h, r, field = h.api.H[10]) {
@@ -499,7 +501,7 @@ test('sharing freezes only selected current fields without requesting or waiting
   const unselected = record(h, 'share-unselected', 'Microphone FICT1611');
   h.api.setRows([selected, unselected]);
   const before=JSON.parse(JSON.stringify(selected.raw)),url=await h.api.buildOnlineShareLink([selected]);
-  assert.equal(new URL(url).pathname, '/share.html');
+  assert.equal(new URL(url).pathname, '/s.html');
   assert.equal(h.controls.categoryCalls, 0);
   assert.ok(h.controls.shareSnapshots.length>0);
   const shared=decodeFabricatedShareUrl(url).products;assert.equal(shared.length,1);
@@ -523,7 +525,7 @@ test('every new share URL is a compact same-origin snapshot without consulting a
   for(const text of ['  Buyer English / 5pcs  ','中文 & <mixed>\n5pcs','']){
     chosen.raw[h.api.H[10]]=text;
     const result=await h.api.buildOnlineShareLink([chosen]),url=new URL(result);
-    assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/share.html');assert.equal(url.search,'');
+    assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/s.html');assert.equal(url.hash,'');
     const products=decodeFabricatedShareUrl(result).products;assert.deepEqual(products.map(card=>card.id),[chosen.uid]);assert.equal(products[0].itemChinese,text);
     assert.notEqual(result,previous);previous=result;
     assert.match(h.api.shareLinkMessage(result,1),/1 个产品的直达链接/);assert.doesNotMatch(result,/is\.gd/);
@@ -553,7 +555,7 @@ test('direct sharing removes workspace query state and carries every selected ca
   const h=harness({location}),chosen=completedShareRecord(h,'direct-first'),second=completedShareRecord(h,'00000000000000000000000000002'),other=completedShareRecord(h,'never-shared');h.api.setRows([chosen,second,other]);
   second.raw[h.api.H[12]]='  5pcs / 蓝色  ';
   const result=await h.api.buildOnlineShareLink([chosen,second]);
-  const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/share.html');assert.equal(full.search,'');
+  const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/s.html');assert.equal(full.hash,'');
   const products=decodeFabricatedShareUrl(result).products;
   assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(products.map(card=>card.id),[chosen.uid,second.uid]);assert.equal(products[1].modelChinese,'  5pcs / 蓝色  ');
   assert.match(h.api.shareLinkMessage(result,2),/2 个产品的直达链接/);assert.equal(h.controls.shortenerCalls.length,0);
@@ -790,7 +792,7 @@ for(const missing of [10,12])test('sharing preserves an empty current field '+mi
 
 test('buyer-completed Chinese title and model can be shared when original fields are absent',async()=>{
   const h=harness(),r=record(h,'completed-without-source','');r.raw[h.api.H[10]]='人工补全中文标题';r.raw[h.api.H[12]]='人工补全中文型号';r.userEditedFields=[h.api.H[10],h.api.H[12]];h.api.setRows([r]);
-  const url=await h.api.buildOnlineShareLink([r]);assert.equal(new URL(url).pathname,'/share.html');assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.shareSnapshots[0].modelChinese,'人工补全中文型号');
+  const url=await h.api.buildOnlineShareLink([r]);assert.equal(new URL(url).pathname,'/s.html');assert.equal(h.transport.mock.callCount(),0);assert.equal(h.controls.shareSnapshots[0].modelChinese,'人工补全中文型号');
 });
 
 test('Chrome mode routes only prepared languages locally and keeps other full sentences on Google',async()=>{

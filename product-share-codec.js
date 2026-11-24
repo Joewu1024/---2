@@ -94,7 +94,8 @@
 
   function fromBase64Url(value) {
     if (!/^[A-Za-z0-9_-]+$/.test(value) || value.length % 4 === 1) throw invalid();
-    const string = atob(value.replace(/-/g, '+').replace(/_/g, '/'));
+    const padding = (4 - value.length % 4) % 4;
+    const string = atob(value.replace(/-/g, '+').replace(/_/g, '/') + '=='.slice(0, padding));
     const bytes = new Uint8Array(string.length);
     for (let i = 0; i < string.length; i++) bytes[i] = string.charCodeAt(i);
     return bytes;
@@ -135,6 +136,60 @@
     return bytes;
   }
 
+  function decodeUtf8(bytes) {
+    if (typeof TextDecoder === 'function') {
+      try {
+        const decoded = new TextDecoder('utf-8', {fatal:true}).decode(bytes);
+        // Some WebViews silently ignore fatal mode. Validate any replacement characters below.
+        if (!decoded.includes('\uFFFD')) return decoded;
+      } catch (error) {
+        // A WebView may expose TextDecoder without supporting strict decoding.
+      }
+    }
+    const chunks = [];
+    let part = '';
+    for (let i = 0; i < bytes.length;) {
+      const first = bytes[i++];
+      let point = first;
+      let extra = 0;
+      let minimum = 0;
+      if (first >= 194 && first <= 223) {
+        point = first & 31;
+        extra = 1;
+        minimum = 128;
+      } else if (first >= 224 && first <= 239) {
+        point = first & 15;
+        extra = 2;
+        minimum = 2048;
+      } else if (first >= 240 && first <= 244) {
+        point = first & 7;
+        extra = 3;
+        minimum = 65536;
+      } else if (first > 127) {
+        throw invalid();
+      }
+      if (i + extra > bytes.length) throw invalid();
+      for (let j = 0; j < extra; j++) {
+        const next = bytes[i++];
+        if ((next & 192) !== 128) throw invalid();
+        point = point * 64 + (next & 63);
+      }
+      if (point < minimum || point > 1114111 || (point >= 55296 && point <= 57343)) throw invalid();
+      if (point > 65535) {
+        point -= 65536;
+        part += String.fromCharCode(55296 + (point >> 10), 56320 + (point & 1023));
+      } else {
+        part += String.fromCharCode(point);
+      }
+      if (part.length >= 8192) {
+        chunks.push(part);
+        part = '';
+      }
+    }
+    chunks.push(part);
+    return chunks.join('');
+  }
+
   function decode(token) {
     if (typeof token !== 'string' || token.charAt(0) !== 'c') throw invalid();
     if (token.length > MAX_TOKEN_LENGTH) throw tooLarge();
@@ -143,10 +198,7 @@
       if (packet.length <= 4) throw invalid();
       const bytes = inflate(packet.subarray(4));
       if (checksum(bytes) !== new DataView(packet.buffer).getUint32(0)) throw invalid();
-      const json = typeof TextDecoder === 'function'
-        ? new TextDecoder('utf-8', {fatal:true}).decode(bytes)
-        : fflate.strFromU8(bytes);
-      const rows = JSON.parse(json);
+      const rows = JSON.parse(decodeUtf8(bytes));
       if (!Array.isArray(rows) || !rows.length) throw invalid();
       return {v:1, products:rows.map(unpack)};
     } catch (error) {
@@ -155,5 +207,5 @@
     }
   }
 
-  return {encode, decode};
+  return {encode, decode, decodeUtf8};
 });

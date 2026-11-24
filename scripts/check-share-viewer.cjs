@@ -23,17 +23,24 @@ const token = (value = payload, mode = 'z') => mode + (mode === 'z' ? zlib.gzipS
 const gzipToken = bytes => 'z' + Buffer.from(bytes).toString('base64url');
 
 function viewer(options = {}) {
-  const elements = { summary: { textContent: '' }, cards: { innerHTML: '' } };
+  const elements = {
+    summary: { textContent: '' },
+    cards: { innerHTML: '' },
+    shareRecovery: { hidden: true },
+    shareRecoveryInput: { value: '' },
+    shareRecoverySubmit: { disabled: false }
+  };
   const sandbox = {
-    URL, URLSearchParams, Uint8Array, Uint16Array, Uint32Array, ArrayBuffer,
-    atob: text => Buffer.from(text, 'base64').toString('latin1'),
+    URL, Uint8Array, Uint16Array, Uint32Array, ArrayBuffer,
+    atob: options.atob || (text => Buffer.from(text, 'base64').toString('latin1')),
     location: { search: options.search || '', hash: options.hash || '' },
     document: { title: '', getElementById: id => elements[id] },
     fetch: options.fetch || (() => { throw new Error('Complete share URLs must not fetch'); }),
     setTimeout, clearTimeout, AbortController
   };
+  if (options.urlSearchParams !== false) sandbox.URLSearchParams = URLSearchParams;
   if (options.crypto !== false) sandbox.crypto = crypto.webcrypto;
-  if (options.textDecoder !== false) sandbox.TextDecoder = TextDecoder;
+  if (options.textDecoder !== false) sandbox.TextDecoder = options.TextDecoder || TextDecoder;
   if (options.Blob) sandbox.Blob = options.Blob;
   if (options.DecompressionStream) sandbox.DecompressionStream = options.DecompressionStream;
   Object.defineProperty(sandbox, 'localStorage', { get() { throw new Error('Viewer must not use localStorage'); } });
@@ -46,6 +53,12 @@ function viewer(options = {}) {
     vm.runInContext(at < 0 ? source : source.slice(0, at), context, { filename: 'share.html' });
   }
   return { context, elements };
+}
+
+async function boot(context) {
+  const main = scripts.at(-1)[2];
+  vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
+  await new Promise(resolve => setImmediate(resolve));
 }
 
 const tests = [];
@@ -67,16 +80,19 @@ test('fixed official vendor is embedded exactly, with MIT and SHA-256 provenance
   const embedded = scripts.find(script => script[1].includes('data-buyer-share-gzip="fflate-0.8.3"'));
   assert.ok(embedded && embedded[2].includes(fs.readFileSync(path.join(root, 'vendor/fflate-0.8.3.min.js'), 'utf8')));
   assert.ok(embedded[2].includes('Permission is hereby granted, free of charge'));
-  assert.equal(scripts.length, 4);
+  assert.equal(scripts.length, 5);
   const sealed = scripts.find(script => script[1].includes('data-buyer-github-share="v1"'));
   assert.equal(sealed[2].trim(), fs.readFileSync(path.join(root, 'github-share.js'), 'utf8').trim());
   const codec = fs.readFileSync(path.join(root, 'product-share-codec.js'), 'utf8').trim();
   assert.ok(scripts.some(script => script[2].trim() === codec), 'Viewer includes the same codec as the share builder');
+  const transport = fs.readFileSync(path.join(root, 'product-share-transport.js'), 'utf8').trim();
+  assert.ok(scripts.some(script => script[2].trim() === transport), 'Viewer includes the same carrier parser as the share builder');
+  assert.equal(fs.readFileSync(path.join(root, 's.html'), 'utf8'), html, 'Both viewer paths must ship the same recovery and decoding logic');
   assert.ok(!/<script\b[^>]*\bsrc\s*=/i.test(html));
   assert.ok(!/\b(?:fetch|XMLHttpRequest|localStorage|sessionStorage)\s*[.(]/.test(scripts.at(-1)[2]));
 });
 
-test('compact links render without transport on a clean viewer without native decompression or crypto', async () => {
+test('compact query and legacy fragment links render without network on a restricted viewer', async () => {
   const products = [
     product,
     { ...product, id: '000000000000000045', itemChinese: '', target: '0', modelChinese: '  蓝色 / 5pcs  ' },
@@ -86,17 +102,19 @@ test('compact links render without transport on a clean viewer without native de
     const compact = BuyerShareCodec.encode(entries);
     const legacy = token({ v: 1, products: entries });
     assert.ok(compact.length < legacy.length, 'the fabricated share should be shorter than its former gzip payload');
-    for (const fragment of ['#' + compact, '#d=' + compact]) {
+    for (const carrier of [{ search: '?d=' + compact + '&from=singlemessage' }, { hash: '#' + compact }, { hash: '#d=' + compact }]) {
       let requests = 0;
       const { context, elements } = viewer({
-        hash: fragment,
+        ...carrier,
         textDecoder: false,
         crypto: false,
+        urlSearchParams: false,
         fetch() { requests++; throw new Error('Compact links carry all card fields'); }
       });
       assert.deepEqual(plain(await context.decodeSharePayload(context.readShareToken())), { v: 1, products: entries });
       assert.equal(await context.load(), entries.length);
       assert.equal(requests, 0);
+      assert.equal(elements.shareRecovery.hidden, true);
       assert.match(elements.summary.textContent, new RegExp(entries.length + ' 个产品'));
       assert.match(elements.cards.innerHTML, /示例风扇/);
       assert.match(elements.cards.innerHTML, /5pcs/);
@@ -110,14 +128,36 @@ test('compact links render without transport on a clean viewer without native de
   }
 });
 
-test('malformed compact fragments display a readable error', async () => {
-  const { context, elements } = viewer({ hash: '#cBAD' });
-  const main = scripts.at(-1)[2];
-  vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
-  await new Promise(resolve => setImmediate(resolve));
+test('old incomplete fragments open a recovery field and accept the full original share URL', async () => {
+  const { context, elements } = viewer({ hash: '#cA' });
+  await boot(context);
   assert.equal(elements.summary.textContent, '无法显示分享内容');
-  assert.ok(elements.cards.innerHTML.includes('emptyState'));
-  assert.doesNotMatch(elements.cards.innerHTML, /cBAD/);
+  assert.match(elements.cards.innerHTML, /不完整/);
+  assert.doesNotMatch(elements.cards.innerHTML, /#cA/);
+  assert.equal(elements.shareRecovery.hidden, false);
+  const compact = BuyerShareCodec.encode([product]);
+  const escaped = compact.replace(/[-_]/g, ch => '%' + ch.charCodeAt(0).toString(16));
+  const forwarded = escaped.slice(0, 60) + '\u200b\n' + escaped.slice(60);
+  elements.shareRecoveryInput.value = '<https://example.test/s.html?d=' + forwarded + '&from=singlemessage>';
+  let submitted = false;
+  await elements.shareRecovery.onsubmit({ preventDefault() { submitted = true; } });
+  assert.equal(submitted, true);
+  assert.equal(elements.shareRecovery.hidden, true);
+  assert.equal(elements.shareRecoverySubmit.disabled, false);
+  assert.equal(elements.shareRecoveryInput.value, '');
+  assert.match(elements.cards.innerHTML, /示例风扇/);
+  assert.equal(context.location.hash, '#cA', 'Recovery must not navigate away or upload the pasted URL');
+});
+
+test('missing data and a damaged snapshot produce distinct messages', async () => {
+  const gone = viewer({ search: '?from=singlemessage' });
+  await boot(gone.context);
+  assert.match(gone.elements.cards.innerHTML, /没有产品数据/);
+  const compact = BuyerShareCodec.encode([product]);
+  const corrupt = viewer({ search: '?d=' + compact[0] + (compact[1] === 'A' ? 'B' : 'A') + compact.slice(2) });
+  await boot(corrupt.context);
+  assert.match(corrupt.elements.cards.innerHTML, /校验失败/);
+  assert.equal(corrupt.elements.shareRecovery.hidden, false);
 });
 
 test('one product and a batch have the same length short URL and render from a public encrypted file', async () => {
@@ -155,6 +195,11 @@ test('bad or missing short snapshot fails with a readable error', async () => {
 
 test('gzip works with DecompressionStream, Blob and TextDecoder all absent', async () => {
   const { context } = viewer({ textDecoder: false });
+  assert.deepEqual(plain(await context.decodeSharePayload(token())), payload);
+});
+
+test('legacy UTF-8 is readable when the available native decoder fails at runtime', async () => {
+  const { context } = viewer({ TextDecoder: class { decode() { throw new Error('Unavailable native decoding'); } } });
   assert.deepEqual(plain(await context.decodeSharePayload(token())), payload);
 });
 
@@ -317,9 +362,7 @@ test('forged small ISIZE cannot bypass the streaming expansion limit', async () 
 
 test('boot error rendering remains escaped and does not expose the input URL', async () => {
   const { context, elements } = viewer({ hash: '#d=jinvalid<script>' });
-  const main = scripts.at(-1)[2];
-  vm.runInContext(main.slice(main.indexOf('\nload().catch')), context);
-  await new Promise(resolve => setImmediate(resolve));
+  await boot(context);
   assert.equal(elements.summary.textContent, '无法显示分享内容');
   assert.ok(elements.cards.innerHTML.includes('emptyState'));
   assert.ok(!elements.cards.innerHTML.includes('<script>') && !elements.cards.innerHTML.includes('jinvalid'));
@@ -342,10 +385,9 @@ test('boot error rendering remains escaped and does not expose the input URL', a
       if (process.env.BUYER_SHARE_VIEWER_EXPECTED_COUNT && count !== Number(process.env.BUYER_SHARE_VIEWER_EXPECTED_COUNT)) throw new Error('count mismatch');
       assert.equal((elements.cards.innerHTML.match(/<article class="product">/g) || []).length, count);
       const snapshot = plain(await context.decodeSharePayload(context.readShareToken()));
-      const compactUrl = new URL(url.href);
-      compactUrl.search = '';
-      compactUrl.hash = BuyerShareCodec.encode(snapshot.products);
-      const compact = viewer({ hash: compactUrl.hash, textDecoder: false });
+      const compactUrl = new URL('s.html', url.href);
+      compactUrl.search = '?d=' + BuyerShareCodec.encode(snapshot.products);
+      const compact = viewer({ search: compactUrl.search, textDecoder: false });
       assert.deepEqual(plain(await compact.context.decodeSharePayload(compact.context.readShareToken())).products, snapshot.products);
       assert.equal(await compact.context.load(), count);
       console.log(JSON.stringify({ realLink: 'local opt-in', cards: count, legacyChars: url.href.length, compactChars: compactUrl.href.length, nativeDecompression: false, textDecoder: false }));
