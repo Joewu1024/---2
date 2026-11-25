@@ -114,15 +114,15 @@ function harness(overrides = {}) {
     render() { controls.renders++; context.closeProductCard(); }, toast: text => { controls.toast = text; },
     async ensureProductTranslations(records) { controls.ensureCalls++; return controls.ensure?.(records); },
     async ensureCategoryTranslations(records) { controls.categoryCalls++; return controls.ensureCategory?.(records); },
-    async buildOnlineShareLink(records) {
+    async buildLinkCardShareLink(records, options = {}) {
       if (controls.generateError) throw controls.generateError;
       const row = records[0], payload = context.productDetail(row);
       const url = 'https://example.test/share.html#d=j' + Buffer.from(JSON.stringify(payload)).toString('base64url');
-      controls.generatedUrls.push(url); return controls.generate ? controls.generate(records, url) : url;
+      controls.generatedUrls.push(url);options.onOriginal?.(url); return controls.generate ? controls.generate(records, url) : controls.cardUrl || url;
     },
     shareLinkMessage(url, count = 1) {
       controls.linkMessages.push({ url, count });
-      return '已生成 ' + count + ' 个产品的直达链接';
+      return '已生成 ' + count + ' 个产品的卡片分享链接';
     },
     copyShareText: async url => { controls.copiedUrls.push(url); return controls.clipboardAllowed; },
     closeProductCard() { document.getElementById('productCard')?.remove(); context.activeProductCard = ''; },
@@ -362,7 +362,7 @@ test('single preview reports direct sharing and exposes only its primary control
     assert.equal(card.querySelector('[data-preview-link]').querySelector('input').value, expectedUrl);
     const status = card.querySelector('[data-preview-status]');
     assert.equal(status.hidden, false);
-    assert.match(status.textContent,/直达链接/);assert.doesNotMatch(status.textContent,/短链接|is\.gd|翻译失败|一键翻译/);
+    assert.match(status.textContent,/卡片分享链接/);assert.doesNotMatch(status.textContent,/短链接|is\.gd|翻译失败|一键翻译/);
     assert.equal(card.querySelector('[data-preview-direct]'),null);
     assert.deepEqual(h.controls.linkMessages.at(-1), { url: expectedUrl, count: 1 });
     h.context.closeProductCard();
@@ -380,8 +380,8 @@ test('generation errors after valid Chinese are not misreported as translation f
 test('actual shareLinkMessage reports the number of products in the generated direct link', () => {
   const context = vm.createContext({}); vm.runInContext(messageSource, context);
   const url = 'https://example.test/share.html#d=cDirect';
-  assert.equal(context.shareLinkMessage(url, 3), '已生成 3 个产品的直达链接');
-  assert.equal(context.shareLinkMessage(url), '已生成 1 个产品的直达链接');
+  assert.equal(context.shareLinkMessage(url, 3), '已生成 3 个产品的卡片分享链接');
+  assert.equal(context.shareLinkMessage(url), '已生成 1 个产品的卡片分享链接');
 });
 
 test('a pending or failed regeneration never exposes the previous successful open URL', async () => {
@@ -434,4 +434,37 @@ test('the online viewer displays current foreign values and marks empty fields w
   assert.doesNotMatch(result, /Wireless speaker|Black/);
   const current=context.card({id:'FAKE-ASCII',itemChinese:'Buyer English title',modelChinese:'5pcs'},0);assert.match(current,/Buyer English title/);assert.match(current,/5pcs/);
   assert.match(context.card({ id: 'FAKE-2', itemChinese: '音箱<img>', modelChinese: '黑色' }, 0), /音箱&lt;img&gt;/);
+});
+
+test('single sharing prefills the original URL but copies and opens only the card-maker result', async () => {
+  const cardUrl='https://link-card-maker.app.workbuddy.host/c/TEST01?sharecode=26URNVPWDI';
+  const h=harness({cardUrl}),card=h.open();
+  await card.querySelector('[data-generate-single]').onclick();
+  const original=card.querySelector('[data-preview-original]'),input=card.querySelector('[data-preview-original-url]');
+  assert.equal(original.hidden,false);assert.equal(input.value,h.controls.generatedUrls[0]);
+  assert.notEqual(input.value,cardUrl);
+  assert.equal(card.querySelector('[data-preview-link]').querySelector('input').value,cardUrl);
+  assert.equal(card.querySelector('[data-open-single]').href,cardUrl);
+  assert.deepEqual(h.controls.copiedUrls,[cardUrl]);
+  h.record.raw[h.H[10]]='Changed after sharing';card.refreshChinese(h.record);
+  assert.equal(original.hidden,true);assert.equal(input.value,'');
+  assertSingleLinkUnavailable(card);
+});
+
+test('a stale single original-link callback cannot update a closed or replaced preview',async()=>{
+  let callback;
+  const h=harness(),card=h.open(),gate=deferred();
+  h.controls.generate=(records,url)=>gate.promise;
+  const originalBuilder=h.context.buildLinkCardShareLink;
+  h.context.buildLinkCardShareLink=(records,options)=>{callback=options.onOriginal;return originalBuilder(records,options)};
+  const pending=card.querySelector('[data-generate-single]').onclick();await flush();
+  const original=card.querySelector('[data-preview-original-url]').value;
+  h.context.closeProductCard();h.context.rows=[{...h.record,raw:{...h.record.raw}}];
+  const replacement=h.open();
+  callback('https://example.test/OBSOLETE-ORIGINAL');
+  assert.equal(card.querySelector('[data-preview-original-url]').value,original);
+  assert.equal(replacement.querySelector('[data-preview-original]').hidden,true);
+  gate.resolve('https://link-card-maker.app.workbuddy.host/c/STALE1?sharecode=26URNVPWDI');await pending;
+  assert.deepEqual(h.controls.copiedUrls,[]);
+  assertSingleLinkUnavailable(replacement);
 });

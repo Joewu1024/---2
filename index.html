@@ -74,6 +74,7 @@ body{min-width:0}
 .panel{z-index:210}.modalbg{z-index:220}#closeDialog{z-index:300}.toast{z-index:320}
 .share-limit-hint{display:inline-flex;align-items:center;flex-shrink:0;max-width:100%;padding:7px 11px;border:1px solid #e4bb68;border-radius:8px;background:#fff5da;color:#805000;font-size:13px;font-weight:750;line-height:1.45;white-space:normal;overflow-wrap:anywhere}
 .share-limit-hint.is-over-limit{border-color:#dc9389;background:#fff0ed;color:#a52e20}
+.share-card-original{margin:12px 0}.share-card-original label{display:block;margin-bottom:6px;color:#7c573a;font-size:12px;font-weight:650}.share-card-original textarea{display:block;width:100%;min-height:58px;max-height:110px;resize:vertical;border:1px solid #e4d8cc;border-radius:8px;background:#fffbf5;color:#6b6158;padding:8px;font-size:11px;line-height:1.45;overflow-wrap:anywhere;word-break:break-all}
 .share-limit-modal{width:min(430px,calc(100vw - 32px));text-align:center;padding:26px}
 .share-limit-icon{display:grid;place-items:center;width:42px;height:42px;margin:0 auto 12px;border-radius:50%;background:#fff0df;color:#ac5c00;font-size:25px;font-weight:800}
 .share-limit-modal h3{margin:0 0 12px;font-size:20px}.share-limit-modal p{line-height:1.7}.share-limit-rule{font-size:16px;font-weight:650;color:#963a20}.share-limit-rule strong{font-size:23px}.share-limit-modal [data-share-limit-message]{color:#53665d;margin:8px 0 20px}.share-limit-modal .btn{min-width:120px}
@@ -2626,6 +2627,95 @@ input.buyer-choice{padding-right:24px!important;background-image:url("data:image
 
 </script>
 
+<script data-buyer-link-card-client="v1">
+(function (root, factory) {
+  'use strict';
+  if (typeof module === 'object' && module.exports) module.exports = factory(root);
+  else root.BuyerLinkCard = factory(root);
+})(typeof globalThis !== 'undefined' ? globalThis : this, function (root) {
+  'use strict';
+
+  const ORIGIN = 'https://link-card-maker.app.workbuddy.host';
+  const SHARECODE = '26URNVPWDI';
+  const ENDPOINT = ORIGIN + '/api/make?sharecode=' + SHARECODE;
+  const DESCRIPTION = '寻品产品信息 · 点击查看详情 · 可截图或保存 PDF';
+
+  function readUrl(value) {
+    if (typeof value !== 'string' || !value || value.trim() !== value || /[\u0000-\u001f\u007f]/.test(value)) return null;
+    try {
+      const parsed = new URL(value);
+      return parsed.protocol === 'https:' && !parsed.username && !parsed.password ? parsed : null;
+    } catch (_) { return null; }
+  }
+
+  function checkedResult(data, originalUrl) {
+    if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('外链工具返回内容无效，请重新生成');
+    const parsed = readUrl(data.shortUrl);
+    if (!parsed || parsed.origin !== ORIGIN || !/^\/c\/[A-Za-z0-9_-]{1,128}$/.test(parsed.pathname) ||
+        data.shortUrl.includes('#') || parsed.searchParams.getAll('sharecode').length !== 1 ||
+        parsed.searchParams.get('sharecode') !== SHARECODE) throw new Error('外链工具返回链接无效，请重新生成');
+    if (Object.prototype.hasOwnProperty.call(data, 'original') && data.original !== originalUrl) {
+      throw new Error('外链工具返回的原始链接不一致，请重新生成');
+    }
+    return data.shortUrl;
+  }
+
+  async function generate(originalUrl, options) {
+    options = options || {};
+    if (!readUrl(originalUrl)) throw new Error('原始分享链接无效，请使用完整的 HTTPS 链接');
+    const fetchRequest = typeof options.fetch === 'function' ? options.fetch :
+      typeof root.fetch === 'function' ? root.fetch.bind(root) : null;
+    if (!fetchRequest) throw new Error('当前浏览器无法连接外链工具');
+    const countValue = Number(options.count), count = Number.isFinite(countValue) && countValue >= 1 ? Math.floor(countValue) : 1;
+    const timeoutValue = Number(options.timeoutMs), timeoutMs = Number.isFinite(timeoutValue) && timeoutValue > 0 ? timeoutValue : 15000;
+    const controller = typeof root.AbortController === 'function' ? new root.AbortController() : null;
+    const payload = {
+      url: originalUrl,
+      title: typeof options.title === 'string' && options.title.trim() ? options.title : '寻品产品分享 · ' + count + ' 个产品',
+      desc: typeof options.desc === 'string' && options.desc.trim() ? options.desc : DESCRIPTION,
+      origin: ORIGIN,
+      sharecode: SHARECODE
+    };
+    let timer, timedOut = false;
+    const timeout = new Promise((resolve, reject) => {
+      timer = setTimeout(() => {
+        timedOut = true;
+        controller?.abort();
+        reject(new Error('外链工具生成超时，请稍后重试'));
+      }, timeoutMs);
+    });
+    const request = (async () => {
+      let response;
+      try {
+        response = await fetchRequest(ENDPOINT, {
+          method: 'POST',
+          // The service accepts JSON text but does not implement OPTIONS.
+          // text/plain keeps this a simple CORS request from the workbench.
+          headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+          body: JSON.stringify(payload),
+          mode: 'cors', credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error',
+          ...(controller ? { signal: controller.signal } : {})
+        });
+      } catch (_) {
+        throw new Error(timedOut ? '外链工具生成超时，请稍后重试' : '无法连接外链工具，请检查网络后重试');
+      }
+      if (!response || !response.ok) {
+        if (response?.status === 429) throw new Error('外链工具暂时限流，请稍后重试');
+        throw new Error('外链工具生成失败，请稍后重试');
+      }
+      let data;
+      try { data = await response.json(); }
+      catch (_) { throw new Error('外链工具返回内容无效，请重新生成'); }
+      return checkedResult(data, originalUrl);
+    })();
+    try { return await Promise.race([request, timeout]); }
+    finally { clearTimeout(timer); }
+  }
+
+  return { generate };
+});
+
+</script>
 <script data-buyer-share-gzip="fflate-0.8.3">
 /* fflate 0.8.3 — https://github.com/101arrowz/fflate/tree/v0.8.3
 MIT License
@@ -3535,9 +3625,24 @@ async function buildOnlineShareLink(records,options={}) {
   if(link)return link;
   throw new Error('分享内容较长，请减少勾选或简化分享内容后重试');
 }
+// link-card-integration:start
+async function buildLinkCardShareLink(records,options={}){
+  const dataset=rows,list=Array.from(records||[]),members=new Set(dataset);
+  const current=()=>rows===dataset&&list.every(record=>members.has(record)&&rows.includes(record))&&(!options.isCurrent||options.isCurrent());
+  const assertCurrent=()=>{if(!current())throw new Error('分享内容或工作区已变更，请重新生成')};
+  assertCurrent();
+  const originalUrl=await buildOnlineShareLink(list,{isCurrent:current});
+  assertCurrent();
+  options.onOriginal?.(originalUrl);
+  assertCurrent();
+  const link=await BuyerLinkCard.generate(originalUrl,{count:list.length});
+  assertCurrent();
+  return link;
+}
+// link-card-integration:end
 function shareRecordSignature(record){return JSON.stringify(productDetail(record))}
 function shareLinkMessage(url,count=1){
-  return '已生成 '+count+' 个产品的直达链接';
+  return '已生成 '+count+' 个产品的卡片分享链接';
 }
 async function copyShareText(text) {
   try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
@@ -3550,12 +3655,17 @@ async function copyShareText(text) {
 async function showShareLinkDialog(records) {
   const dialog=$('shareLinkDialog'),dataset=rows,list=Array.from(records),request=showShareLinkDialog.serial=(showShareLinkDialog.serial||0)+1;
   dialog.shareRequest=request;dialog.hidden=false;
-  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>在线产品分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在生成直达链接…</p><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div></section>';
+  dialog.innerHTML='<section class="modal share-link-modal"><div class="share-link-head"><h3>企微 / 微信卡片分享链接</h3><button type="button" class="btn" data-share-close aria-label="关闭">×</button></div><p class="muted" data-share-status>正在整理所选产品…</p><div class="share-card-original" data-share-original hidden><label>原始链接 · 已自动带入外链工具</label><textarea data-share-original-url readonly rows="2" aria-label="原始链接"></textarea></div><div class="share-link-controls" hidden><input readonly aria-label="在线产品链接"><button class="btn primary" data-copy-share>复制链接</button><button class="btn" data-open-share>打开链接</button></div></section>';
   const current=()=>rows===dataset&&!dialog.hidden&&dialog.shareRequest===request;
   const close=()=>{if(dialog.shareRequest===request){dialog.hidden=true;dialog.shareRequest=null}};
   dialog.querySelector('[data-share-close]').onclick=close;dialog.onclick=event=>{if(event.target===dialog)close()};
   try{
-    const link=await buildOnlineShareLink(list,{isCurrent:current});if(!current())return;
+    const link=await buildLinkCardShareLink(list,{isCurrent:current,onOriginal:originalUrl=>{
+      if(!current())return;
+      const original=dialog.querySelector('[data-share-original]');original.hidden=false;
+      original.querySelector('[data-share-original-url]').value=originalUrl;
+      dialog.querySelector('[data-share-status]').textContent='原始链接已带入，正在由外链工具生成卡片链接…';
+    }});if(!current())return;
     const status=dialog.querySelector('[data-share-status]'),controls=dialog.querySelector('.share-link-controls');
     status.textContent=shareLinkMessage(link,list.length);controls.querySelector('input').value=link;controls.hidden=false;
     const copy=controls.querySelector('[data-copy-share]');
@@ -3587,13 +3697,13 @@ function toggleProductCard(uid, anchor) {
   const image=(src,label,badges)=>'<figure class="product-card-model-figure">'+(src?'<img loading="lazy" src="'+esc(src)+'" alt="'+esc(label)+'">':'<div class="product-card-empty">暂无图片</div>')+'<div class="product-card-media-footer"><figcaption>'+esc(label)+'</figcaption>'+inlineBadgesMarkup(badges)+'</div></figure>';
   const field=(label,text,attribute)=>'<div class="product-card-block"'+(attribute?' data-preview-field="'+attribute+'"':'')+'><span class="product-card-label">'+esc(label)+'</span><div class="product-card-value"'+(attribute==='category'?' data-share-category':attribute?' data-preview-chinese="'+attribute+'"':'')+'>'+esc(text||'')+'</div></div>';
   const shopee=detail.shopee?(detail.shopeeUrl?'<a href="'+esc(detail.shopeeUrl)+'" target="_blank" rel="noopener">'+esc(detail.shopee)+'</a>':esc(detail.shopee)):'未提供';
-  card.innerHTML='<button class="product-card-close" type="button" aria-label="关闭">×</button><div class="product-card-images">'+image(detail.model,'model 图片（SKU图）',detail.badges)+'</div>'+field('中文标题',sharePreviewChineseValue(record,10),'10')+field('中文型号',sharePreviewChineseValue(record,12),'12')+field('上新类目',sharePreviewCategoryValue(record),'category')+(detail.invitation?field('邀请ID',detail.invitation):'')+'<dl><dt>目标价</dt><dd>'+esc(detail.target)+'</dd><dt>Model ID</dt><dd>'+esc(detail.id)+'</dd><dt>Shopee link</dt><dd>'+shopee+'</dd></dl><p class="muted" data-preview-status role="status" hidden></p><div class="product-card-actions"><button type="button" data-generate-single>生成直达链接</button></div><div class="share-link-controls share-inline-controls" data-preview-link hidden><input class="share-inline-link" readonly aria-label="在线分享链接"><button type="button" class="btn" data-copy-single>复制链接</button><a class="btn" data-open-single target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">打开链接</a></div>';
+  card.innerHTML='<button class="product-card-close" type="button" aria-label="关闭">×</button><div class="product-card-images">'+image(detail.model,'model 图片（SKU图）',detail.badges)+'</div>'+field('中文标题',sharePreviewChineseValue(record,10),'10')+field('中文型号',sharePreviewChineseValue(record,12),'12')+field('上新类目',sharePreviewCategoryValue(record),'category')+(detail.invitation?field('邀请ID',detail.invitation):'')+'<dl><dt>目标价</dt><dd>'+esc(detail.target)+'</dd><dt>Model ID</dt><dd>'+esc(detail.id)+'</dd><dt>Shopee link</dt><dd>'+shopee+'</dd></dl><p class="muted" data-preview-status role="status" hidden></p><div class="product-card-actions"><button type="button" data-generate-single>生成分享链接</button></div><div class="share-card-original" data-preview-original hidden><label>原始链接 · 已自动带入外链工具</label><textarea data-preview-original-url readonly rows="2" aria-label="原始链接"></textarea></div><div class="share-link-controls share-inline-controls" data-preview-link hidden><input class="share-inline-link" readonly aria-label="在线分享链接"><button type="button" class="btn" data-copy-single>复制链接</button><a class="btn" data-open-single target="_blank" rel="noopener noreferrer" aria-disabled="true" tabindex="-1">打开链接</a></div>';
   document.body.append(card);activeProductCard=uid;
   const current=()=>rows===dataset&&rows.includes(record)&&activeProductCard===uid&&document.getElementById('productCard')===card&&document.body.contains(card);
   const status=card.querySelector('[data-preview-status]'),generate=card.querySelector('[data-generate-single]'),result=card.querySelector('[data-preview-link]');
   let generating=false,linkError='',linkNotice='',linkBaselineSignature='',sharedSnapshot=null,linkGeneration=0;
   const snapshot=()=>{const detail=sharedSnapshot||productDetail(record);return [detail.itemChinese,detail.modelChinese,detail.category]};
-  const clearLink=()=>{linkGeneration++;result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;open.onclick=null;result.querySelector('[data-copy-single]').onclick=null;result.querySelector('[data-copy-single]').textContent='复制链接';linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
+  const clearLink=()=>{linkGeneration++;card.querySelector('[data-preview-original]').hidden=true;card.querySelector('[data-preview-original-url]').value='';result.hidden=true;result.querySelector('input').value='';const open=result.querySelector('[data-open-single]');open.removeAttribute('href');open.setAttribute('aria-disabled','true');open.tabIndex=-1;open.onclick=null;result.querySelector('[data-copy-single]').onclick=null;result.querySelector('[data-copy-single]').textContent='复制链接';linkBaselineSignature='';linkNotice='';sharedSnapshot=null};
   const update=()=>{
     if(!current())return false;
     const signature=shareRecordSignature(record);
@@ -3617,7 +3727,12 @@ function toggleProductCard(uid, anchor) {
     if(!current()||generating)return;
     generating=true;linkError='';clearLink();sharedSnapshot=JSON.parse(JSON.stringify(productDetail(record)));update();
     try{
-      const url=await buildOnlineShareLink([record],{isCurrent:current});
+      const url=await buildLinkCardShareLink([record],{isCurrent:current,onOriginal:originalUrl=>{
+        if(!current())return;
+        card.querySelector('[data-preview-original]').hidden=false;
+        card.querySelector('[data-preview-original-url]').value=originalUrl;
+        linkNotice='原始链接已带入，正在由外链工具生成卡片链接…';update();
+      }});
       if(!current())return;
       const open=result.querySelector('[data-open-single]');open.setAttribute('href',url);open.setAttribute('aria-disabled','false');open.tabIndex=0;result.querySelector('input').value=url;result.hidden=false;linkBaselineSignature=shareRecordSignature(record);linkNotice=shareLinkMessage(url,1)+' · 已按点击时的内容生成';
       const generation=linkGeneration,currentLink=()=>current()&&linkGeneration===generation&&linkBaselineSignature===shareRecordSignature(record)&&open.getAttribute('href')===url&&!result.hidden;

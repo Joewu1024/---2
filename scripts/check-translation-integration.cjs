@@ -662,7 +662,7 @@ test('every new share URL is a compact same-origin snapshot without consulting a
     assert.equal(url.origin,'https://buyer.example.test');assert.equal(url.pathname,'/s.html');assert.equal(url.hash,'');
     const products=decodeFabricatedShareUrl(result).products;assert.deepEqual(products.map(card=>card.id),[chosen.uid]);assert.equal(products[0].itemChinese,text);
     assert.notEqual(result,previous);previous=result;
-    assert.match(h.api.shareLinkMessage(result,1),/1 个产品的直达链接/);assert.doesNotMatch(result,/is\.gd/);
+    assert.match(h.api.shareLinkMessage(result,1),/1 个产品的卡片分享链接/);assert.doesNotMatch(result,/is\.gd/);
   }
   assert.equal(h.controls.shortenerCalls.length,0);assert.equal(network.mock.callCount(),0);
 });
@@ -680,7 +680,7 @@ test('direct share generation never reads denied localStorage or contacts the ne
   assert.equal(deniedReads,0,'generating a direct link has no storage dependency');
   assert.equal(h.controls.shortenerCalls.length,0);
   assert.deepEqual(decodeFabricatedShareUrl(result).products.map(card=>card.id),[chosen.uid]);
-  assert.match(h.api.shareLinkMessage(result,1),/直达链接/);
+  assert.match(h.api.shareLinkMessage(result,1),/卡片分享链接/);
   assert.equal(h.transport.mock.callCount(),0);
 });
 
@@ -692,7 +692,7 @@ test('direct sharing removes workspace query state and carries every selected ca
   const full=new URL(result);assert.equal(full.origin,'https://buyer.example.test');assert.equal(full.pathname,'/---2/s.html');assert.equal(full.hash,'');
   const products=decodeFabricatedShareUrl(result).products;
   assert.doesNotMatch(result,/PRIVATE-WORKSPACE|local-state/);assert.deepEqual(products.map(card=>card.id),[chosen.uid,second.uid]);assert.equal(products[1].modelChinese,'  5pcs / 蓝色  ');
-  assert.match(h.api.shareLinkMessage(result,2),/2 个产品的直达链接/);assert.equal(h.controls.shortenerCalls.length,0);
+  assert.match(h.api.shareLinkMessage(result,2),/2 个产品的卡片分享链接/);assert.equal(h.controls.shortenerCalls.length,0);
 });
 
 test('a dataset replacement during image preparation prevents a stale share result',async()=>{

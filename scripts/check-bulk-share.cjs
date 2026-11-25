@@ -29,12 +29,13 @@ class Node {
   set innerHTML(value) {
     this._html = value; this.nodes = new Map();
     if (!String(value).includes('data-share-close')) return;
-    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node(), file = new Node();
+    const modal = new Node(), controls = new Node(), input = new Node(), copy = new Node(), open = new Node(), status = new Node(), close = new Node(), file = new Node(), original = new Node(), originalUrl = new Node();
     controls.hidden = true;
-    file.hidden = true;
+    file.hidden = true; original.hidden = true;
+    original.nodes = new Map([['textarea', originalUrl], ['[data-share-original-url]', originalUrl]]);
     status.textContent = '正在整理产品信息和中文类目…';
     controls.nodes = new Map([['input', input], ['[data-copy-share]', copy], ['[data-open-share]', open]]);
-    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls], ['[data-share-file]', file]]);
+    this.nodes = new Map([['.share-link-modal', modal], ['[data-share-close]', close], ['[data-share-status]', status], ['.share-link-controls', controls], ['[data-share-file]', file], ['[data-share-original]', original], ['[data-share-original-url]', originalUrl]]);
     modal.nodes = this.nodes; this.firstElementChild = modal;
   }
   get innerHTML() { return this._html || ''; }
@@ -45,16 +46,18 @@ function harness() {
   const records = ['FAKE-A', 'FAKE-B', 'FAKE-C'].map(uid => ({ uid, raw: {} }));
   const controls = { jobs: [], copied: [], opened: [], messages: [], timers: [], downloaded: [], clipboardAllowed: true };
   const builder = async (entries, options = {}) => {
-    const gate = deferred(); controls.jobs.push({ ...gate, records: entries, options }); return gate.promise;
+    const gate = deferred(), originalUrl = 'https://example.test/s.html?d=cFAKE-ORIGINAL-' + controls.jobs.length;
+    controls.jobs.push({ ...gate, records: entries, options, originalUrl });
+    options.onOriginal?.(originalUrl);return gate.promise;
   };
   const context = vm.createContext({
     rows: records, historyMode: false, canEditWorkspace: () => true,
     $: id => id === 'shareLinkDialog' ? dialog : null,
     document: { getElementById: id => id === 'shareLinkDialog' ? dialog : null, body: { contains: () => true } },
-    buildOnlineShareLink: builder,
+    buildLinkCardShareLink: builder,
     shareLinkMessage(url, count = 1) {
       controls.messages.push({ url, count });
-      return '已生成 ' + count + ' 个产品的直达链接';
+      return '已生成 ' + count + ' 个产品的卡片分享链接';
     },
     copyShareText: async url => { controls.copied.push(url); return controls.clipboardAllowed; },
     downloadShareFile: products => controls.downloaded.push(products),
@@ -66,10 +69,12 @@ function harness() {
   return { dialog, records, controls, context, resolve, show: entries => context.showShareLinkDialog(entries) };
 }
 
-test('the bulk dialog shows, copies and opens one long URL for the selection', async () => {
+test('the bulk dialog prefills the original link and copies and opens the generated card URL', async () => {
   const h = harness();
   const work = h.show(h.records);
-  const url = 'https://example.test/s.html?d=c' + 'A'.repeat(6700);
+  const url = 'https://link-card-maker.app.workbuddy.host/c/TEST01?sharecode=26URNVPWDI';
+  assert.equal(h.dialog.querySelector('[data-share-original]').hidden, false);
+  assert.equal(h.dialog.querySelector('[data-share-original-url]').value, h.controls.jobs[0].originalUrl);
   h.resolve(0, url);
   await work;
   const controls = h.dialog.querySelector('.share-link-controls');
@@ -78,7 +83,7 @@ test('the bulk dialog shows, copies and opens one long URL for the selection', a
   assert.deepEqual(h.controls.copied, [url]);
   controls.querySelector('[data-open-share]').onclick();
   assert.deepEqual(h.controls.opened.map(args => args[0]), [url]);
-  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的直达链接/);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的卡片分享链接/);
 });
 
 test('overlong sharing explains how to reduce the selection without a link or file fallback', async () => {
@@ -149,7 +154,7 @@ test('bulk sharing keeps every selected record and copies/opens the exact direct
   const url = 'https://example.test/share.html#d=jFakeABC'; h.resolve(0, url); await pending;
   const controls = h.dialog.querySelector('.share-link-controls');
   assert.equal(controls.hidden, false); assert.equal(controls.querySelector('input').value, url);
-  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的直达链接/);
+  assert.match(h.dialog.querySelector('[data-share-status]').textContent, /3 个产品的卡片分享链接/);
   assert.deepEqual(h.controls.messages.at(-1), { url, count: 3 });
   await controls.querySelector('[data-copy-share]').onclick({ currentTarget: controls.querySelector('[data-copy-share]') });
   controls.querySelector('[data-open-share]').onclick();
@@ -162,7 +167,7 @@ test('bulk direct sharing is usable in the primary controls and has no duplicate
   assert.equal(h.dialog.querySelector('.share-link-controls').querySelector('input').value, url);
   assert.equal(h.dialog.querySelector('[data-direct-share]'),null,'the direct URL is only shown in primary controls');
   const status = h.dialog.querySelector('[data-share-status]').textContent;
-  assert.match(status, /2 个产品的直达链接/); assert.doesNotMatch(status, /短链接|is\.gd|一键翻译|翻译失败/);
+  assert.match(status, /2 个产品的卡片分享链接/); assert.doesNotMatch(status, /短链接|is\.gd|一键翻译|翻译失败/);
 });
 
 test('an earlier generation cannot overwrite a newer pending or completed dialog', async () => {
@@ -239,4 +244,19 @@ test('obsolete copy/open handlers cannot act after a newer request or dialog clo
   h.dialog.querySelector('[data-share-close]').onclick();
   await copy({ currentTarget: copyButton }); open();
   assert.deepEqual(h.controls.copied, ['https://is.gd/FakeObsolete', 'https://is.gd/FakeCurrent']); assert.deepEqual(h.controls.opened, []);
+});
+
+test('obsolete original-link callbacks cannot overwrite a newer dialog or update it after close', async () => {
+  const h=harness(),first=h.show(h.records.slice(0,1));
+  const firstOriginal=h.controls.jobs[0].options.onOriginal;
+  const second=h.show(h.records.slice(1));
+  const expected=h.controls.jobs[1].originalUrl;
+  firstOriginal('https://example.test/OBSOLETE-ORIGINAL');
+  assert.equal(h.dialog.querySelector('[data-share-original-url]').value,expected);
+  h.dialog.querySelector('[data-share-close]').onclick();
+  h.controls.jobs[1].options.onOriginal('https://example.test/CLOSED-ORIGINAL');
+  assert.equal(h.dialog.querySelector('[data-share-original-url]').value,expected);
+  h.resolve(0,'https://example.test/old');h.resolve(1,'https://example.test/new');
+  await Promise.all([first,second]);
+  assert.deepEqual(h.controls.copied,[]);
 });
